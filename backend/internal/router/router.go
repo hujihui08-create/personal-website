@@ -21,13 +21,19 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	experienceRepo := repository.NewWorkExperienceRepository(db)
 	resumeRepo := repository.NewResumeRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
+	scheduleSettingRepo := repository.NewScheduleSettingRepository(db)
+	bookingRepo := repository.NewBookingRepository(db)
+	notificationRepo := repository.NewNotificationRepository(db)
 
 	// --- Services ---
+	emailService := service.NewEmailService(cfg.Email)
+	notificationService := service.NewNotificationService(notificationRepo, emailService)
 	authService := service.NewAuthService(adminRepo, cfg.JWT)
 	profileService := service.NewProfileService(profileRepo, minioClient, cfg)
 	experienceService := service.NewExperienceService(experienceRepo)
 	resumeService := service.NewResumeService(resumeRepo, minioClient, cfg)
 	projectService := service.NewProjectService(projectRepo, minioClient, cfg)
+	bookingService := service.NewBookingService(scheduleSettingRepo, bookingRepo, notificationService)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
@@ -35,6 +41,8 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	experienceHandler := handler.NewExperienceHandler(experienceService)
 	fileHandler := handler.NewFileHandler(minioClient, cfg.MinIO.Bucket)
 	projectHandler := handler.NewProjectHandler(projectService)
+	bookingHandler := handler.NewBookingHandler(bookingService)
+	notificationHandler := handler.NewNotificationHandler(notificationService)
 
 	api := r.Group("/api")
 	{
@@ -137,7 +145,41 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			projectsProtected.POST("/upload-cover", projectHandler.UploadCoverImage)
 			projectsProtected.POST("/upload-image", projectHandler.UploadProjectImage)
 		}
+
+		// Booking routes (public)
+		bookings := api.Group("/bookings")
+		{
+			bookings.GET("/slots", bookingHandler.GetSlots)
+			bookings.POST("", bookingHandler.CreateBooking)
+		}
+
+		// Booking management (protected)
+		bookingsProtected := api.Group("/bookings")
+		bookingsProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			bookingsProtected.GET("", bookingHandler.ListBookings)
+			bookingsProtected.GET("/:id", bookingHandler.GetBooking)
+			bookingsProtected.PUT("/:id/status", bookingHandler.UpdateBookingStatus)
+		}
+
+		// Schedule settings (protected)
+	scheduleProtected := api.Group("/schedule")
+	scheduleProtected.Use(middleware.AuthMiddleware(authService))
+	{
+		scheduleProtected.GET("", bookingHandler.GetScheduleSettings)
+		scheduleProtected.PUT("", bookingHandler.UpdateScheduleSettings)
 	}
+
+	// Notifications (protected)
+	notificationsProtected := api.Group("/notifications")
+	notificationsProtected.Use(middleware.AuthMiddleware(authService))
+	{
+		notificationsProtected.GET("", notificationHandler.GetNotifications)
+		notificationsProtected.PUT("/:id/read", notificationHandler.MarkAsRead)
+		notificationsProtected.PUT("/read-all", notificationHandler.MarkAllAsRead)
+		notificationsProtected.GET("/unread", notificationHandler.GetUnreadCount)
+	}
+}
 }
 
 func healthCheck(c *gin.Context) {

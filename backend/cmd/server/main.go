@@ -47,6 +47,9 @@ func main() {
 		&model.WorkExperience{},
 		&model.ExperienceProject{},
 		&model.Resume{},
+		&model.ScheduleSetting{},
+		&model.Booking{},
+		&model.Notification{},
 	); err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}

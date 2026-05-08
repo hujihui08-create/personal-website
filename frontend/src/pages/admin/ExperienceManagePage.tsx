@@ -20,6 +20,7 @@ import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { CreateExperienceRequest } from '@/api/experiences'
 import type { WorkExperience } from '@/types'
+import { Portal } from '@/components/Portal'
 
 interface ExperienceFormData {
   type: 'study' | 'internship' | 'work'
@@ -331,13 +332,14 @@ export const ExperienceManagePage = () => {
         {/* Edit/Add Modal */}
         <AnimatePresence>
           {isModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
-              onClick={handleCloseModal}
-            >
+            <Portal>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
+                onClick={handleCloseModal}
+              >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -493,20 +495,22 @@ export const ExperienceManagePage = () => {
                   </button>
                 </div>
               </motion.div>
-            </motion.div>
+              </motion.div>
+            </Portal>
           )}
         </AnimatePresence>
 
         {/* Delete Confirmation Modal */}
         <AnimatePresence>
           {deleteTarget && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
-              onClick={() => setDeleteTarget(null)}
-            >
+            <Portal>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
+                onClick={() => setDeleteTarget(null)}
+              >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -550,7 +554,8 @@ export const ExperienceManagePage = () => {
                   </div>
                 </div>
               </motion.div>
-            </motion.div>
+              </motion.div>
+            </Portal>
           )}
         </AnimatePresence>
       </div>

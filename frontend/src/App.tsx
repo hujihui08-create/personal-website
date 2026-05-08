@@ -13,6 +13,9 @@ import BookingPage from '@/pages/booking'
 import ProfileEditPage from '@/pages/admin/ProfileEditPage'
 import ExperienceManagePage from '@/pages/admin/ExperienceManagePage'
 import ProjectManagePage from '@/pages/admin/ProjectManagePage'
+import BookingManagePage from '@/pages/admin/BookingManagePage'
+import NotificationManagePage from '@/pages/admin/NotificationManagePage'
+import ScheduleManagePage from '@/pages/admin/ScheduleManagePage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -90,6 +93,36 @@ function App() {
                 <ProtectedRoute>
                   <AdminLayout>
                     <ProjectManagePage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/bookings"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <BookingManagePage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/schedule"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <ScheduleManagePage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/notifications"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <NotificationManagePage />
                   </AdminLayout>
                 </ProtectedRoute>
               }

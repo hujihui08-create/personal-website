@@ -23,10 +23,11 @@ import {
 import { toast } from 'sonner'
 import type { Project } from '@/types'
 import { projectApi } from '@/api/projects'
+import { Portal } from '@/components/Portal'
 
 interface ProjectFormData {
 	name: string
- type: 'enterprise' | 'personal'
+	type: 'enterprise' | 'personal'
 	startDate: string
 	endDate: string
 	summary: string
@@ -418,370 +419,374 @@ export const ProjectManagePage = () => {
 
 			<AnimatePresence>
 				{isModalOpen && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40 overflow-y-auto"
-						onClick={handleCloseModal}
-					>
+					<Portal>
 						<motion.div
-							initial={{ opacity: 0, scale: 0.95, y: 10 }}
-							animate={{ opacity: 1, scale: 1, y: 0 }}
-							exit={{ opacity: 0, scale: 0.95, y: 10 }}
-							transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-							className="w-full max-w-2xl bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] overflow-hidden my-8"
-							onClick={(e) => e.stopPropagation()}
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40 overflow-y-auto"
+							onClick={handleCloseModal}
 						>
-							<div className="flex items-center justify-between px-[var(--space-lg)] pt-[var(--space-lg)] pb-[var(--space-md)] border-b border-[var(--color-border-light)]">
-								<h2 className="text-lg font-semibold text-[var(--color-primary)]">
-									{editingProject ? '编辑作品' : '添加作品'}
-								</h2>
-								<button
-									onClick={handleCloseModal}
-									className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-secondary)]
+							<motion.div
+								initial={{ opacity: 0, scale: 0.95, y: 10 }}
+								animate={{ opacity: 1, scale: 1, y: 0 }}
+								exit={{ opacity: 0, scale: 0.95, y: 10 }}
+								transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+								className="w-full max-w-2xl bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] overflow-hidden my-8"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<div className="flex items-center justify-between px-[var(--space-lg)] pt-[var(--space-lg)] pb-[var(--space-md)] border-b border-[var(--color-border-light)]">
+									<h2 className="text-lg font-semibold text-[var(--color-primary)]">
+										{editingProject ? '编辑作品' : '添加作品'}
+									</h2>
+									<button
+										onClick={handleCloseModal}
+										className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-secondary)]
                       hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
-									aria-label="关闭"
-								>
-									<X className="w-4 h-4" />
-								</button>
-							</div>
-
-							<div className="px-[var(--space-lg)] py-[var(--space-md)] space-y-[var(--space-md)] max-h-[70vh] overflow-y-auto">
-								<div className="space-y-1.5">
-									<label htmlFor="name" className="block text-sm font-medium text-[var(--color-primary)]">
-										项目名称 <span className="text-[var(--color-error)]">*</span>
-									</label>
-									<input
-										id="name"
-										name="name"
-										type="text"
-										value={formData.name}
-										onChange={handleFormChange}
-										className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    placeholder:text-[var(--color-secondary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										placeholder="请输入项目名称"
-									/>
-								</div>
-
-								<div className="space-y-1.5">
-									<label htmlFor="type" className="block text-sm font-medium text-[var(--color-primary)]">
-										项目类型 <span className="text-[var(--color-error)]">*</span>
-									</label>
-									<select
-										id="type"
-										name="type"
-										value={formData.type}
-										onChange={handleFormChange}
-										className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+										aria-label="关闭"
 									>
-										<option value="enterprise">企业项目</option>
-										<option value="personal">个人项目</option>
-									</select>
+										<X className="w-4 h-4" />
+									</button>
 								</div>
 
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
+								<div className="px-[var(--space-lg)] py-[var(--space-md)] space-y-[var(--space-md)] max-h-[70vh] overflow-y-auto">
 									<div className="space-y-1.5">
-										<label htmlFor="startDate" className="block text-sm font-medium text-[var(--color-primary)]">
-											开始日期
+										<label htmlFor="name" className="block text-sm font-medium text-[var(--color-primary)]">
+											项目名称 <span className="text-[var(--color-error)]">*</span>
 										</label>
 										<input
-											id="startDate"
-											name="startDate"
-											type="date"
-											value={formData.startDate}
+											id="name"
+											name="name"
+											type="text"
+											value={formData.name}
 											onChange={handleFormChange}
 											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										/>
-									</div>
-									<div className="space-y-1.5">
-										<label htmlFor="endDate" className="block text-sm font-medium text-[var(--color-primary)]">
-											结束日期
-										</label>
-										<input
-											id="endDate"
-											name="endDate"
-											type="date"
-											value={formData.endDate}
-											onChange={handleFormChange}
-											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										/>
-									</div>
-								</div>
-
-								<div className="space-y-1.5">
-									<label htmlFor="summary" className="block text-sm font-medium text-[var(--color-primary)]">
-										项目简介
-									</label>
-									<input
-										id="summary"
-										name="summary"
-										type="text"
-										value={formData.summary}
-										onChange={handleFormChange}
-										className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                     placeholder:text-[var(--color-secondary)]
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										placeholder="请输入项目简介"
-									/>
-								</div>
+											placeholder="请输入项目名称"
+										/>
+									</div>
 
-								<div className="space-y-1.5">
-									<label htmlFor="description" className="block text-sm font-medium text-[var(--color-primary)]">
-										项目详情
-									</label>
-									<textarea
-										id="description"
-										name="description"
-										value={formData.description}
-										onChange={handleFormChange}
-										rows={4}
-										className="w-full px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    placeholder:text-[var(--color-secondary)] resize-none
+									<div className="space-y-1.5">
+										<label htmlFor="type" className="block text-sm font-medium text-[var(--color-primary)]">
+											项目类型 <span className="text-[var(--color-error)]">*</span>
+										</label>
+										<select
+											id="type"
+											name="type"
+											value={formData.type}
+											onChange={handleFormChange}
+											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										placeholder="请输入项目详情（支持Markdown）"
-									/>
-								</div>
+										>
+											<option value="enterprise">企业项目</option>
+											<option value="personal">个人项目</option>
+										</select>
+									</div>
 
-								<div className="space-y-1.5">
-									<label htmlFor="coverImage" className="block text-sm font-medium text-[var(--color-primary)]">
-										封面图片
-									</label>
-									<div className="space-y-2">
-										<div className="flex gap-2">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
+										<div className="space-y-1.5">
+											<label htmlFor="startDate" className="block text-sm font-medium text-[var(--color-primary)]">
+												开始日期
+											</label>
 											<input
-												id="coverImage"
-												name="coverImage"
-												type="text"
-												value={formData.coverImage}
+												id="startDate"
+												name="startDate"
+												type="date"
+												value={formData.startDate}
 												onChange={handleFormChange}
-												className="flex-1 h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+												className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+											/>
+										</div>
+										<div className="space-y-1.5">
+											<label htmlFor="endDate" className="block text-sm font-medium text-[var(--color-primary)]">
+												结束日期
+											</label>
+											<input
+												id="endDate"
+												name="endDate"
+												type="date"
+												value={formData.endDate}
+												onChange={handleFormChange}
+												className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-1.5">
+										<label htmlFor="summary" className="block text-sm font-medium text-[var(--color-primary)]">
+											项目简介
+										</label>
+										<input
+											id="summary"
+											name="summary"
+											type="text"
+											value={formData.summary}
+											onChange={handleFormChange}
+											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                     placeholder:text-[var(--color-secondary)]
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-												placeholder="请输入封面图片 URL 或上传图片"
-											/>
-											<label className="flex items-center justify-center h-10 px-4 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] cursor-pointer transition-colors">
-												<Upload className="w-4 h-4 mr-2" />
-												<span>{isUploading ? '上传中...' : '上传'}</span>
-												<input
-													type="file"
-													accept="image/*"
-													className="hidden"
-													onChange={handleUploadCoverImage}
-													disabled={isUploading}
-												/>
-											</label>
-										</div>
-										{formData.coverImage && (
-											<div className="relative w-full h-32 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border-light)]">
-												<img
-													src={formData.coverImage}
-													alt="封面预览"
-													className="w-full h-full object-cover"
-												/>
-											</div>
-										)}
+											placeholder="请输入项目简介"
+										/>
 									</div>
-								</div>
 
-								<div className="space-y-1.5">
-									<label htmlFor="images" className="block text-sm font-medium text-[var(--color-primary)]">
-										项目图片
-									</label>
-									<div className="space-y-2">
-										<div className="flex gap-2">
-											<textarea
-												id="images"
-												name="images"
-												value={formData.images}
-												onChange={handleFormChange}
-												rows={3}
-												className="flex-1 px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+									<div className="space-y-1.5">
+										<label htmlFor="description" className="block text-sm font-medium text-[var(--color-primary)]">
+											项目详情
+										</label>
+										<textarea
+											id="description"
+											name="description"
+											value={formData.description}
+											onChange={handleFormChange}
+											rows={4}
+											className="w-full px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                     placeholder:text-[var(--color-secondary)] resize-none
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-												placeholder="请输入项目图片URL，每行一个"
-											/>
-											<label className="flex items-center justify-center px-4 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] cursor-pointer transition-colors">
-												<Upload className="w-4 h-4 mr-2" />
-												<span>{isUploading ? '上传中...' : '上传'}</span>
+											placeholder="请输入项目详情（支持Markdown）"
+										/>
+									</div>
+
+									<div className="space-y-1.5">
+										<label htmlFor="coverImage" className="block text-sm font-medium text-[var(--color-primary)]">
+											封面图片
+										</label>
+										<div className="space-y-2">
+											<div className="flex gap-2">
 												<input
-													type="file"
-													accept="image/*"
-													className="hidden"
-													onChange={handleUploadProjectImage}
-													disabled={isUploading}
+													id="coverImage"
+													name="coverImage"
+													type="text"
+													value={formData.coverImage}
+													onChange={handleFormChange}
+													className="flex-1 h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    placeholder:text-[var(--color-secondary)]
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+													placeholder="请输入封面图片 URL 或上传图片"
 												/>
-											</label>
-										</div>
-										{formData.images && (
-											<div className="grid grid-cols-4 gap-2">
-												{formData.images.split('\n').filter(Boolean).map((url, index) => (
-													<div key={index} className="relative aspect-square rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border-light)]">
-														<img
-															src={url}
-															alt={`项目图片 ${index + 1}`}
-															className="w-full h-full object-cover"
-														/>
-													</div>
-												))}
+												<label className="flex items-center justify-center h-10 px-4 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] cursor-pointer transition-colors">
+													<Upload className="w-4 h-4 mr-2" />
+													<span>{isUploading ? '上传中...' : '上传'}</span>
+													<input
+														type="file"
+														accept="image/*"
+														className="hidden"
+														onChange={handleUploadCoverImage}
+														disabled={isUploading}
+													/>
+												</label>
 											</div>
-										)}
+											{formData.coverImage && (
+												<div className="relative w-full h-32 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border-light)]">
+													<img
+														src={formData.coverImage}
+														alt="封面预览"
+														className="w-full h-full object-cover"
+													/>
+												</div>
+											)}
+										</div>
 									</div>
-								</div>
 
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
 									<div className="space-y-1.5">
-										<label htmlFor="githubUrl" className="block text-sm font-medium text-[var(--color-primary)]">
-											GitHub URL
+										<label htmlFor="images" className="block text-sm font-medium text-[var(--color-primary)]">
+											项目图片
+										</label>
+										<div className="space-y-2">
+											<div className="flex gap-2">
+												<textarea
+													id="images"
+													name="images"
+													value={formData.images}
+													onChange={handleFormChange}
+													rows={3}
+													className="flex-1 px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    placeholder:text-[var(--color-secondary)] resize-none
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+													placeholder="请输入项目图片URL，每行一个"
+												/>
+												<label className="flex items-center justify-center px-4 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] cursor-pointer transition-colors">
+													<Upload className="w-4 h-4 mr-2" />
+													<span>{isUploading ? '上传中...' : '上传'}</span>
+													<input
+														type="file"
+														accept="image/*"
+														className="hidden"
+														onChange={handleUploadProjectImage}
+														disabled={isUploading}
+													/>
+												</label>
+											</div>
+											{formData.images && (
+												<div className="grid grid-cols-4 gap-2">
+													{formData.images.split('\n').filter(Boolean).map((url, index) => (
+														<div key={index} className="relative aspect-square rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border-light)]">
+															<img
+																src={url}
+																alt={`项目图片 ${index + 1}`}
+																className="w-full h-full object-cover"
+															/>
+														</div>
+													))}
+												</div>
+											)}
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
+										<div className="space-y-1.5">
+											<label htmlFor="githubUrl" className="block text-sm font-medium text-[var(--color-primary)]">
+												GitHub URL
+											</label>
+											<input
+												id="githubUrl"
+												name="githubUrl"
+												type="text"
+												value={formData.githubUrl}
+												onChange={handleFormChange}
+												className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    placeholder:text-[var(--color-secondary)]
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+													placeholder="请输入 GitHub 仓库 URL"
+											/>
+										</div>
+										<div className="space-y-1.5">
+											<label htmlFor="demoUrl" className="block text-sm font-medium text-[var(--color-primary)]">
+												Demo URL
+											</label>
+											<input
+												id="demoUrl"
+												name="demoUrl"
+												type="text"
+												value={formData.demoUrl}
+												onChange={handleFormChange}
+												className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                    placeholder:text-[var(--color-secondary)]
+                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+													placeholder="请输入在线演示 URL"
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-1.5">
+										<label htmlFor="tags" className="block text-sm font-medium text-[var(--color-primary)]">
+											标签（用逗号分隔）
 										</label>
 										<input
-											id="githubUrl"
-											name="githubUrl"
+											id="tags"
+											name="tags"
 											type="text"
-											value={formData.githubUrl}
+											value={formData.tags}
 											onChange={handleFormChange}
 											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                     placeholder:text-[var(--color-secondary)]
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-											placeholder="请输入 GitHub 仓库 URL"
+											placeholder="React, TypeScript, Node.js"
 										/>
 									</div>
+
 									<div className="space-y-1.5">
-										<label htmlFor="demoUrl" className="block text-sm font-medium text-[var(--color-primary)]">
-											Demo URL
+										<label htmlFor="sortOrder" className="block text-sm font-medium text-[var(--color-primary)]">
+											排序权重
 										</label>
 										<input
-											id="demoUrl"
-											name="demoUrl"
-											type="text"
-											value={formData.demoUrl}
+											id="sortOrder"
+											name="sortOrder"
+											type="number"
+											value={formData.sortOrder}
 											onChange={handleFormChange}
 											className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    placeholder:text-[var(--color-secondary)]
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-											placeholder="请输入在线演示 URL"
+											placeholder="0"
 										/>
 									</div>
 								</div>
 
-								<div className="space-y-1.5">
-									<label htmlFor="tags" className="block text-sm font-medium text-[var(--color-primary)]">
-										标签（用逗号分隔）
-									</label>
-									<input
-										id="tags"
-										name="tags"
-										type="text"
-										value={formData.tags}
-										onChange={handleFormChange}
-										className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    placeholder:text-[var(--color-secondary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										placeholder="React, TypeScript, Node.js"
-									/>
-								</div>
-
-								<div className="space-y-1.5">
-									<label htmlFor="sortOrder" className="block text-sm font-medium text-[var(--color-primary)]">
-										排序权重
-									</label>
-									<input
-										id="sortOrder"
-										name="sortOrder"
-										type="number"
-										value={formData.sortOrder}
-										onChange={handleFormChange}
-										className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
-                    focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
-										placeholder="0"
-									/>
-								</div>
-							</div>
-
-							<div className="flex items-center justify-end gap-[var(--space-sm)] px-[var(--space-lg)] py-[var(--space-md)] border-t border-[var(--color-border-light)]">
-								<button
-									onClick={handleCloseModal}
-									className="h-10 px-[var(--space-md)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
+								<div className="flex items-center justify-end gap-[var(--space-sm)] px-[var(--space-lg)] py-[var(--space-md)] border-t border-[var(--color-border-light)]">
+									<button
+										onClick={handleCloseModal}
+										className="h-10 px-[var(--space-md)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
                       hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)]"
-								>
-									取消
-								</button>
-								<button
-									onClick={handleSave}
-									disabled={isSaving}
-									className="inline-flex items-center gap-2 h-10 px-[var(--space-md)] bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium
+									>
+										取消
+									</button>
+									<button
+										onClick={handleSave}
+										disabled={isSaving}
+										className="inline-flex items-center gap-2 h-10 px-[var(--space-md)] bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium
                       hover:bg-[var(--color-secondary)] transition-all duration-[var(--duration-base)] ease-standard
                       disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									{isSaving ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										<span>{editingProject ? '保存修改' : '添加'}</span>
-									)}
-								</button>
-							</div>
+									>
+										{isSaving ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<span>{editingProject ? '保存修改' : '添加'}</span>
+										)}
+									</button>
+								</div>
+							</motion.div>
 						</motion.div>
-					</motion.div>
+					</Portal>
 				)}
 			</AnimatePresence>
 
 			<AnimatePresence>
 				{deleteTarget && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
-						onClick={() => setDeleteTarget(null)}
-					>
+					<Portal>
 						<motion.div
-							initial={{ opacity: 0, scale: 0.95 }}
-							animate={{ opacity: 1, scale: 1 }}
-							exit={{ opacity: 0, scale: 0.95 }}
-							transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-							className="w-full max-w-sm bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] p-[var(--space-lg)]"
-							onClick={(e) => e.stopPropagation()}
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
+							onClick={() => setDeleteTarget(null)}
 						>
-							<div className="flex flex-col items-center text-center">
-								<div className="w-14 h-14 rounded-[var(--radius-full)] bg-[var(--color-error)]/10 flex items-center justify-center mb-[var(--space-md)]">
-									<Trash2 className="w-7 h-7 text-[var(--color-error)]" />
-								</div>
-								<h2 className="text-lg font-semibold text-[var(--color-primary)] mb-1">
-									确认删除
-								</h2>
-								<p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
-									确定要删除 <strong>{deleteTarget.name}</strong> 吗？此操作不可撤销。
-								</p>
-								<div className="flex items-center gap-[var(--space-sm)] w-full">
-									<button
-										onClick={() => setDeleteTarget(null)}
-										className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
+							<motion.div
+								initial={{ opacity: 0, scale: 0.95 }}
+								animate={{ opacity: 1, scale: 1 }}
+								exit={{ opacity: 0, scale: 0.95 }}
+								transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+								className="w-full max-w-sm bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] p-[var(--space-lg)]"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<div className="flex flex-col items-center text-center">
+									<div className="w-14 h-14 rounded-[var(--radius-full)] bg-[var(--color-error)]/10 flex items-center justify-center mb-[var(--space-md)]">
+										<Trash2 className="w-7 h-7 text-[var(--color-error)]" />
+									</div>
+									<h2 className="text-lg font-semibold text-[var(--color-primary)] mb-1">
+										确认删除
+									</h2>
+									<p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
+										确定要删除 <strong>{deleteTarget.name}</strong> 吗？此操作不可撤销。
+									</p>
+									<div className="flex items-center gap-[var(--space-sm)] w-full">
+										<button
+											onClick={() => setDeleteTarget(null)}
+											className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
                     hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)]"
-									>
-										取消
-									</button>
-									<button
-										onClick={handleDelete}
-										disabled={deleteMutation.isPending}
-										className="flex-1 h-10 bg-[var(--color-error)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium
+										>
+											取消
+										</button>
+										<button
+											onClick={handleDelete}
+											disabled={deleteMutation.isPending}
+											className="flex-1 h-10 bg-[var(--color-error)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium
                     hover:opacity-90 transition-all duration-[var(--duration-fast)]
                     disabled:opacity-50 disabled:cursor-not-allowed
                     inline-flex items-center justify-center gap-2"
-									>
-										{deleteMutation.isPending ? (
-											<Loader2 className="w-4 h-4 animate-spin" />
-										) : (
-											<span>删除</span>
-										)}
-									</button>
+										>
+											{deleteMutation.isPending ? (
+												<Loader2 className="w-4 h-4 animate-spin" />
+											) : (
+												<span>删除</span>
+											)}
+										</button>
+									</div>
 								</div>
-							</div>
+							</motion.div>
 						</motion.div>
-					</motion.div>
+					</Portal>
 				)}
 			</AnimatePresence>
 		</div>

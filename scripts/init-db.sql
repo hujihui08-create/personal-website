@@ -68,3 +68,55 @@ CREATE TABLE IF NOT EXISTS resumes (
     file_name VARCHAR(200) NOT NULL DEFAULT '',
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- 预约时段设置表
+CREATE TABLE IF NOT EXISTS schedule_settings (
+    id SERIAL PRIMARY KEY,
+    weekday INT NOT NULL CHECK (weekday BETWEEN 1 AND 5),
+    start_time VARCHAR(10) NOT NULL,
+    end_time VARCHAR(10) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(weekday, start_time)
+);
+
+-- 预约表
+CREATE TABLE IF NOT EXISTS bookings (
+    id SERIAL PRIMARY KEY,
+    company_name VARCHAR(100) NOT NULL,
+    company_location VARCHAR(100) NOT NULL,
+    booking_date DATE NOT NULL,
+    booking_time VARCHAR(10) NOT NULL,
+    contact_email VARCHAR(255) NOT NULL,
+    contact_phone VARCHAR(20),
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'pending'
+        CHECK (status IN ('pending', 'confirmed', 'rejected', 'completed', 'cancelled')),
+    reject_reason TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(booking_date, booking_time)
+);
+
+-- 索引
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(booking_date, booking_time);
+
+-- 通知表
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    related_id INT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 通知索引
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);

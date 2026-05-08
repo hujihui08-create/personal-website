@@ -5,6 +5,7 @@ import { Save, Upload, X, Loader2, ChevronRight, FileText, Download, Trash2 } fr
 import { useProfile, useUpdateProfile, useUploadAvatar } from '@/hooks/useProfile'
 import { useResume, useUploadResume, useDeleteResume } from '@/hooks/useResume'
 import { toast } from 'sonner'
+import { Portal } from '@/components/Portal'
 
 export const ProfileEditPage = () => {
   const { data: profile, isLoading: profileLoading } = useProfile()
@@ -488,55 +489,57 @@ export const ProfileEditPage = () => {
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
-            onClick={() => setShowDeleteConfirm(false)}
-          >
+          <Portal>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="w-full max-w-sm bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] p-[var(--space-xl)]"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-[var(--space-md)] bg-black/40"
+              onClick={() => setShowDeleteConfirm(false)}
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-[var(--radius-full)] bg-[var(--color-error)]/10 flex items-center justify-center mb-[var(--space-md)]">
-                  <Trash2 className="w-7 h-7 text-[var(--color-error)]" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="w-full max-w-sm bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] p-[var(--space-xl)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-[var(--radius-full)] bg-[var(--color-error)]/10 flex items-center justify-center mb-[var(--space-md)]">
+                    <Trash2 className="w-7 h-7 text-[var(--color-error)]" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-2">
+                    确认删除
+                  </h2>
+                  <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
+                    确定要删除简历吗？此操作不可撤销。
+                  </p>
+                  <div className="flex items-center gap-[var(--space-sm)] w-full">
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium
+                        hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)]"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handleDeleteResume}
+                      disabled={deleteResumeMutation.isPending}
+                      className="flex-1 h-10 bg-[var(--color-error)] text-[var(--color-bg)] rounded-[var(--radius-md)] text-sm font-medium
+                        hover:opacity-90 transition-all duration-[var(--duration-fast)]
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        inline-flex items-center justify-center gap-2"
+                    >
+                      {deleteResumeMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <span>删除</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-2">
-                  确认删除
-                </h2>
-                <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
-                  确定要删除简历吗？此操作不可撤销。
-                </p>
-                <div className="flex items-center gap-[var(--space-sm)] w-full">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium
-                      hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)]"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleDeleteResume}
-                    disabled={deleteResumeMutation.isPending}
-                    className="flex-1 h-10 bg-[var(--color-error)] text-[var(--color-bg)] rounded-[var(--radius-md)] text-sm font-medium
-                      hover:opacity-90 transition-all duration-[var(--duration-fast)]
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      inline-flex items-center justify-center gap-2"
-                  >
-                    {deleteResumeMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <span>删除</span>
-                    )}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </Portal>
         )}
       </div>
   )

@@ -1,26 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, User, Briefcase, FolderOpen, LogOut } from 'lucide-react'
+import { Menu, X, Home, User, Briefcase, FolderOpen, Calendar, Clock, LogOut, Bell } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useLocation } from 'react-router-dom'
+import { notificationsApi } from '@/api/notifications'
 
 interface AdminLayoutProps {
-  children: React.ReactNode
+	children: React.ReactNode
 }
 
 interface NavItem {
-  key: string
-  label: string
-  path: string
-  icon: React.ComponentType<{ className?: string }>
+	key: string
+	label: string
+	path: string
+	icon: React.ComponentType<{ className?: string }>
 }
 
 const navItems: NavItem[] = [
-  { key: 'dashboard', label: '仪表盘', path: '/admin/dashboard', icon: Home },
-  { key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
-  { key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
-  { key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
+	{ key: 'dashboard', label: '仪表盘', path: '/admin/dashboard', icon: Home },
+	{ key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
+	{ key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
+	{ key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
+	{ key: 'bookings', label: '预约管理', path: '/admin/bookings', icon: Calendar },
+	{ key: 'notifications', label: '通知中心', path: '/admin/notifications', icon: Bell },
+	{ key: 'schedule', label: '时段设置', path: '/admin/schedule', icon: Clock },
 ]
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
@@ -28,8 +32,25 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const isActive = (path: string) => location.pathname === path
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await notificationsApi.getUnreadCount()
+      setUnreadCount(response.data.count)
+    } catch (err) {
+      console.error('Failed to load unread count:', err)
+    }
+  }
+
+  useEffect(() => {
+    loadUnreadCount()
+    // 每 30 秒刷新一次未读数量
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -43,20 +64,28 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         {navItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.path)
+          const showBadge = item.key === 'notifications' && unreadCount > 0
           return (
             <Link
               key={item.key}
               to={item.path}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`group flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
+              className={`group flex items-center justify-between gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
                 ${active
                   ? 'bg-[var(--color-accent)] text-[var(--color-bg)] shadow-sm'
                   : 'text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)]'
                 }`}
               aria-current={active ? 'page' : undefined}
             >
-              <Icon className={`w-5 h-5 transition-transform duration-[var(--duration-base)] ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span className="text-sm font-medium">{item.label}</span>
+              <div className="flex items-center gap-[var(--space-sm)]">
+                <Icon className={`w-5 h-5 transition-transform duration-[var(--duration-base)] ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
+                <span className="text-sm font-medium">{item.label}</span>
+              </div>
+              {showBadge && (
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-red-500 rounded-full">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           )
         })}

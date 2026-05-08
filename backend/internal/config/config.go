@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
 	MinIO    MinIOConfig
 	JWT      JWTConfig
 	CORS     CORSConfig
+	Email    EmailConfig
 }
 
 type ServerConfig struct {
@@ -55,6 +56,18 @@ type CORSConfig struct {
 	AllowedOrigins string
 }
 
+type EmailConfig struct {
+	Provider     string // "brevo", "smtp", "sendgrid"
+	APIKey       string
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUser     string
+	SMTPPassword string
+	FromEmail    string
+	FromName     string
+	AdminEmail   string
+}
+
 func Load() *Config {
 	godotenv.Load()
 
@@ -89,6 +102,17 @@ func Load() *Config {
 		},
 		CORS: CORSConfig{
 			AllowedOrigins: getEnv("CORS_ALLOWED_ORIGINS", "*"),
+		},
+		Email: EmailConfig{
+			Provider:     getEnv("EMAIL_PROVIDER", "brevo"),
+			APIKey:       getEnv("EMAIL_API_KEY", ""),
+			SMTPHost:     getEnv("EMAIL_SMTP_HOST", "smtp-relay.brevo.com"),
+			SMTPPort:     getEnvInt("EMAIL_SMTP_PORT", 587),
+			SMTPUser:     getEnv("EMAIL_SMTP_USER", ""),
+			SMTPPassword: getEnv("EMAIL_SMTP_PASSWORD", ""),
+			FromEmail:    getEnv("EMAIL_FROM", "noreply@example.com"),
+			FromName:     getEnv("EMAIL_FROM_NAME", "个人网站"),
+			AdminEmail:   getEnv("EMAIL_ADMIN", ""),
 		},
 	}
 }

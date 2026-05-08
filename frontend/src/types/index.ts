@@ -74,23 +74,70 @@ export interface Resume {
   file_name: string
 }
 
+export interface ScheduleSetting {
+  id: number;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Slot {
+  time: string;
+  available: boolean;
+  reason?: string;
+}
+
+export interface SlotsResponse {
+  date: string;
+  weekday: string;
+  is_available: boolean;
+  message?: string;
+  slots?: Slot[];
+}
+
 export interface Booking {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  purpose: string
-  preferredDate?: string
-  preferredTime?: string
-  message?: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
-  createdAt: string
-  updatedAt: string
+  id: number;
+  company_name: string;
+  company_location: string;
+  booking_date: string;
+  booking_time: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  notes?: string;
+  status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled';
+  reject_reason?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: string
+	id: string
+	role: 'user' | 'assistant'
+	content: string
+	timestamp: string
+}
+
+export interface Notification {
+	id: number
+	type: string
+	title: string
+	content: string
+	is_read: boolean
+	related_id?: number
+	created_at: string
+}
+
+export interface PaginatedNotificationsResponse {
+	items: Notification[]
+	total: number
+	page: number
+	page_size: number
+}
+
+export interface UnreadCountResponse {
+	count: number
 }
