@@ -1,0 +1,50 @@
+:root {
+  /* ========== 颜色令牌 ========== */
+  --color-primary: #1A1A1A;
+  --color-secondary: #666666;
+  --color-accent: #0066FF;
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F5F5F5;
+  --color-bg-tertiary: #FAFAFA;
+  --color-border-light: #E5E5E5;
+  --color-border-medium: #D4D4D4;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  --color-accent-soft: rgba(0, 102, 255, 0.10);
+
+  /* ========== 间距令牌 (8px 基础单位) ========== */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ========== 圆角令牌 ========== */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ========== 阴影令牌 ========== */
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-strong: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-focus-ring: 0 0 0 3px rgba(0, 102, 255, 0.3);
+
+  /* ========== 动效令牌 ========== */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 500ms;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========== Z-index 令牌 ========== */
+  --z-base: 1;
+  --z-nav: 30;
+  --z-dropdown: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+}
