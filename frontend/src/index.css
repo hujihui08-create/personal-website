@@ -8,6 +8,7 @@
   }
   body {
     @apply bg-background text-primary antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
 
   /* 无障碍：屏幕阅读器专用类 */

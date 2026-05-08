@@ -33,29 +33,39 @@ export interface Profile {
 }
 
 export interface Project {
-  id: string
-  title: string
-  description: string
-  thumbnail?: string
-  images?: string[]
-  tags?: string[]
-  demoUrl?: string
-  repoUrl?: string
-  featured: boolean
-  order: number
-  createdAt: string
-  updatedAt: string
+	id: number
+	name: string
+	type: 'enterprise' | 'personal'
+	startDate?: string
+	endDate?: string
+	summary: string
+	description: string
+	coverImage: string
+	images: string[]
+	githubUrl: string
+	demoUrl: string
+	tags: string[]
+	sortOrder: number
+	createdAt: string
+	updatedAt: string
+}
+
+export interface PaginatedProjectsResponse {
+	items: Project[]
+	total: number
+	page: number
+	pageSize: number
 }
 
 export interface WorkExperience {
   id: number
+  type?: 'study' | 'internship' | 'work'
   company_name: string
   position: string
   start_date: string
   end_date: string | null
   description: string
   sort_order: number
-  type?: 'work' | 'education' | 'achievement'
   projects?: Project[]
 }
 

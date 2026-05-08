@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Lock, Loader2 } from 'lucide-react'
+import { Lock, Loader2, ArrowLeft } from 'lucide-react'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'sonner'
@@ -117,6 +117,18 @@ export const LoginPage = ({ onSuccess }: LoginPageProps) => {
               )}
             </button>
           </form>
+
+          <div className="mt-6">
+            <Link
+              to="/"
+              className="flex items-center justify-center gap-2 w-full h-11 border border-border-medium text-primary rounded-[var(--radius-sm)] text-sm font-medium
+                hover:border-accent hover:text-accent hover:bg-accent-soft transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>返回首页</span>
+            </Link>
+          </div>
         </div>
 
         <p className="text-center text-xs text-secondary mt-4">

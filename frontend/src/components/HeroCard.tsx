@@ -98,7 +98,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
 
         {/* Social Links */}
         <motion.div
-          className="flex items-center gap-[var(--space-md)] mb-[var(--space-lg)]"
+          className="flex flex-wrap items-center justify-center gap-[var(--space-md)] mb-[var(--space-lg)]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.4 }}
@@ -108,15 +108,15 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               href={profile.github_url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`访问 ${profile.name} 的 GitHub 主页`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] transition-colors duration-[var(--duration-base)] ease-standard"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
             >
-              <Github className="w-5 h-5" />
+              <Github className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm truncate max-w-48">{profile.github_url}</span>
             </motion.a>
           )}
           {profile.linkedin_url && (
@@ -124,29 +124,29 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               href={profile.linkedin_url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`访问 ${profile.name} 的 LinkedIn 主页`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55, duration: 0.3 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] transition-colors duration-[var(--duration-base)] ease-standard"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
             >
-              <ExternalLink className="w-5 h-5" />
+              <ExternalLink className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm truncate max-w-48">{profile.linkedin_url}</span>
             </motion.a>
           )}
           {profile.email && (
             <motion.a
               href={`mailto:${profile.email}`}
-              aria-label={`向 ${profile.name} 发送邮件`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.3 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] transition-colors duration-[var(--duration-base)] ease-standard"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
             >
-              <Mail className="w-5 h-5" />
+              <Mail className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm truncate max-w-48">{profile.email}</span>
             </motion.a>
           )}
         </motion.div>

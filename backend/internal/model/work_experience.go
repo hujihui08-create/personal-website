@@ -4,6 +4,7 @@ import "time"
 
 type WorkExperience struct {
 	ID          uint       `gorm:"primaryKey" json:"id"`
+	Type        string     `gorm:"column:type;default:'work';not null" json:"type"`
 	CompanyName string     `gorm:"column:company_name;not null" json:"company_name"`
 	Position    string     `gorm:"column:position;not null" json:"position"`
 	StartDate   time.Time  `gorm:"column:start_date;not null;type:date" json:"start_date"`

@@ -20,18 +20,21 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	profileRepo := repository.NewProfileRepository(db)
 	experienceRepo := repository.NewWorkExperienceRepository(db)
 	resumeRepo := repository.NewResumeRepository(db)
+	projectRepo := repository.NewProjectRepository(db)
 
 	// --- Services ---
 	authService := service.NewAuthService(adminRepo, cfg.JWT)
 	profileService := service.NewProfileService(profileRepo, minioClient, cfg)
 	experienceService := service.NewExperienceService(experienceRepo)
 	resumeService := service.NewResumeService(resumeRepo, minioClient, cfg)
+	projectService := service.NewProjectService(projectRepo, minioClient, cfg)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
 	profileHandler := handler.NewProfileHandler(profileService)
 	experienceHandler := handler.NewExperienceHandler(experienceService)
 	fileHandler := handler.NewFileHandler(minioClient, cfg.MinIO.Bucket)
+	projectHandler := handler.NewProjectHandler(projectService)
 
 	api := r.Group("/api")
 	{
@@ -113,6 +116,26 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 					"data":    resumeData,
 				})
 			})
+		}
+
+		// Project routes (public)
+		projects := api.Group("/projects")
+		{
+			projects.GET("", projectHandler.List)
+			projects.GET("/featured", projectHandler.ListFeatured)
+			projects.GET("/:id", projectHandler.GetByID)
+		}
+
+		// Project routes (protected)
+		projectsProtected := api.Group("/projects")
+		projectsProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			projectsProtected.POST("", projectHandler.Create)
+			projectsProtected.PUT("/:id", projectHandler.Update)
+			projectsProtected.DELETE("/:id", projectHandler.Delete)
+			projectsProtected.PUT("/reorder", projectHandler.Reorder)
+			projectsProtected.POST("/upload-cover", projectHandler.UploadCoverImage)
+			projectsProtected.POST("/upload-image", projectHandler.UploadProjectImage)
 		}
 	}
 }

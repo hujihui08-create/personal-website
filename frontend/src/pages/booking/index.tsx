@@ -1,6 +1,6 @@
 export const BookingPage = () => {
   return (
-    <div className="min-h-screen bg-[var(--color-bg-tertiary)]">
+    <div className="min-h-screen bg-white">
       <main className="max-w-4xl mx-auto px-[var(--space-md)] py-[var(--space-2xl)]">
         <div className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-xl)] text-center">
           <h1 className="text-xl font-semibold text-[var(--color-primary)] mb-2">

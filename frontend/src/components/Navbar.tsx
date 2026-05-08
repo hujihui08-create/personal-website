@@ -29,26 +29,29 @@ export const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[var(--z-nav)] bg-[var(--color-bg)]/80 backdrop-blur-md border-b border-[var(--color-border-light)]">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
         <Link
           to="/"
-          className="text-xl font-semibold text-[var(--color-primary)]"
+          className="text-xl text-[var(--color-primary)]"
         >
           个人简介
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => navigate(item.path)}
-              className={`text-sm font-medium transition-colors
+              className={`text-base font-medium transition-colors
                 ${activeKey === item.key ? 'text-[var(--color-accent)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-primary)]'}`}
               aria-current={activeKey === item.key ? 'page' : undefined}
             >
               {item.label}
             </button>
           ))}
+        </nav>
+
+        <div className="hidden md:flex items-center">
           <Link
             to="/admin/login"
             className="h-10 px-5 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium flex items-center
@@ -56,7 +59,7 @@ export const Navbar = () => {
           >
             管理后台
           </Link>
-        </nav>
+        </div>
       </div>
     </header>
   )

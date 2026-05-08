@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Home, User, Briefcase, FolderOpen, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
@@ -25,14 +25,16 @@ const navItems: NavItem[] = [
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const isActive = (path: string) => location.pathname === path
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setIsMobileMenuOpen(false)
+    navigate('/')
   }
 
   const navContent = (

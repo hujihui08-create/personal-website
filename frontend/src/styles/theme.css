@@ -1,4 +1,7 @@
 :root {
+  /* ========== 字体令牌 ========== */
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  
   /* ========== 颜色令牌 ========== */
   --color-primary: #1A1A1A;
   --color-secondary: #666666;

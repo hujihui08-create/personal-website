@@ -19,43 +19,46 @@ func NewExperienceService(experienceRepo *repository.WorkExperienceRepository) *
 }
 
 type ProjectBrief struct {
-	ID            uint   `json:"id"`
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	CoverImageURL string `json:"cover_image_url"`
-	LiveURL       string `json:"live_url"`
-	SourceURL     string `json:"source_url"`
+	ID         uint   `json:"id"`
+	Name       string `json:"name"`
+	Summary    string `json:"summary"`
+	CoverImage string `json:"coverImage"`
+	DemoURL    string `json:"demoUrl"`
+	GitHubURL  string `json:"githubUrl"`
 }
 
 type ExperienceResponse struct {
 	ID          uint           `json:"id"`
-	CompanyName string         `json:"company_name"`
+	Type        string         `json:"type"`
+	CompanyName string         `json:"companyName"`
 	Position    string         `json:"position"`
-	StartDate   string         `json:"start_date"`
-	EndDate     *string        `json:"end_date,omitempty"`
+	StartDate   string         `json:"startDate"`
+	EndDate     *string        `json:"endDate,omitempty"`
 	Description string         `json:"description"`
-	SortOrder   int            `json:"sort_order"`
+	SortOrder   int            `json:"sortOrder"`
 	Projects    []ProjectBrief `json:"projects,omitempty"`
-	CreatedAt   string         `json:"created_at"`
-	UpdatedAt   string         `json:"updated_at"`
+	CreatedAt   string         `json:"createdAt"`
+	UpdatedAt   string         `json:"updatedAt"`
 }
 
 type CreateExperienceRequest struct {
-	CompanyName string  `json:"company_name" binding:"required"`
+	Type        string  `json:"type"`
+	CompanyName string  `json:"companyName" binding:"required"`
 	Position    string  `json:"position" binding:"required"`
-	StartDate   string  `json:"start_date" binding:"required"`
-	EndDate     *string `json:"end_date,omitempty"`
+	StartDate   string  `json:"startDate" binding:"required"`
+	EndDate     *string `json:"endDate,omitempty"`
 	Description string  `json:"description"`
-	SortOrder   int     `json:"sort_order"`
+	SortOrder   int     `json:"sortOrder"`
 }
 
 type UpdateExperienceRequest struct {
-	CompanyName *string `json:"company_name"`
+	Type        *string `json:"type"`
+	CompanyName *string `json:"companyName"`
 	Position    *string `json:"position"`
-	StartDate   *string `json:"start_date"`
-	EndDate     *string `json:"end_date,omitempty"`
+	StartDate   *string `json:"startDate"`
+	EndDate     *string `json:"endDate,omitempty"`
 	Description *string `json:"description"`
-	SortOrder   *int    `json:"sort_order"`
+	SortOrder   *int    `json:"sortOrder"`
 }
 
 type ReorderRequest struct {
@@ -65,6 +68,7 @@ type ReorderRequest struct {
 func toExperienceResponse(exp *model.WorkExperience) *ExperienceResponse {
 	resp := &ExperienceResponse{
 		ID:          exp.ID,
+		Type:        exp.Type,
 		CompanyName: exp.CompanyName,
 		Position:    exp.Position,
 		StartDate:   exp.StartDate.Format("2006-01-02"),
@@ -83,12 +87,12 @@ func toExperienceResponse(exp *model.WorkExperience) *ExperienceResponse {
 		projects := make([]ProjectBrief, 0, len(exp.Projects))
 		for _, p := range exp.Projects {
 			projects = append(projects, ProjectBrief{
-				ID:            p.ID,
-				Title:         p.Title,
-				Description:   p.Description,
-				CoverImageURL: p.CoverImageURL,
-				LiveURL:       p.LiveURL,
-				SourceURL:     p.SourceURL,
+				ID:         p.ID,
+				Name:       p.Name,
+				Summary:    p.Summary,
+				CoverImage: p.CoverImage,
+				DemoURL:    p.DemoURL,
+				GitHubURL:  p.GitHubURL,
 			})
 		}
 		resp.Projects = projects
@@ -125,7 +129,13 @@ func (s *ExperienceService) Create(req *CreateExperienceRequest) (*ExperienceRes
 		endDate = &parsed
 	}
 
+	expType := req.Type
+	if expType == "" {
+		expType = "work"
+	}
+
 	exp := &model.WorkExperience{
+		Type:        expType,
 		CompanyName: req.CompanyName,
 		Position:    req.Position,
 		StartDate:   startDate,
@@ -176,6 +186,9 @@ func (s *ExperienceService) Update(id uint, req *UpdateExperienceRequest) (*Expe
 	}
 	if req.SortOrder != nil {
 		exp.SortOrder = *req.SortOrder
+	}
+	if req.Type != nil {
+		exp.Type = *req.Type
 	}
 
 	if err := s.experienceRepo.Update(exp); err != nil {

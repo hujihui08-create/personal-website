@@ -2,6 +2,7 @@ import client from './client'
 import type { WorkExperience, ApiResponse } from '../types'
 
 export interface CreateExperienceRequest {
+  type: 'study' | 'internship' | 'work'
   company_name: string
   position: string
   start_date: string

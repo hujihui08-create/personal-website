@@ -33,20 +33,20 @@ type ProfileResponse struct {
 	Name        string   `json:"name"`
 	Title       string   `json:"title"`
 	Bio         string   `json:"bio"`
-	AvatarURL   string   `json:"avatar_url"`
-	GithubURL   string   `json:"github_url"`
-	LinkedinURL string   `json:"linkedin_url"`
+	AvatarURL   string   `json:"avatarUrl"`
+	GithubURL   string   `json:"githubUrl"`
+	LinkedinURL string   `json:"linkedinUrl"`
 	Email       string   `json:"email"`
 	Skills      []string `json:"skills"`
-	UpdatedAt   string   `json:"updated_at"`
+	UpdatedAt   string   `json:"updatedAt"`
 }
 
 type UpdateProfileRequest struct {
 	Name        string   `json:"name"`
 	Title       string   `json:"title"`
 	Bio         string   `json:"bio"`
-	GithubURL   string   `json:"github_url"`
-	LinkedinURL string   `json:"linkedin_url"`
+	GithubURL   string   `json:"githubUrl"`
+	LinkedinURL string   `json:"linkedinUrl"`
 	Email       string   `json:"email"`
 	Skills      []string `json:"skills"`
 }

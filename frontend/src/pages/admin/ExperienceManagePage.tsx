@@ -22,6 +22,7 @@ import type { CreateExperienceRequest } from '@/api/experiences'
 import type { WorkExperience } from '@/types'
 
 interface ExperienceFormData {
+  type: 'study' | 'internship' | 'work'
   company_name: string
   position: string
   start_date: string
@@ -30,6 +31,7 @@ interface ExperienceFormData {
 }
 
 const emptyFormData: ExperienceFormData = {
+  type: 'work',
   company_name: '',
   position: '',
   start_date: '',
@@ -55,7 +57,13 @@ export const ExperienceManagePage = () => {
   // Pre-fill form when editing
   useEffect(() => {
     if (editingExperience) {
+      // 兼容旧数据，旧类型默认处理为 work
+      let type: 'study' | 'internship' | 'work' = editingExperience.type as any
+      if (!['study', 'internship', 'work'].includes(type)) {
+        type = 'work'
+      }
       setFormData({
+        type,
         company_name: editingExperience.company_name,
         position: editingExperience.position,
         start_date: editingExperience.start_date.split('T')[0] ?? editingExperience.start_date,
@@ -86,7 +94,7 @@ export const ExperienceManagePage = () => {
   }
 
   const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -101,6 +109,7 @@ export const ExperienceManagePage = () => {
     setIsSaving(true)
     try {
       const payload: CreateExperienceRequest = {
+        type: formData.type,
         company_name: formData.company_name,
         position: formData.position,
         start_date: formData.start_date,
@@ -267,7 +276,7 @@ export const ExperienceManagePage = () => {
                             key={project.id}
                             className="inline-flex items-center px-3 py-1 text-xs font-medium text-[var(--color-accent)] bg-[var(--color-accent-soft)] rounded-[var(--radius-full)] hover:bg-[var(--color-accent-soft)]/80 transition-colors"
                           >
-                            {project.title}
+                            {project.name}
                           </span>
                         ))}
                       </div>
@@ -354,6 +363,25 @@ export const ExperienceManagePage = () => {
 
                 {/* Modal Body */}
                 <div className="px-[var(--space-lg)] py-[var(--space-md)] space-y-[var(--space-md)]">
+                  {/* Type Selector */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="type" className="block text-sm font-medium text-[var(--color-primary)]">
+                      经历类型 <span className="text-[var(--color-error)]">*</span>
+                    </label>
+                    <select
+                      id="type"
+                      name="type"
+                      value={formData.type}
+                      onChange={handleFormChange}
+                      className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
+                        focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+                    >
+                      <option value="work">工作</option>
+                      <option value="internship">实习</option>
+                      <option value="study">学习</option>
+                    </select>
+                  </div>
+                  
                   {/* Company Name */}
                   <div className="space-y-1.5">
                     <label htmlFor="company_name" className="block text-sm font-medium text-[var(--color-primary)]">

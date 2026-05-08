@@ -8,3 +8,12 @@ export {
   useReorderExperiences,
 } from './useExperiences'
 export { useResume, useUploadResume, useDeleteResume } from './useResume'
+export {
+  useProjects,
+  useFeaturedProjects,
+  useProject,
+  useCreateProject,
+  useUpdateProject,
+  useDeleteProject,
+  useReorderProjects,
+} from './useProjects'

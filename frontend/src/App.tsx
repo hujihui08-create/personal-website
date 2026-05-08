@@ -7,10 +7,12 @@ import { LoginPage } from '@/pages/admin/LoginPage'
 import { DashboardPage } from '@/pages/admin/DashboardPage'
 import HomePage from '@/pages/home'
 import ProjectsPage from '@/pages/projects'
+import ProjectDetailPage from '@/pages/projects/[id]'
 import AgentPage from '@/pages/agent'
 import BookingPage from '@/pages/booking'
 import ProfileEditPage from '@/pages/admin/ProfileEditPage'
 import ExperienceManagePage from '@/pages/admin/ExperienceManagePage'
+import ProjectManagePage from '@/pages/admin/ProjectManagePage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -46,10 +48,11 @@ function App() {
       <div className={showNavigation ? 'pt-16 pb-24 md:pb-0' : ''}>
         <main id="main-content">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/agent" element={<AgentPage />} />
-            <Route path="/booking" element={<BookingPage />} />
+				<Route path="/" element={<HomePage />} />
+				<Route path="/projects" element={<ProjectsPage />} />
+				<Route path="/projects/:id" element={<ProjectDetailPage />} />
+				<Route path="/agent" element={<AgentPage />} />
+				<Route path="/booking" element={<BookingPage />} />
             <Route path="/admin/login" element={<LoginPage />} />
             <Route
               path="/admin/dashboard"
@@ -86,10 +89,7 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminLayout>
-                    <div className="min-h-[50vh] flex flex-col items-center justify-center text-center">
-                      <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">作品管理</h2>
-                      <p className="text-[var(--color-secondary)]">即将推出...</p>
-                    </div>
+                    <ProjectManagePage />
                   </AdminLayout>
                 </ProtectedRoute>
               }
