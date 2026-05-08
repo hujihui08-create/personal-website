@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -8,10 +9,13 @@ import (
 
 	"portfolio-backend/internal/config"
 	"portfolio-backend/internal/database"
+	"portfolio-backend/internal/model"
 	"portfolio-backend/internal/router"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
@@ -24,6 +28,41 @@ func main() {
 
 	if err := database.ConnectRedis(cfg.Redis); err != nil {
 		log.Printf("Warning: Failed to connect to Redis: %v", err)
+	}
+
+	// Initialize MinIO client
+	minioClient, err := minio.New(cfg.MinIO.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.MinIO.AccessKeyID, cfg.MinIO.SecretAccessKey, ""),
+		Secure: cfg.MinIO.UseSSL,
+	})
+	if err != nil {
+		log.Printf("Warning: Failed to initialize MinIO client: %v", err)
+	}
+
+	// Auto-migrate database models
+	if err := db.AutoMigrate(
+		&model.Admin{},
+		&model.Project{},
+		&model.Profile{},
+		&model.WorkExperience{},
+		&model.ExperienceProject{},
+		&model.Resume{},
+	); err != nil {
+		log.Fatalf("Failed to auto-migrate database: %v", err)
+	}
+
+	// Ensure MinIO bucket exists
+	if minioClient != nil {
+		ctx := context.Background()
+		bucketName := cfg.MinIO.Bucket
+		exists, err := minioClient.BucketExists(ctx, bucketName)
+		if err != nil {
+			log.Printf("Warning: Failed to check MinIO bucket: %v", err)
+		} else if !exists {
+			if err := minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{}); err != nil {
+				log.Printf("Warning: Failed to create MinIO bucket: %v", err)
+			}
+		}
 	}
 
 	defer func() {
@@ -49,7 +88,7 @@ func main() {
 	}
 	r.Use(cors.New(corsConfig))
 
-	router.Setup(r, cfg, db)
+	router.Setup(r, cfg, db, minioClient)
 
 	go func() {
 		log.Printf("Server starting on %s", cfg.Server.Address)

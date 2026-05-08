@@ -1,3 +1,6 @@
 export { default as apiClient } from './client'
 export * from './auth'
 export * from './projects'
+export * from './profile'
+export * from './experiences'
+export * from './resume'

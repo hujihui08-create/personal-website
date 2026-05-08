@@ -37,3 +37,23 @@
 INSERT INTO admins (password_hash) VALUES ('$2a$12$apIi9wfTd4HYAnZJHl7Zve9XrvGKvu0JBl09wuIPuP86qdLc4Ji5W');
 
 -- Add your seed data below:
+
+-- Insert sample profile
+INSERT INTO profiles (name, title, bio, avatar_url, github_url, linkedin_url, email, skills)
+VALUES (
+    'Demo User',
+    'Full-Stack Developer',
+    'A passionate developer with experience in building modern web applications.',
+    '',
+    'https://github.com/demouser',
+    'https://linkedin.com/in/demouser',
+    'demo@example.com',
+    ARRAY['Go', 'TypeScript', 'React', 'PostgreSQL', 'Docker']
+);
+
+-- Insert sample work experiences
+INSERT INTO work_experiences (company_name, position, start_date, end_date, description, sort_order)
+VALUES
+    ('Tech Corp', 'Senior Software Engineer', '2022-01-01', NULL, 'Leading development of microservices architecture using Go and PostgreSQL. Managing a team of 5 engineers.', 0),
+    ('Startup Inc', 'Full-Stack Developer', '2020-03-01', '2021-12-31', 'Built and maintained multiple client-facing web applications using React and Node.js.', 1),
+    ('Freelance', 'Junior Developer', '2018-06-01', '2020-02-28', 'Developed custom WordPress themes and plugins for small businesses.', 2);

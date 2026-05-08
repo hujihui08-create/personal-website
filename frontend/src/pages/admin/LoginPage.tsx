@@ -20,10 +20,16 @@ export const LoginPage = ({ onSuccess }: LoginPageProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    const normalizedPassword = password.trim()
+    if (!normalizedPassword) {
+      setError('请输入管理员密码')
+      toast.error('请输入管理员密码')
+      return
+    }
     setIsLoading(true)
 
     try {
-      const response = await authApi.login({ password })
+      const response = await authApi.login({ password: normalizedPassword })
       login(response.token, { id: 1, name: 'Admin', email: '' })
       toast.success('登录成功')
       if (onSuccess) {
@@ -77,7 +83,7 @@ export const LoginPage = ({ onSuccess }: LoginPageProps) => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="请输入管理员密码"
                 disabled={isLoading}
-                className="w-full h-11 px-4 rounded-md border border-border-medium bg-background text-primary placeholder:text-secondary
+                className="w-full h-11 px-4 rounded-[var(--radius-sm)] border border-border-medium bg-background text-primary placeholder:text-secondary
                   transition-all duration-200
                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft
                   disabled:bg-background-secondary disabled:border-border-light disabled:cursor-not-allowed"
@@ -94,7 +100,7 @@ export const LoginPage = ({ onSuccess }: LoginPageProps) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 bg-primary text-background rounded-md font-medium
+              className="w-full h-11 bg-primary text-background rounded-[var(--radius-sm)] font-medium
                 transition-all duration-200
                 hover:bg-secondary
                 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2

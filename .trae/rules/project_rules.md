@@ -81,35 +81,10 @@
 - MinIO ^7.0.66
 - JWT ^5.2.0
 
-## 设计令牌
+## 设计规范
 
-### 颜色
-- `--color-primary: #1A1A1A`
-- `--color-secondary: #666666`
-- `--color-accent: #0066FF`
-- `--color-bg: #FFFFFF`
-- `--color-bg-secondary: #F5F5F5`
-- `--color-bg-tertiary: #FAFAFA`
-- `--color-border-light: #E5E5E5`
-- `--color-border-medium: #D4D4D4`
-- `--color-success: #10B981`
-- `--color-warning: #F59E0B`
-- `--color-error: #EF4444`
-- `--color-info: #3B82F6`
-- `--color-accent-soft: rgba(0, 102, 255, 0.10)`
-
-### 间距 (8px 基础单位)
-- `--space-xs: 4px`, `--space-sm: 8px`, `--space-md: 16px`
-- `--space-lg: 24px`, `--space-xl: 32px`, `--space-2xl: 48px`, `--space-3xl: 64px`
-
-### 圆角
-- `--radius-sm: 6px`, `--radius-md: 8px`, `--radius-lg: 12px`
-- `--radius-xl: 16px`, `--radius-full: 9999px`
-
-### 阴影
-- `--shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08)`
-- `--shadow-card-strong: 0 8px 24px rgba(0, 0, 0, 0.12)`
-- `--shadow-focus-ring: 0 0 0 3px rgba(0, 102, 255, 0.3)`
+完整的设计规范、设计令牌、组件规范、响应式断点和无障碍规范请参考：
+[COMPONENT_SPEC.md](../../../COMPONENT_SPEC.md)
 
 ## Git 提交规范
 
@@ -119,21 +94,6 @@
 ```
 
 类型: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`
-
-## 响应式断点
-
-- Mobile: `< 640px` (默认)
-- Tablet: `640–1024px` (`sm:` ~ `md:`)
-- Desktop: `≥ 1024px` (`lg:`)
-
-## 无障碍规范
-
-- 语义化标签: `<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>`
-- 键盘可达: 所有交互元素可 Tab 聚焦
-- ARIA 标签: 图标按钮必须含 `aria-label`
-- 对比度: 正文 ≥ 4.5:1，UI 控件 ≥ 3:1
-- 图片替代文本: 所有图片必须提供 `alt` 属性
-- 触摸目标: 移动端可点击区域 ≥ 44×44px
 
 ## 自动化对接机制
 

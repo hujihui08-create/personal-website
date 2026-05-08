@@ -21,6 +21,17 @@ export interface User {
   updatedAt: string
 }
 
+export interface Profile {
+  name: string
+  title: string
+  bio: string
+  avatar_url: string
+  github_url: string
+  linkedin_url: string
+  email: string
+  skills: string[]
+}
+
 export interface Project {
   id: string
   title: string
@@ -37,14 +48,20 @@ export interface Project {
 }
 
 export interface WorkExperience {
-  id: string
-  company: string
+  id: number
+  company_name: string
   position: string
+  start_date: string
+  end_date: string | null
   description: string
-  startDate: string
-  endDate?: string
-  current: boolean
-  order: number
+  sort_order: number
+  type?: 'work' | 'education' | 'achievement'
+  projects?: Project[]
+}
+
+export interface Resume {
+  file_url: string
+  file_name: string
 }
 
 export interface Booking {
