@@ -1,4 +1,4 @@
- 0name: portfolio
+ name: portfolio
 
 services:
   frontend:
