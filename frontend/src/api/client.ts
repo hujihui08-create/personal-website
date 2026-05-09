@@ -5,9 +5,6 @@ import { useAuthStore } from '@/stores/auth'
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 apiClient.interceptors.request.use(
@@ -16,6 +13,12 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // 如果不是 FormData，才设置 Content-Type 为 application/json
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+    
     return config
   },
   (error) => {

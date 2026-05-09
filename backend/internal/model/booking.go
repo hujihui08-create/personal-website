@@ -18,13 +18,13 @@ func (ScheduleSetting) TableName() string {
 
 type Booking struct {
 	ID              uint      `gorm:"primaryKey" json:"id"`
-	CompanyName     string    `gorm:"column:company_name;not null;size:100" json:"company_name"`
-	CompanyLocation string    `gorm:"column:company_location;not null;size:100" json:"company_location"`
-	BookingDate     string    `gorm:"column:booking_date;not null;index" json:"booking_date"`
-	BookingTime     string    `gorm:"column:booking_time;not null" json:"booking_time"`
-	ContactName     string    `gorm:"column:contact_name;not null;size:50" json:"contact_name"`
-	ContactEmail    string    `gorm:"column:contact_email;not null;size:255" json:"contact_email"`
-	ContactPhone    string    `gorm:"column:contact_phone;not null;size:20" json:"contact_phone"`
+	CompanyName     string    `gorm:"column:company_name;size:100" json:"company_name"`
+	CompanyLocation string    `gorm:"column:company_location;size:100" json:"company_location"`
+	BookingDate     string    `gorm:"column:booking_date;index" json:"booking_date"`
+	BookingTime     string    `gorm:"column:booking_time" json:"booking_time"`
+	ContactName     string    `gorm:"column:contact_name;size:50" json:"contact_name"`
+	ContactEmail    string    `gorm:"column:contact_email;size:255" json:"contact_email"`
+	ContactPhone    string    `gorm:"column:contact_phone;size:20" json:"contact_phone"`
 	Notes           string    `gorm:"column:notes;type:text" json:"notes,omitempty"`
 	Status          string    `gorm:"column:status;default:pending;check:status in ('pending','confirmed','rejected','completed','cancelled')" json:"status"`
 	RejectReason    string    `gorm:"column:reject_reason;type:text" json:"reject_reason,omitempty"`

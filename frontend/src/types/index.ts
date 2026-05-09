@@ -141,3 +141,74 @@ export interface PaginatedNotificationsResponse {
 export interface UnreadCountResponse {
 	count: number
 }
+
+// === Agent Types ===
+
+export interface AgentChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+}
+
+export interface AgentChatSession {
+  session_id: string
+  messages: AgentChatMessage[]
+}
+
+export interface AgentChatRequest {
+  message: string
+  session_id?: string
+  stream?: boolean
+}
+
+export interface AgentChatStreamChunk {
+  type: 'thinking' | 'chunk' | 'done'
+  content?: string
+  session_id?: string
+}
+
+export interface AgentClearRequest {
+  session_id: string
+}
+
+// === Knowledge Types ===
+
+export interface KnowledgeDoc {
+  id: number
+  filename: string
+  file_size?: number
+  created_at: string
+}
+
+export interface KnowledgeDocListResponse {
+  code: number
+  message: string
+  data: KnowledgeDoc[]
+}
+
+// === Config Types ===
+
+export interface Config {
+  id: number
+  key: string
+  value: string
+  category: string
+  created_at: string
+  updated_at: string
+}
+
+export interface LLMConfig {
+  provider: string
+  api_key: string
+  base_url: string
+  model: string
+  temperature: number
+  max_tokens: number
+}
+
+export interface EmbeddingConfig {
+  provider: string
+  api_key: string
+  base_url: string
+  model: string
+}

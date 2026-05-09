@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from '@/stores/auth'
 import { Navbar } from '@/components/Navbar'
 import { MobileTabBar } from '@/components/MobileTabBar'
@@ -16,6 +17,8 @@ import ProjectManagePage from '@/pages/admin/ProjectManagePage'
 import BookingManagePage from '@/pages/admin/BookingManagePage'
 import NotificationManagePage from '@/pages/admin/NotificationManagePage'
 import ScheduleManagePage from '@/pages/admin/ScheduleManagePage'
+import KnowledgeManagePage from '@/pages/admin/KnowledgeManagePage'
+import SettingsPage from '@/pages/admin/SettingsPage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -34,6 +37,12 @@ const isAdminRoute = (pathname: string) => {
 function App() {
   const location = useLocation()
   const showNavigation = !isAdminRoute(location.pathname)
+
+  useEffect(() => {
+    if (location.pathname !== '/agent') {
+      window.scrollTo(0, 0)
+    }
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen">
@@ -123,6 +132,26 @@ function App() {
                 <ProtectedRoute>
                   <AdminLayout>
                     <NotificationManagePage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/knowledge"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <KnowledgeManagePage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <SettingsPage />
                   </AdminLayout>
                 </ProtectedRoute>
               }

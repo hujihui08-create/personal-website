@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, User, Briefcase, FolderOpen, Calendar, Clock, LogOut, Bell } from 'lucide-react'
+import { Menu, X, Home, User, Briefcase, FolderOpen, Calendar, Clock, LogOut, Bell, Brain, Settings } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useLocation } from 'react-router-dom'
 import { notificationsApi } from '@/api/notifications'
@@ -22,6 +22,8 @@ const navItems: NavItem[] = [
 	{ key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
 	{ key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
 	{ key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
+	{ key: 'knowledge', label: '知识库管理', path: '/admin/knowledge', icon: Brain },
+	{ key: 'settings', label: '系统设置', path: '/admin/settings', icon: Settings },
 	{ key: 'bookings', label: '预约管理', path: '/admin/bookings', icon: Calendar },
 	{ key: 'notifications', label: '通知中心', path: '/admin/notifications', icon: Bell },
 	{ key: 'schedule', label: '时段设置', path: '/admin/schedule', icon: Clock },

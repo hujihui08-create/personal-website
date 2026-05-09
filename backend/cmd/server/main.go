@@ -10,12 +10,14 @@ import (
 	"portfolio-backend/internal/config"
 	"portfolio-backend/internal/database"
 	"portfolio-backend/internal/model"
+	"portfolio-backend/internal/repository"
 	"portfolio-backend/internal/router"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -50,8 +52,16 @@ func main() {
 		&model.ScheduleSetting{},
 		&model.Booking{},
 		&model.Notification{},
+		&model.ChatSession{},
+		&model.KnowledgeDoc{},
+		&model.Config{},
 	); err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
+	}
+
+	// Initialize default configurations
+	if err := initDefaultConfigs(db); err != nil {
+		log.Printf("Warning: Failed to initialize default configs: %v", err)
 	}
 
 	// Ensure MinIO bucket exists
@@ -91,7 +101,7 @@ func main() {
 	}
 	r.Use(cors.New(corsConfig))
 
-	router.Setup(r, cfg, db, minioClient)
+	router.Setup(r, cfg, db, minioClient, database.RedisClient)
 
 	go func() {
 		log.Printf("Server starting on %s", cfg.Server.Address)
@@ -105,4 +115,50 @@ func main() {
 	<-quit
 
 	log.Println("Shutting down server...")
+}
+
+func initDefaultConfigs(db *gorm.DB) error {
+	configRepo := repository.NewConfigRepository(db)
+
+	// 从环境变量读取配置，如果没有则使用默认值
+	getEnv := func(key, defaultValue string) string {
+		if v := os.Getenv(key); v != "" {
+			return v
+		}
+		return defaultValue
+	}
+
+	// 先删除所有旧的配置
+	log.Println("Clearing old configurations...")
+	if err := db.Exec("DELETE FROM configs").Error; err != nil {
+		log.Printf("Warning: Failed to clear old configs: %v", err)
+	}
+
+	defaultConfigs := []struct {
+		key      string
+		value    string
+		category string
+	}{
+		{"llm.provider", getEnv("LLM_PROVIDER", "openai"), "llm"},
+		{"llm.api_key", getEnv("LLM_API_KEY", ""), "llm"},
+		{"llm.base_url", getEnv("LLM_BASE_URL", ""), "llm"},
+		{"llm.model", getEnv("LLM_MODEL", "deepseek-chat"), "llm"},
+		{"llm.temperature", getEnv("LLM_TEMPERATURE", "0.7"), "llm"},
+		{"llm.max_tokens", getEnv("LLM_MAX_TOKENS", "2000"), "llm"},
+		{"embedding.provider", getEnv("LLM_PROVIDER", "openai"), "embedding"},
+		{"embedding.api_key", getEnv("LLM_API_KEY", ""), "embedding"},
+		{"embedding.base_url", getEnv("LLM_BASE_URL", ""), "embedding"},
+		{"embedding.model", getEnv("LLM_EMBEDDING_MODEL", "text-embedding-3-small"), "embedding"},
+	}
+
+	for _, cfg := range defaultConfigs {
+		if err := configRepo.Upsert(cfg.key, cfg.value, cfg.category); err != nil {
+			log.Printf("Warning: Failed to upsert config %s: %v", cfg.key, err)
+		} else {
+			log.Printf("Config %s set to: %s", cfg.key, cfg.value)
+		}
+	}
+
+	log.Println("Default configurations initialized successfully")
+	return nil
 }

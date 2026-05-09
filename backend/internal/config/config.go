@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -17,6 +18,7 @@ type Config struct {
 	JWT      JWTConfig
 	CORS     CORSConfig
 	Email    EmailConfig
+	LLM      LLMConfig
 }
 
 type ServerConfig struct {
@@ -68,8 +70,31 @@ type EmailConfig struct {
 	AdminEmail   string
 }
 
+type LLMConfig struct {
+	Provider          string // "openai", "anthropic", "dashscope"
+	APIKey            string
+	BaseURL           string
+	ChatModel         string
+	EmbeddingModel    string
+	MaxTokens         int
+	Temperature       float64
+	DailyLimitPerUser int
+}
+
 func Load() *Config {
-	godotenv.Load()
+	// 尝试从多个位置加载 .env 文件
+	envFiles := []string{
+		".env",
+		"../.env",
+		"../../.env",
+	}
+
+	for _, file := range envFiles {
+		if err := godotenv.Load(file); err == nil {
+			log.Printf("Loaded environment variables from %s", file)
+			break
+		}
+	}
 
 	return &Config{
 		Server: ServerConfig{
@@ -114,7 +139,26 @@ func Load() *Config {
 			FromName:     getEnv("EMAIL_FROM_NAME", "个人网站"),
 			AdminEmail:   getEnv("EMAIL_ADMIN", ""),
 		},
+		LLM: LLMConfig{
+			Provider:          getEnv("LLM_PROVIDER", "openai"),
+			APIKey:            getEnv("LLM_API_KEY", ""),
+			BaseURL:           getEnv("LLM_BASE_URL", ""),
+			ChatModel:         getEnv("LLM_CHAT_MODEL", "gpt-4o-mini"),
+			EmbeddingModel:    getEnv("LLM_EMBEDDING_MODEL", "text-embedding-3-small"),
+			MaxTokens:         getEnvInt("LLM_MAX_TOKENS", 2048),
+			Temperature:       getEnvFloat("LLM_TEMPERATURE", 0.7),
+			DailyLimitPerUser: getEnvInt("LLM_DAILY_LIMIT", 50),
+		},
 	}
+}
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
+			return floatVal
+		}
+	}
+	return defaultValue
 }
 
 func (d *DatabaseConfig) DSN() string {

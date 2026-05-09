@@ -120,3 +120,30 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+
+-- 知识库文档表
+CREATE TABLE IF NOT EXISTS knowledge_docs (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    embedding vector(1536),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 向量索引
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_embedding ON knowledge_docs 
+    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+-- Agent会话表
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id SERIAL PRIMARY KEY,
+    session_id VARCHAR(100) UNIQUE NOT NULL,
+    messages JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 会话索引
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_session_id ON chat_sessions(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated_at ON chat_sessions(updated_at DESC);

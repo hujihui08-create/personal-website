@@ -11,10 +11,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/minio/minio-go/v7"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Client) {
+func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Client, redisClient *redis.Client) {
 	// --- Repositories ---
 	adminRepo := repository.NewAdminRepository(db)
 	profileRepo := repository.NewProfileRepository(db)
@@ -24,6 +25,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	scheduleSettingRepo := repository.NewScheduleSettingRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
+	chatSessionRepo := repository.NewChatSessionRepository(db)
+	knowledgeDocRepo := repository.NewKnowledgeDocRepository(db)
+	configRepo := repository.NewConfigRepository(db)
 
 	// --- Services ---
 	emailService := service.NewEmailService(cfg.Email)
@@ -34,6 +38,12 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	resumeService := service.NewResumeService(resumeRepo, minioClient, cfg)
 	projectService := service.NewProjectService(projectRepo, minioClient, cfg)
 	bookingService := service.NewBookingService(scheduleSettingRepo, bookingRepo, notificationService)
+	documentParser := service.NewDocumentParser()
+	textSplitter := service.NewTextSplitter(512, 50)
+	configService := service.NewConfigService(configRepo)
+	embeddingService := service.NewEmbeddingService(configService)
+	ragService := service.NewRAGService(knowledgeDocRepo, documentParser, textSplitter, embeddingService)
+	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
@@ -43,6 +53,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	projectHandler := handler.NewProjectHandler(projectService)
 	bookingHandler := handler.NewBookingHandler(bookingService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
+	agentHandler := handler.NewAgentHandler(chatService)
+	knowledgeHandler := handler.NewKnowledgeHandler(ragService)
+	configHandler := handler.NewConfigHandler(configService)
 
 	api := r.Group("/api")
 	{
@@ -163,23 +176,49 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 		}
 
 		// Schedule settings (protected)
-	scheduleProtected := api.Group("/schedule")
-	scheduleProtected.Use(middleware.AuthMiddleware(authService))
-	{
-		scheduleProtected.GET("", bookingHandler.GetScheduleSettings)
-		scheduleProtected.PUT("", bookingHandler.UpdateScheduleSettings)
-	}
+		scheduleProtected := api.Group("/schedule")
+		scheduleProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			scheduleProtected.GET("", bookingHandler.GetScheduleSettings)
+			scheduleProtected.PUT("", bookingHandler.UpdateScheduleSettings)
+		}
 
-	// Notifications (protected)
-	notificationsProtected := api.Group("/notifications")
-	notificationsProtected.Use(middleware.AuthMiddleware(authService))
-	{
-		notificationsProtected.GET("", notificationHandler.GetNotifications)
-		notificationsProtected.PUT("/:id/read", notificationHandler.MarkAsRead)
-		notificationsProtected.PUT("/read-all", notificationHandler.MarkAllAsRead)
-		notificationsProtected.GET("/unread", notificationHandler.GetUnreadCount)
+		// Notifications (protected)
+		notificationsProtected := api.Group("/notifications")
+		notificationsProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			notificationsProtected.GET("", notificationHandler.GetNotifications)
+			notificationsProtected.PUT("/:id/read", notificationHandler.MarkAsRead)
+			notificationsProtected.PUT("/read-all", notificationHandler.MarkAllAsRead)
+			notificationsProtected.GET("/unread", notificationHandler.GetUnreadCount)
+		}
+
+		// Agent (public)
+		api.POST("/agent/chat", agentHandler.Chat)
+		api.GET("/agent/history", agentHandler.GetHistory)
+		api.POST("/agent/clear", agentHandler.ClearSession)
+
+		// Knowledge (protected)
+		knowledgeProtected := api.Group("/knowledge")
+		knowledgeProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			knowledgeProtected.GET("", knowledgeHandler.ListDocuments)
+			knowledgeProtected.POST("", knowledgeHandler.UploadDocument)
+			knowledgeProtected.DELETE("/:id", knowledgeHandler.DeleteDocument)
+			knowledgeProtected.POST("/reindex", knowledgeHandler.ReindexAll)
+		}
+
+		// Config (protected)
+		configProtected := api.Group("/config")
+		configProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			configProtected.GET("", configHandler.GetAllConfigs)
+			configProtected.GET("/llm", configHandler.GetLLMConfig)
+			configProtected.PUT("/llm", configHandler.UpdateLLMConfig)
+			configProtected.GET("/embedding", configHandler.GetEmbeddingConfig)
+			configProtected.PUT("/embedding", configHandler.UpdateEmbeddingConfig)
+		}
 	}
-}
 }
 
 func healthCheck(c *gin.Context) {
