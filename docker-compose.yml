@@ -15,8 +15,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,8 +65,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./scripts/init-default-configs.sql:/docker-entrypoint-initdb.d/02-configs.sql
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - portfolio-network
     restart: unless-stopped
@@ -82,8 +78,6 @@ services:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-    ports:
-      - "127.0.0.1:6379:6379"
     networks:
       - portfolio-network
     restart: unless-stopped
@@ -98,9 +92,6 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
