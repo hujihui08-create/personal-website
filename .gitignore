@@ -42,30 +42,6 @@ secrets.*
 *.pem
 *.key
 
-# ==================== 文档和规格文件（不推送到生产仓库） ====================
-# PRD 文档
-*_PRD.md
-*.prd.md
-
-# 设计规范文档
-COMPONENT_SPEC.md
-
-# 设计文档目录
-portfolio-docs/
-
-# Trae 规格文件（开发过程文档）
-.trae/specs/
-
-# Trae 开发文档（本地开发笔记）
-.trae/documents/
-
-# 本地开发文档
-docs/
-
-# 中文命名的文档文件
-*.md
-!README.md
-
 # ==================== 二进制文件和编译产物 ====================
 *.exe
 bin/
