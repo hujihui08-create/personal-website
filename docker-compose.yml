@@ -1,4 +1,4 @@
-name: portfolio
+ 0name: portfolio
 
 services:
   frontend:
@@ -26,31 +26,18 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PASSWORD=Portfolio@2024!Secure
       - DB_NAME=portfolio
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - MINIO_ENDPOINT=minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=${MINIO_BUCKET:-portfolio}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION:-168h}
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=Minio@2024!SecureKey
+      - MINIO_BUCKET=portfolio
+      - JWT_SECRET=portfolio-jwt-secret-key-2024-very-secure
+      - JWT_EXPIRATION=168h
       - GIN_MODE=release
-      - CORS_ORIGINS=https://${DOMAIN:-dundun.store}
-      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-brevo}
-      - EMAIL_API_KEY=${EMAIL_API_KEY}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-个人网站}
-      - EMAIL_ADMIN=${EMAIL_ADMIN}
-      - LLM_PROVIDER=${LLM_PROVIDER:-dashscope}
-      - LLM_API_KEY=${LLM_API_KEY}
-      - LLM_BASE_URL=${LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      - LLM_CHAT_MODEL=${LLM_CHAT_MODEL:-qwen-plus}
-      - LLM_EMBEDDING_MODEL=${LLM_EMBEDDING_MODEL:-text-embedding-v4}
-      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-2048}
-      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.7}
-      - LLM_DAILY_LIMIT=${LLM_DAILY_LIMIT:-50}
+      - CORS_ORIGINS=https://dundun.store
     networks:
       - portfolio-network
     restart: unless-stopped
@@ -60,7 +47,7 @@ services:
     environment:
       POSTGRES_DB: portfolio
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: Portfolio@2024!Secure
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -93,8 +80,8 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: Minio@2024!SecureKey
     networks:
       - portfolio-network
     restart: unless-stopped
