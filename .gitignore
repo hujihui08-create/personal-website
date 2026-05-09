@@ -56,3 +56,13 @@ ktop*/
 .cache/
 update-config.sql
 update-deepseek-config.sql
+
+# ==================== 敏感文档和规格 ====================
+portfolio-docs/
+个人简介网站_PRD.md
+COMPONENT_SPEC.md
+.trae/rules/
+.trae/documents/
+.trae/specs/
+docs/
+DEPLOYMENT.md
