@@ -58,7 +58,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-base)] ease-standard">
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-base)] ease-standard">
           <div className="absolute bottom-0 left-0 right-0 p-[var(--space-md)]">
             <Link
               to={`/projects/${project.id}`}
