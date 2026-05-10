@@ -135,7 +135,7 @@ export const ProjectDetailPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative mb-[var(--space-xl)] rounded-[var(--radius-xl)] overflow-hidden bg-[var(--color-bg-secondary)]"
+            className="relative mb-[var(--space-xl)] rounded-[var(--radius-xl)] overflow-hidden bg-[var(--color-bg-secondary)] select-none"
             style={{ minHeight: '320px', maxHeight: '70vh' }}
           >
             <div
@@ -148,38 +148,58 @@ export const ProjectDetailPage = () => {
                 filter: 'blur(30px)',
               }}
             />
-            <motion.img
-              key={currentImageIndex}
-              src={allImages[currentImageIndex]}
-              alt={project.name}
-              loading="lazy"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="relative z-10 w-full h-full object-contain"
-              style={{ maxHeight: '70vh', margin: '0 auto' }}
-            />
+            <div
+              className="relative z-10 w-full h-full"
+              style={{ maxHeight: '70vh' }}
+              onTouchStart={(e) => {
+                const startX = e.touches[0].clientX
+                const container = e.currentTarget
+                const handleTouchEnd = (ev: TouchEvent) => {
+                  const endX = ev.changedTouches[0].clientX
+                  const diff = startX - endX
+                  if (Math.abs(diff) > 50) {
+                    if (diff > 0) nextImage()
+                    else prevImage()
+                  }
+                  container.removeEventListener('touchend', handleTouchEnd)
+                }
+                container.addEventListener('touchend', handleTouchEnd, { passive: true })
+              }}
+            >
+              <motion.img
+                key={currentImageIndex}
+                src={allImages[currentImageIndex]}
+                alt={project.name}
+                loading="lazy"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className="w-full h-full object-contain"
+                style={{ maxHeight: '70vh', margin: '0 auto' }}
+                draggable={false}
+              />
+            </div>
 
             {/* Navigation Buttons */}
             {allImages.length > 1 && (
               <>
                 <button
                   onClick={prevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-[var(--radius-full)] bg-black/50 text-white flex items-center justify-center
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-[var(--radius-full)] bg-black/50 text-white flex items-center justify-center
 										hover:bg-black/70 transition-colors duration-[var(--duration-base)] ease-standard"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={nextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-[var(--radius-full)] bg-black/50 text-white flex items-center justify-center
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-[var(--radius-full)] bg-black/50 text-white flex items-center justify-center
 										hover:bg-black/70 transition-colors duration-[var(--duration-base)] ease-standard"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
 
                 {/* Indicators */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                   {allImages.map((_, index) => (
                     <button
                       key={index}
