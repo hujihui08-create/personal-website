@@ -18,7 +18,7 @@ type Config struct {
 	JWT      JWTConfig
 	CORS     CORSConfig
 	Email    EmailConfig
-	LLM      LLMConfig
+	LLM      EnvLLMConfig
 }
 
 type ServerConfig struct {
@@ -70,7 +70,7 @@ type EmailConfig struct {
 	AdminEmail   string
 }
 
-type LLMConfig struct {
+type EnvLLMConfig struct {
 	Provider          string // "openai", "anthropic", "dashscope"
 	APIKey            string
 	BaseURL           string
@@ -139,7 +139,7 @@ func Load() *Config {
 			FromName:     getEnv("EMAIL_FROM_NAME", "个人网站"),
 			AdminEmail:   getEnv("EMAIL_ADMIN", ""),
 		},
-		LLM: LLMConfig{
+		LLM: EnvLLMConfig{
 			Provider:          getEnv("LLM_PROVIDER", "openai"),
 			APIKey:            getEnv("LLM_API_KEY", ""),
 			BaseURL:           getEnv("LLM_BASE_URL", ""),

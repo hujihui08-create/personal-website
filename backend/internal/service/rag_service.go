@@ -91,8 +91,8 @@ func (s *RAGService) UploadDocument(filename string, file multipart.File) error 
 		embedding, err := s.embeddingService.CreateEmbedding(chunk)
 		if err != nil {
 			println("[RAGService] 生成 embedding 失败:", err.Error())
-			// 即使 embedding 失败，也保存文档（不带 embedding）
-			embedding = model.Embedding{}
+			// 即使 embedding 失败，也保存文档（使用零值 1536 维向量，以匹配 PostgreSQL vector(1536) 列类型）
+			embedding = make(model.Embedding, 1536)
 		}
 
 		doc := &model.KnowledgeDoc{
@@ -165,7 +165,7 @@ func (s *RAGService) ReindexAll() error {
 			embedding, err := s.embeddingService.CreateEmbedding(chunk)
 			if err != nil {
 				log.Printf("[RAGService]   生成 embedding 失败 (分块 %d): %v", i+1, err)
-				embedding = model.Embedding{}
+				embedding = make(model.Embedding, 1536)
 			}
 
 			doc := &model.KnowledgeDoc{

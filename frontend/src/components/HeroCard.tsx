@@ -43,9 +43,9 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
           transition={{ delay: 0.2, duration: 0.5, type: 'spring', stiffness: 100 }}
         >
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[var(--radius-full)] overflow-hidden ring-4 ring-[#F5F5F5] shadow-[var(--shadow-card-strong)]">
-            {profile.avatar_url ? (
+            {profile.avatarUrl ? (
               <img
-                src={profile.avatar_url}
+                src={profile.avatarUrl}
                 alt={`${profile.name}的头像`}
                 className="w-full h-full object-cover transition-transform duration-[var(--duration-slow)] ease-standard hover:scale-110"
               />
@@ -103,9 +103,9 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.4 }}
         >
-          {profile.github_url && (
+          {profile.githubUrl && (
             <motion.a
-              href={profile.github_url}
+              href={profile.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
@@ -116,12 +116,12 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
             >
               <Github className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm truncate max-w-48">{profile.github_url}</span>
+              <span className="text-sm truncate max-w-48">{profile.githubUrl}</span>
             </motion.a>
           )}
-          {profile.linkedin_url && (
+          {profile.linkedinUrl && (
             <motion.a
-              href={profile.linkedin_url}
+              href={profile.linkedinUrl}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
@@ -132,7 +132,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
             >
               <ExternalLink className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm truncate max-w-48">{profile.linkedin_url}</span>
+              <span className="text-sm truncate max-w-48">{profile.linkedinUrl}</span>
             </motion.a>
           )}
           {profile.email && (

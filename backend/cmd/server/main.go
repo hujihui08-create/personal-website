@@ -41,6 +41,11 @@ func main() {
 		log.Printf("Warning: Failed to initialize MinIO client: %v", err)
 	}
 
+	// Enable vector extension before auto-migration (needed for vector column type)
+	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS vector").Error; err != nil {
+		log.Printf("Warning: Failed to create vector extension: %v", err)
+	}
+
 	// Auto-migrate database models
 	if err := db.AutoMigrate(
 		&model.Admin{},
@@ -57,6 +62,11 @@ func main() {
 		&model.Config{},
 	); err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
+	}
+
+	// Create vector index for similarity search
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_knowledge_docs_embedding ON knowledge_docs USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)").Error; err != nil {
+		log.Printf("Warning: Failed to create vector index: %v", err)
 	}
 
 	// Initialize default configurations

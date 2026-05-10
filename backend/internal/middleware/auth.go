@@ -4,12 +4,16 @@ import (
 	"net/http"
 	"strings"
 
-	"portfolio-backend/internal/service"
-
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(authService *service.AuthService) gin.HandlerFunc {
+// AuthServiceInterface defines the methods needed from the auth service.
+// Defined locally to avoid circular dependencies with the handler package.
+type AuthServiceInterface interface {
+	ValidateToken(tokenString string) (uint, error)
+}
+
+func AuthMiddleware(authService AuthServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {

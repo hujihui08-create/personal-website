@@ -34,10 +34,10 @@ export const ProfileEditPage = () => {
       setName(profile.name ?? '')
       setTitle(profile.title ?? '')
       setBio(profile.bio ?? '')
-      setGithubUrl(profile.github_url ?? '')
-      setLinkedinUrl(profile.linkedin_url ?? '')
+      setGithubUrl(profile.githubUrl ?? '')
+      setLinkedinUrl(profile.linkedinUrl ?? '')
       setEmail(profile.email ?? '')
-      setAvatarUrl(profile.avatar_url ?? '')
+      setAvatarUrl(profile.avatarUrl ?? '')
       setSkills(profile.skills ?? [])
     }
   }, [profile])
@@ -112,10 +112,10 @@ export const ProfileEditPage = () => {
         name,
         title,
         bio,
-        github_url: githubUrl,
-        linkedin_url: linkedinUrl,
+        githubUrl,
+        linkedinUrl,
         email,
-        avatar_url: avatarUrl,
+        avatarUrl,
         skills,
       })
       toast.success('个人资料已更新')

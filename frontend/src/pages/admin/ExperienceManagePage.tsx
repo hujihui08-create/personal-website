@@ -24,19 +24,19 @@ import { Portal } from '@/components/Portal'
 
 interface ExperienceFormData {
   type: 'study' | 'internship' | 'work'
-  company_name: string
+  companyName: string
   position: string
-  start_date: string
-  end_date: string
+  startDate: string
+  endDate: string
   description: string
 }
 
 const emptyFormData: ExperienceFormData = {
   type: 'work',
-  company_name: '',
+  companyName: '',
   position: '',
-  start_date: '',
-  end_date: '',
+  startDate: '',
+  endDate: '',
   description: '',
 }
 
@@ -58,18 +58,17 @@ export const ExperienceManagePage = () => {
   // Pre-fill form when editing
   useEffect(() => {
     if (editingExperience) {
-      // 兼容旧数据，旧类型默认处理为 work
       let type: 'study' | 'internship' | 'work' = editingExperience.type as any
       if (!['study', 'internship', 'work'].includes(type)) {
         type = 'work'
       }
       setFormData({
         type,
-        company_name: editingExperience.company_name,
+        companyName: editingExperience.companyName,
         position: editingExperience.position,
-        start_date: editingExperience.start_date.split('T')[0] ?? editingExperience.start_date,
-        end_date: editingExperience.end_date
-          ? (editingExperience.end_date.split('T')[0] ?? editingExperience.end_date)
+        startDate: editingExperience.startDate.split('T')[0] ?? editingExperience.startDate,
+        endDate: editingExperience.endDate
+          ? (editingExperience.endDate.split('T')[0] ?? editingExperience.endDate)
           : '',
         description: editingExperience.description ?? '',
       })
@@ -102,7 +101,7 @@ export const ExperienceManagePage = () => {
   }
 
   const handleSave = async () => {
-    if (!formData.company_name.trim() || !formData.position.trim() || !formData.start_date) {
+    if (!formData.companyName.trim() || !formData.position.trim() || !formData.startDate) {
       toast.error('请填写必填字段')
       return
     }
@@ -111,10 +110,10 @@ export const ExperienceManagePage = () => {
     try {
       const payload: CreateExperienceRequest = {
         type: formData.type,
-        company_name: formData.company_name,
+        companyName: formData.companyName,
         position: formData.position,
-        start_date: formData.start_date,
-        end_date: formData.end_date || null,
+        startDate: formData.startDate,
+        endDate: formData.endDate || null,
         description: formData.description,
       }
 
@@ -143,7 +142,7 @@ export const ExperienceManagePage = () => {
 
   const sortedExperiences = experiences
     ? [...experiences].sort(
-        (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+        (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
       )
     : []
 
@@ -250,16 +249,16 @@ export const ExperienceManagePage = () => {
                           {experience.position}
                         </h3>
                         <p className="text-sm font-medium text-[var(--color-accent)] mt-1">
-                          {experience.company_name}
+                          {experience.companyName}
                         </p>
                       </div>
                       <div className="flex-shrink-0">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)]">
                           <Calendar className="w-3.5 h-3.5 text-[var(--color-secondary)]" />
                           <span className="text-xs font-medium text-[var(--color-secondary)]">
-                            {formatDate(new Date(experience.start_date))} —{' '}
-                            {experience.end_date
-                              ? formatDate(new Date(experience.end_date))
+                            {formatDate(new Date(experience.startDate))} —{' '}
+                            {experience.endDate
+                              ? formatDate(new Date(experience.endDate))
                               : '至今'}
                           </span>
                         </div>
@@ -290,7 +289,7 @@ export const ExperienceManagePage = () => {
                       onClick={() => handleOpenEdit(experience)}
                       className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                         hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)] hover:scale-110"
-                      aria-label={`编辑 ${experience.company_name} - ${experience.position}`}
+                      aria-label={`编辑 ${experience.companyName} - ${experience.position}`}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -298,7 +297,7 @@ export const ExperienceManagePage = () => {
                       onClick={() => setDeleteTarget(experience)}
                       className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                         hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-all duration-[var(--duration-fast)] hover:scale-110"
-                      aria-label={`删除 ${experience.company_name} - ${experience.position}`}
+                      aria-label={`删除 ${experience.companyName} - ${experience.position}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -310,7 +309,7 @@ export const ExperienceManagePage = () => {
                       onClick={() => handleOpenEdit(experience)}
                       className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                         hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)]"
-                      aria-label={`编辑 ${experience.company_name} - ${experience.position}`}
+                      aria-label={`编辑 ${experience.companyName} - ${experience.position}`}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -318,7 +317,7 @@ export const ExperienceManagePage = () => {
                       onClick={() => setDeleteTarget(experience)}
                       className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                         hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-all duration-[var(--duration-fast)]"
-                      aria-label={`删除 ${experience.company_name} - ${experience.position}`}
+                      aria-label={`删除 ${experience.companyName} - ${experience.position}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -386,14 +385,14 @@ export const ExperienceManagePage = () => {
                   
                   {/* Company Name */}
                   <div className="space-y-1.5">
-                    <label htmlFor="company_name" className="block text-sm font-medium text-[var(--color-primary)]">
+                    <label htmlFor="companyName" className="block text-sm font-medium text-[var(--color-primary)]">
                       公司名称 <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <input
-                      id="company_name"
-                      name="company_name"
+                      id="companyName"
+                      name="companyName"
                       type="text"
-                      value={formData.company_name}
+                      value={formData.companyName}
                       onChange={handleFormChange}
                       className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                         placeholder:text-[var(--color-secondary)]
@@ -423,28 +422,28 @@ export const ExperienceManagePage = () => {
                   {/* Date Range */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
                     <div className="space-y-1.5">
-                      <label htmlFor="start_date" className="block text-sm font-medium text-[var(--color-primary)]">
+                      <label htmlFor="startDate" className="block text-sm font-medium text-[var(--color-primary)]">
                         开始日期 <span className="text-[var(--color-error)]">*</span>
                       </label>
                       <input
-                        id="start_date"
-                        name="start_date"
+                        id="startDate"
+                        name="startDate"
                         type="date"
-                        value={formData.start_date}
+                        value={formData.startDate}
                         onChange={handleFormChange}
                         className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                           focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label htmlFor="end_date" className="block text-sm font-medium text-[var(--color-primary)]">
+                      <label htmlFor="endDate" className="block text-sm font-medium text-[var(--color-primary)]">
                         结束日期
                       </label>
                       <input
-                        id="end_date"
-                        name="end_date"
+                        id="endDate"
+                        name="endDate"
                         type="date"
-                        value={formData.end_date}
+                        value={formData.endDate}
                         onChange={handleFormChange}
                         className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)]
                           focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
@@ -527,7 +526,7 @@ export const ExperienceManagePage = () => {
                     确认删除
                   </h2>
                   <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
-                    确定要删除 <strong>{deleteTarget.company_name}</strong> 的 <strong>{deleteTarget.position}</strong> 记录吗？此操作不可撤销。
+                    确定要删除 <strong>{deleteTarget.companyName}</strong> 的 <strong>{deleteTarget.position}</strong> 记录吗？此操作不可撤销。
                   </p>
                   <div className="flex items-center gap-[var(--space-sm)] w-full">
                     <button

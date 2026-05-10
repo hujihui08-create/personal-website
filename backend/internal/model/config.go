@@ -4,7 +4,7 @@ import "time"
 
 type Config struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	Key       string    `gorm:"column:key;uniqueIndex;not null" json:"key"`
+	Key       string    `gorm:"column:key;unique;not null" json:"key"`
 	Value     string    `gorm:"column:value;type:text" json:"value"`
 	Category  string    `gorm:"column:category;index" json:"category"`
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
@@ -22,11 +22,6 @@ type ConfigResponse struct {
 	Category  string    `json:"category"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type ConfigUpdateRequest struct {
-	Key   string `json:"key" binding:"required"`
-	Value string `json:"value"`
 }
 
 type LLMConfig struct {

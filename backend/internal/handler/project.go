@@ -22,7 +22,7 @@ func NewProjectHandler(projectService *service.ProjectService) *ProjectHandler {
 func (h *ProjectHandler) List(c *gin.Context) {
 	projectType := c.Query("type")
 	pageStr := c.Query("page")
-	pageSizeStr := c.Query("page_size")
+	pageSizeStr := c.Query("pageSize")
 
 	page := 1
 	if pageStr != "" {

@@ -12,10 +12,10 @@ import (
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+	authService AuthServiceInterface
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
@@ -170,6 +170,13 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 	admin, err := h.authService.GetAdmin(adminID.(uint))
 	if err != nil {
+		if errors.Is(err, service.ErrAdminNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": gin.H{
+				"code":    "ADMIN_NOT_FOUND",
+				"message": "管理员不存在",
+			}})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{
 			"code":    "INTERNAL_ERROR",
 			"message": "获取用户信息失败",

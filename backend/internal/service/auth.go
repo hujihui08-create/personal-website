@@ -11,13 +11,17 @@ import (
 	"portfolio-backend/internal/model"
 	"portfolio-backend/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
 
+const adminPasswordCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+
 var (
-	ErrInvalidPassword = errors.New("密码错误")
-	ErrRateLimited     = errors.New("登录失败次数过多，请15分钟后再试")
-	ErrAdminNotFound   = errors.New("管理员不存在")
+	ErrInvalidPassword  = errors.New("密码错误")
+	ErrRateLimited      = errors.New("登录失败次数过多，请15分钟后再试")
+	ErrAdminNotFound    = errors.New("管理员不存在")
+	ErrAdminAlreadyInit = errors.New("管理员已存在，无法重复初始化")
 )
 
 type AuthService struct {
@@ -104,9 +108,12 @@ func (s *AuthService) ValidateToken(tokenString string) (uint, error) {
 }
 
 func (s *AuthService) GetAdmin(id uint) (*model.AdminResponse, error) {
-	admin, err := s.adminRepo.FindFirst()
+	admin, err := s.adminRepo.FindByID(id)
 	if err != nil {
-		return nil, ErrAdminNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrAdminNotFound
+		}
+		return nil, fmt.Errorf("get admin by id failed: %w", err)
 	}
 
 	return &model.AdminResponse{

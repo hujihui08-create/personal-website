@@ -32,7 +32,7 @@ func (c *ChatMessages) Scan(value interface{}) error {
 
 type ChatSession struct {
 	ID        uint         `gorm:"primaryKey" json:"id"`
-	SessionID string       `gorm:"column:session_id;uniqueIndex;not null;size:100" json:"session_id"`
+	SessionID string       `gorm:"column:session_id;unique;not null;size:100" json:"session_id"`
 	Messages  ChatMessages `gorm:"column:messages;type:jsonb;default:'[]'" json:"messages"`
 	CreatedAt time.Time    `gorm:"column:created_at;default:now()" json:"created_at"`
 	UpdatedAt time.Time    `gorm:"column:updated_at;default:now()" json:"updated_at"`

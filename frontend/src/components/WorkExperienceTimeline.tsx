@@ -47,8 +47,8 @@ const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
   const config = typeConfig[type]
   const Icon = config.icon
 
-  const dateRange = `${formatDate(new Date(experience.start_date))} — ${
-    experience.end_date ? formatDate(new Date(experience.end_date)) : '至今'
+  const dateRange = `${formatDate(new Date(experience.startDate))} — ${
+    experience.endDate ? formatDate(new Date(experience.endDate)) : '至今'
   }`
 
   return (
@@ -58,7 +58,7 @@ const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
       viewport={{ once: false, amount: 0.2 }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="relative pl-12 sm:pl-16"
-      aria-label={`${experience.company_name} - ${experience.position}`}
+      aria-label={`${experience.companyName} - ${experience.position}`}
     >
       {/* Timeline Node (Icon Badge) */}
       <motion.div
@@ -105,7 +105,7 @@ const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
           {experience.position}
         </h3>
         <p className="text-sm font-medium text-[var(--color-accent)] mb-3">
-          {experience.company_name}
+          {experience.companyName}
         </p>
 
         {/* Description - collapsed preview */}
@@ -176,7 +176,7 @@ export const WorkExperienceTimeline = ({ experiences, isLoading }: WorkExperienc
       const d = new Date(dateStr || '')
       return isNaN(d.getTime()) ? 0 : d.getTime()
     }
-    return getTime(b.start_date) - getTime(a.start_date)
+    return getTime(b.startDate) - getTime(a.startDate)
   })
 
   return (

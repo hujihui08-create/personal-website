@@ -3,13 +3,13 @@ import type { WorkExperience, ApiResponse } from '../types'
 
 export interface CreateExperienceRequest {
   type: 'study' | 'internship' | 'work'
-  company_name: string
+  companyName: string
   position: string
-  start_date: string
-  end_date?: string | null
+  startDate: string
+  endDate?: string | null
   description?: string
-  sort_order?: number
-  project_ids?: number[]
+  sortOrder?: number
+  projectIds?: number[]
 }
 
 export function getExperiences(): Promise<ApiResponse<WorkExperience[]>> {

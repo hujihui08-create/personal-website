@@ -34,7 +34,7 @@ export const Navbar = () => {
           to="/"
           className="text-xl text-[var(--color-primary)]"
         >
-          个人简介
+          个人主页
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">

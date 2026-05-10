@@ -26,7 +26,10 @@ func NewFileHandler(minioClient *minio.Client, bucket string) *FileHandler {
 // GetFile 从 MinIO 获取文件并提供下载
 func (h *FileHandler) GetFile(c *gin.Context) {
 	filepath := c.Param("filepath")
-	
+
+	// 去掉 Gin *filepath 参数自带的前导斜杠，使路径与 MinIO 对象路径一致
+	filepath = strings.TrimPrefix(filepath, "/")
+
 	if filepath == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
@@ -45,7 +48,7 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 		return
 	}
 
-	// 从路径中提取文件名用于下载
+	// 从路径中提取文件名
 	parts := strings.Split(filepath, "/")
 	filename := parts[len(parts)-1]
 
@@ -62,9 +65,15 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 		return
 	}
 
-	// 设置响应头
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-	c.Header("Content-Type", objectInfo.ContentType)
+	// 根据 Content-Type 决定展示方式：图片展示为 inline，其他为 attachment 下载
+	contentType := objectInfo.ContentType
+	disposition := "inline"
+	if !strings.HasPrefix(contentType, "image/") {
+		disposition = fmt.Sprintf("attachment; filename=\"%s\"", filename)
+	}
+
+	c.Header("Content-Disposition", disposition)
+	c.Header("Content-Type", contentType)
 
 	// 获取对象数据
 	obj, err := h.minioClient.GetObject(ctx, h.bucket, filepath, minio.GetObjectOptions{})

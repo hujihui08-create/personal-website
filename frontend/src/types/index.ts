@@ -25,9 +25,9 @@ export interface Profile {
   name: string
   title: string
   bio: string
-  avatar_url: string
-  github_url: string
-  linkedin_url: string
+  avatarUrl: string
+  githubUrl: string
+  linkedinUrl: string
   email: string
   skills: string[]
 }
@@ -60,13 +60,22 @@ export interface PaginatedProjectsResponse {
 export interface WorkExperience {
   id: number
   type?: 'study' | 'internship' | 'work'
-  company_name: string
+  companyName: string
   position: string
-  start_date: string
-  end_date: string | null
+  startDate: string
+  endDate: string | null
   description: string
-  sort_order: number
-  projects?: Project[]
+  sortOrder: number
+  projects?: ExperienceProjectBrief[]
+}
+
+export interface ExperienceProjectBrief {
+  id: number
+  name: string
+  summary: string
+  coverImage: string
+  demoUrl: string
+  githubUrl: string
 }
 
 export interface Resume {
