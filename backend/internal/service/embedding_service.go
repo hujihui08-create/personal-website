@@ -59,8 +59,9 @@ func (s *EmbeddingService) CreateEmbedding(text string) ([]float32, error) {
 	log.Printf("[EmbeddingService] Creating embedding with model: %s, BaseURL: %s", model, embeddingConfig.BaseURL)
 
 	req := openai.EmbeddingRequest{
-		Model: openai.EmbeddingModel(model),
-		Input: []string{text},
+		Model:      openai.EmbeddingModel(model),
+		Input:      []string{text},
+		Dimensions: 1536,
 	}
 
 	resp, err := client.CreateEmbeddings(context.Background(), req)
@@ -96,8 +97,9 @@ func (s *EmbeddingService) CreateEmbeddings(texts []string) ([][]float32, error)
 	}
 
 	req := openai.EmbeddingRequest{
-		Model: openai.EmbeddingModel(model),
-		Input: texts,
+		Model:      openai.EmbeddingModel(model),
+		Input:      texts,
+		Dimensions: 1536,
 	}
 
 	resp, err := client.CreateEmbeddings(context.Background(), req)
