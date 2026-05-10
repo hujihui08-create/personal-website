@@ -290,7 +290,8 @@ func (s *ChatService) ChatStream(
 
 func (s *ChatService) buildSystemPrompt(contexts []string) string {
 	sb := &strings.Builder{}
-	sb.WriteString("你是一个专业的AI助手，专门回答关于用户个人背景、工作经验、技术栈和项目的问题。\n\n")
+	sb.WriteString("你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈和项目的问题。\n")
+	sb.WriteString("当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历等。"\n\n")
 
 	if len(contexts) > 0 {
 		sb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
@@ -307,6 +308,7 @@ func (s *ChatService) buildSystemPrompt(contexts []string) string {
 	sb.WriteString("1. 不要使用 ** 标记\n")
 	sb.WriteString("2. 不要使用 - 列表\n")
 	sb.WriteString("3. 如需列出要点，请使用数字排序（1. 2. 3. 等）\n")
+	sb.WriteString("4. 如果用户提出与胡冀徽（个人背景、工作经验、技术栈、项目经历、工作履历等）完全不相关的问题，请礼貌拒绝回答，并引导用户询问与胡冀徽相关的问题。例如回复："我只负责解答关于胡冀徽的问题，请询问与胡冀徽工作经历、项目经验等相关的内容。"\n")
 	return sb.String()
 }
 

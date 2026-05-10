@@ -44,7 +44,7 @@ VALUES (
     'Demo User',
     'Full-Stack Developer',
     'A passionate developer with experience in building modern web applications.',
-    '',
+    '', -- 头像上传后会自动填充，上传路径: POST /api/profile/avatar (multipart/form-data)
     'https://github.com/demouser',
     'https://linkedin.com/in/demouser',
     'demo@example.com',

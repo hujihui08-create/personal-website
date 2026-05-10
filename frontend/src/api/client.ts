@@ -13,12 +13,12 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
+
     // 如果不是 FormData，才设置 Content-Type 为 application/json
     if (!(config.data instanceof FormData)) {
       config.headers['Content-Type'] = 'application/json'
     }
-    
+
     return config
   },
   (error) => {
@@ -30,8 +30,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-      window.location.href = '/admin/login'
+      const url = error.config?.url || ''
+      if (!url.includes('/auth/login')) {
+        useAuthStore.getState().logout()
+        window.location.href = '/admin/login'
+      }
     }
     return Promise.reject(error)
   }
