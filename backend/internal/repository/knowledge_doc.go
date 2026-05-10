@@ -62,8 +62,9 @@ func (r *KnowledgeDocRepository) FindSimilarByEmbedding(embedding []float32, top
 
 	scores := make([]docWithScore, 0, len(allDocs))
 	for _, doc := range allDocs {
-		if len(doc.Embedding) > 0 {
-			score := cosineSimilarity(embedding, doc.Embedding)
+		embSlice := doc.Embedding.Slice()
+		if len(embSlice) > 0 {
+			score := cosineSimilarity(embedding, embSlice)
 			scores = append(scores, docWithScore{doc, score})
 		}
 	}

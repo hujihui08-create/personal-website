@@ -140,6 +140,20 @@ func (s *ChatService) ChatStream(
 			return
 		}
 
+		if llmConfig.APIKey == "" {
+			log.Printf("[ChatService] LLM API Key 未配置")
+			respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: "AI 助手功能暂未开启，请在管理后台配置 LLM API Key 后再试。"}
+			assistantMsg := models.ChatMessage{
+				Role:      "assistant",
+				Content:   "AI 助手功能暂未开启，请在管理后台配置 LLM API Key 后再试。",
+				Timestamp: time.Now(),
+			}
+			session.Messages = append(session.Messages, assistantMsg)
+			s.chatSessionRepo.Update(session)
+			respChan <- StreamMessage{Type: StreamMessageTypeDone, SessionID: session.SessionID}
+			return
+		}
+
 		log.Printf("[ChatService] 开始检索相关文档，用户问题: %s", userMessage)
 		relevantDocs, err := s.ragService.RetrieveRelevantDocs(userMessage, 3)
 		if err != nil {
@@ -191,7 +205,10 @@ func (s *ChatService) ChatStream(
 			MaxTokens:   llmConfig.MaxTokens,
 		}
 
-		stream, err := client.CreateChatCompletionStream(ctx, req)
+		llmCtx, llmCancel := context.WithTimeout(ctx, 60*time.Second)
+		defer llmCancel()
+
+		stream, err := client.CreateChatCompletionStream(llmCtx, req)
 		if err != nil {
 			log.Printf("[ChatService] LLM 调用失败: %v", err)
 			apiKeyPreview := llmConfig.APIKey

@@ -130,42 +130,52 @@ func main() {
 func initDefaultConfigs(db *gorm.DB) error {
 	configRepo := repository.NewConfigRepository(db)
 
-	// 从环境变量读取配置，如果没有则使用默认值
-	getEnv := func(key, defaultValue string) string {
-		if v := os.Getenv(key); v != "" {
+	// 从环境变量读取配置（仅当显式设置时使用）
+	getEnv := func(key string) string {
+		v, exists := os.LookupEnv(key)
+		if exists {
 			return v
 		}
-		return defaultValue
-	}
-
-	// 先删除所有旧的配置
-	log.Println("Clearing old configurations...")
-	if err := db.Exec("DELETE FROM configs").Error; err != nil {
-		log.Printf("Warning: Failed to clear old configs: %v", err)
+		return ""
 	}
 
 	defaultConfigs := []struct {
 		key      string
 		value    string
+		envVar   string
 		category string
 	}{
-		{"llm.provider", getEnv("LLM_PROVIDER", "openai"), "llm"},
-		{"llm.api_key", getEnv("LLM_API_KEY", ""), "llm"},
-		{"llm.base_url", getEnv("LLM_BASE_URL", ""), "llm"},
-		{"llm.model", getEnv("LLM_MODEL", "deepseek-chat"), "llm"},
-		{"llm.temperature", getEnv("LLM_TEMPERATURE", "0.7"), "llm"},
-		{"llm.max_tokens", getEnv("LLM_MAX_TOKENS", "2000"), "llm"},
-		{"embedding.provider", getEnv("LLM_PROVIDER", "openai"), "embedding"},
-		{"embedding.api_key", getEnv("LLM_API_KEY", ""), "embedding"},
-		{"embedding.base_url", getEnv("LLM_BASE_URL", ""), "embedding"},
-		{"embedding.model", getEnv("LLM_EMBEDDING_MODEL", "text-embedding-3-small"), "embedding"},
+		{"llm.provider", "openai", "LLM_PROVIDER", "llm"},
+		{"llm.api_key", "", "LLM_API_KEY", "llm"},
+		{"llm.base_url", "", "LLM_BASE_URL", "llm"},
+		{"llm.model", "deepseek-chat", "LLM_MODEL", "llm"},
+		{"llm.temperature", "0.7", "LLM_TEMPERATURE", "llm"},
+		{"llm.max_tokens", "2000", "LLM_MAX_TOKENS", "llm"},
+		{"embedding.provider", "openai", "LLM_PROVIDER", "embedding"},
+		{"embedding.api_key", "", "LLM_API_KEY", "embedding"},
+		{"embedding.base_url", "", "LLM_BASE_URL", "embedding"},
+		{"embedding.model", "text-embedding-3-small", "LLM_EMBEDDING_MODEL", "embedding"},
 	}
 
 	for _, cfg := range defaultConfigs {
-		if err := configRepo.Upsert(cfg.key, cfg.value, cfg.category); err != nil {
+		// 检查数据库中是否已有该配置
+		existing, err := configRepo.FindByKey(cfg.key)
+		if err == nil && existing != nil && existing.Value != "" {
+			// 配置已存在且不为空，跳过
+			log.Printf("Config %s already exists, skipping", cfg.key)
+			continue
+		}
+
+		// 如果环境变量显式设置，优先使用环境变量值
+		value := getEnv(cfg.envVar)
+		if value == "" {
+			value = cfg.value
+		}
+
+		if err := configRepo.Upsert(cfg.key, value, cfg.category); err != nil {
 			log.Printf("Warning: Failed to upsert config %s: %v", cfg.key, err)
 		} else {
-			log.Printf("Config %s set to: %s", cfg.key, cfg.value)
+			log.Printf("Config %s set to: %s", cfg.key, value)
 		}
 	}
 

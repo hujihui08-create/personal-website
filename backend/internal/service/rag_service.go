@@ -7,6 +7,8 @@ import (
 
 	"portfolio-backend/internal/model"
 	"portfolio-backend/internal/repository"
+
+	"github.com/pgvector/pgvector-go"
 )
 
 type RAGService struct {
@@ -88,17 +90,17 @@ func (s *RAGService) UploadDocument(filename string, file multipart.File) error 
 
 	successCount := 0
 	for i, chunk := range chunks {
-		embedding, err := s.embeddingService.CreateEmbedding(chunk)
+		embeddingVec, err := s.embeddingService.CreateEmbedding(chunk)
 		if err != nil {
 			println("[RAGService] 生成 embedding 失败:", err.Error())
 			// 即使 embedding 失败，也保存文档（使用零值 1536 维向量，以匹配 PostgreSQL vector(1536) 列类型）
-			embedding = make(model.Embedding, 1536)
+			embeddingVec = make([]float32, 1536)
 		}
 
 		doc := &model.KnowledgeDoc{
 			Filename:  filename,
 			Content:   chunk,
-			Embedding: embedding,
+			Embedding: pgvector.NewVector(embeddingVec),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -162,16 +164,16 @@ func (s *RAGService) ReindexAll() error {
 
 		// 为每个分块生成 embedding 并保存
 		for i, chunk := range newChunks {
-			embedding, err := s.embeddingService.CreateEmbedding(chunk)
+			embeddingVec, err := s.embeddingService.CreateEmbedding(chunk)
 			if err != nil {
 				log.Printf("[RAGService]   生成 embedding 失败 (分块 %d): %v", i+1, err)
-				embedding = make(model.Embedding, 1536)
+				embeddingVec = make([]float32, 1536)
 			}
 
 			doc := &model.KnowledgeDoc{
 				Filename:  filename,
 				Content:   chunk,
-				Embedding: embedding,
+				Embedding: pgvector.NewVector(embeddingVec),
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
