@@ -55,8 +55,12 @@ export const AgentPage = () => {
   }, [])
 
   const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    const container = messagesContainerRef.current
+    if (!container) return
+    const threshold = 100
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+    if (isNearBottom) {
+      container.scrollTop = container.scrollHeight
     }
   }
 
@@ -192,10 +196,10 @@ export const AgentPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <main className="max-w-4xl mx-auto px-[var(--space-md)] py-[var(--space-md)] md:py-[var(--space-xl)] flex flex-col" style={{ minHeight: 'calc(100vh - 16rem)' }}>
+    <div className="h-[calc(100dvh-10rem)] md:h-[calc(100dvh-4rem)] bg-white">
+      <main className="max-w-4xl mx-auto h-full px-[var(--space-md)] py-[var(--space-md)] md:py-[var(--space-xl)] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-[var(--space-md)]">
+        <div className="flex-shrink-0 flex items-center justify-between mb-[var(--space-md)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[var(--radius-full)] bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
@@ -219,7 +223,7 @@ export const AgentPage = () => {
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto mb-[var(--space-md)] space-y-[var(--space-md)] pr-2">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto min-h-0 mb-[var(--space-md)] space-y-[var(--space-md)] pr-2">
           {messages.length === 0 && (
             <div className="text-center py-[var(--space-3xl)]">
               <div className="w-20 h-20 rounded-[var(--radius-full)] bg-[var(--color-accent-soft)] flex items-center justify-center mx-auto mb-[var(--space-lg)]">
@@ -302,7 +306,7 @@ export const AgentPage = () => {
         </div>
 
         {/* Input */}
-        <div className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-2 md:p-3">
+        <div className="flex-shrink-0 bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-2 md:p-3">
           <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={handleVoiceToggle}
