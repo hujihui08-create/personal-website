@@ -59,6 +59,9 @@ func main() {
 		&model.Notification{},
 		&model.ChatSession{},
 		&model.Config{},
+		&model.KnowledgeDoc{},
+		&model.AgentDebugLog{},
+		&model.AgentPrompt{},
 	); err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}

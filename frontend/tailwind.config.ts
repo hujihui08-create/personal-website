@@ -2,10 +2,7 @@ import type { Config } from 'tailwindcss'
 
 export default {
   darkMode: ['class'],
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -36,40 +33,41 @@ export default {
         info: 'var(--color-info)',
       },
       spacing: {
-        'xs': 'var(--space-xs)',
-        'sm': 'var(--space-sm)',
-        'md': 'var(--space-md)',
-        'lg': 'var(--space-lg)',
-        'xl': 'var(--space-xl)',
+        xs: 'var(--space-xs)',
+        sm: 'var(--space-sm)',
+        md: 'var(--space-md)',
+        lg: 'var(--space-lg)',
+        xl: 'var(--space-xl)',
         '2xl': 'var(--space-2xl)',
         '3xl': 'var(--space-3xl)',
       },
       borderRadius: {
-        'sm': 'var(--radius-sm)',
-        'md': 'var(--radius-md)',
-        'lg': 'var(--radius-lg)',
-        'xl': 'var(--radius-xl)',
-        'full': 'var(--radius-full)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        full: 'var(--radius-full)',
       },
       boxShadow: {
+        'card-hero': 'var(--shadow-card-hero)',
         'card-hover': 'var(--shadow-card-hover)',
         'card-strong': 'var(--shadow-card-strong)',
         'focus-ring': 'var(--shadow-focus-ring)',
       },
       transitionDuration: {
-        'fast': 'var(--duration-fast)',
-        'base': 'var(--duration-base)',
-        'slow': 'var(--duration-slow)',
+        fast: 'var(--duration-fast)',
+        base: 'var(--duration-base)',
+        slow: 'var(--duration-slow)',
       },
       transitionTimingFunction: {
-        'standard': 'var(--easing-standard)',
+        standard: 'var(--easing-standard)',
       },
       zIndex: {
-        'base': 'var(--z-base)',
-        'nav': 'var(--z-nav)',
-        'dropdown': 'var(--z-dropdown)',
-        'modal': 'var(--z-modal)',
-        'toast': 'var(--z-toast)',
+        base: 'var(--z-base)',
+        nav: 'var(--z-nav)',
+        dropdown: 'var(--z-dropdown)',
+        modal: 'var(--z-modal)',
+        toast: 'var(--z-toast)',
       },
     },
   },

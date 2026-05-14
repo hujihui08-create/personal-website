@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
 import { Navbar } from '@/components/Navbar'
 import { MobileTabBar } from '@/components/MobileTabBar'
@@ -19,6 +19,8 @@ import NotificationManagePage from '@/pages/admin/NotificationManagePage'
 import ScheduleManagePage from '@/pages/admin/ScheduleManagePage'
 import KnowledgeManagePage from '@/pages/admin/KnowledgeManagePage'
 import SettingsPage from '@/pages/admin/SettingsPage'
+import AgentDebugPage from '@/pages/admin/agent-debug'
+import AgentPromptsPage from '@/pages/admin/agent-prompts'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -60,11 +62,11 @@ function App() {
       <div className={showNavigation ? 'pt-16 pb-24 md:pb-0' : ''}>
         <main id="main-content">
           <Routes>
-				<Route path="/" element={<HomePage />} />
-				<Route path="/projects" element={<ProjectsPage />} />
-				<Route path="/projects/:id" element={<ProjectDetailPage />} />
-				<Route path="/agent" element={<AgentPage />} />
-				<Route path="/booking" element={<BookingPage />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:id" element={<ProjectDetailPage />} />
+            <Route path="/agent" element={<AgentPage />} />
+            <Route path="/booking" element={<BookingPage />} />
             <Route path="/admin/login" element={<LoginPage />} />
             <Route
               path="/admin/dashboard"
@@ -152,6 +154,26 @@ function App() {
                 <ProtectedRoute>
                   <AdminLayout>
                     <SettingsPage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/agent/debug"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AgentDebugPage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/agent/prompts"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AgentPromptsPage />
                   </AdminLayout>
                 </ProtectedRoute>
               }

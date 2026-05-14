@@ -8,7 +8,11 @@ interface HeroCardProps {
   isLoading?: boolean
 }
 
-const Skeleton = ({ className }: { className?: string }) => (
+interface SkeletonProps {
+  className?: string
+}
+
+const Skeleton = ({ className }: SkeletonProps) => (
   <div
     className={`animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] ${className ?? ''}`}
   />
@@ -47,7 +51,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               <img
                 src={profile.avatarUrl}
                 alt={`${profile.name}的头像`}
-                className="w-full h-full object-cover transition-transform duration-[var(--duration-slow)] ease-standard hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-[var(--duration-slow)] ease-[var(--easing-standard)] hover:scale-110"
               />
             ) : (
               <div className="w-full h-full bg-[var(--color-accent)] flex items-center justify-center text-[var(--color-bg)] text-3xl font-semibold">
@@ -88,7 +92,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
                 transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="inline-flex items-center px-3 py-1 text-sm font-medium text-[var(--color-secondary)] bg-[var(--color-bg-secondary)] rounded-[var(--radius-full)] cursor-default
-                  hover:bg-[#EEEEEE] transition-colors duration-[var(--duration-base)] ease-standard"
+                  hover:bg-[#EEEEEE] transition-colors duration-[var(--duration-base)] ease-[var(--easing-standard)]"
               >
                 {skill}
               </motion.span>
@@ -113,7 +117,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               transition={{ delay: 0.5, duration: 0.3 }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
             >
               <Github className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm truncate max-w-48">{profile.githubUrl}</span>
@@ -129,7 +133,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               transition={{ delay: 0.55, duration: 0.3 }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
             >
               <ExternalLink className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm truncate max-w-48">{profile.linkedinUrl}</span>
@@ -143,7 +147,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               transition={{ delay: 0.6, duration: 0.3 }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard"
+              className="flex items-center gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
             >
               <Mail className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm truncate max-w-48">{profile.email}</span>
@@ -167,7 +171,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               whileHover={{ y: -2, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="inline-flex items-center gap-2 h-11 px-[var(--space-md)] bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-sm)] text-sm font-medium
-                hover:bg-[var(--color-secondary)] transition-all duration-[var(--duration-base)] ease-standard
+                hover:bg-[var(--color-secondary)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
             >
               <Download className="w-4 h-4" />
@@ -179,7 +183,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
             whileHover={{ y: -2, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="inline-flex items-center gap-2 h-11 px-[var(--space-md)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
-              hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard
+              hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
               focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
           >
             <Eye className="w-4 h-4" />
@@ -190,7 +194,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
             whileHover={{ y: -2, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="inline-flex items-center gap-2 h-11 px-[var(--space-md)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
-              hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-standard
+              hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
               focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
           >
             <Calendar className="w-4 h-4" />
@@ -213,7 +217,10 @@ const HeroCardSkeleton = () => (
       <Skeleton className="w-full max-w-lg h-16 mb-[var(--space-lg)]" />
       <div className="flex flex-wrap justify-center gap-2 mb-[var(--space-lg)]">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="w-16 h-7 rounded-[var(--radius-full)] bg-[var(--color-bg-secondary)]" />
+          <Skeleton
+            key={i}
+            className="w-16 h-7 rounded-[var(--radius-full)] bg-[var(--color-bg-secondary)]"
+          />
         ))}
       </div>
       <div className="flex items-center gap-[var(--space-md)] mb-[var(--space-lg)]">

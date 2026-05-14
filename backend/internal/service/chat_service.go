@@ -19,6 +19,8 @@ type ChatService struct {
 	ragService      *RAGService
 	configService   *ConfigService
 	redisClient     *redis.Client
+	profileRepo     *repository.ProfileRepository
+	projectRepo     *repository.ProjectRepository
 }
 
 func NewChatService(
@@ -26,12 +28,16 @@ func NewChatService(
 	ragService *RAGService,
 	configService *ConfigService,
 	redisClient *redis.Client,
+	profileRepo *repository.ProfileRepository,
+	projectRepo *repository.ProjectRepository,
 ) *ChatService {
 	return &ChatService{
 		chatSessionRepo: chatSessionRepo,
 		ragService:      ragService,
 		configService:   configService,
 		redisClient:     redisClient,
+		profileRepo:     profileRepo,
+		projectRepo:     projectRepo,
 	}
 }
 
@@ -293,6 +299,18 @@ func (s *ChatService) buildSystemPrompt(contexts []string) string {
 	sb.WriteString("你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈和项目的问题。\n")
 	sb.WriteString("当用户询问\"你是谁\"或类似问题时，请回答：\"我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历等。\"\n\n")
 
+	profile := s.buildProfileSection()
+	if profile != "" {
+		sb.WriteString(profile)
+		sb.WriteString("\n")
+	}
+
+	projects := s.buildProjectsSection()
+	if projects != "" {
+		sb.WriteString(projects)
+		sb.WriteString("\n")
+	}
+
 	if len(contexts) > 0 {
 		sb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
 		for i, ctx := range contexts {
@@ -309,6 +327,80 @@ func (s *ChatService) buildSystemPrompt(contexts []string) string {
 	sb.WriteString("2. 不要使用 - 列表\n")
 	sb.WriteString("3. 如需列出要点，请使用数字排序（1. 2. 3. 等）\n")
 	sb.WriteString("4. 如果用户提出与胡冀徽（个人背景、工作经验、技术栈、项目经历、工作履历等）完全不相关的问题，请礼貌拒绝回答，并引导用户询问与胡冀徽相关的问题。例如回复：\"我只负责解答关于胡冀徽的问题，请询问与胡冀徽工作经历、项目经验等相关的内容。\"\n")
+	return sb.String()
+}
+
+func (s *ChatService) buildProfileSection() string {
+	if s.profileRepo == nil {
+		return ""
+	}
+
+	profile, err := s.profileRepo.GetProfile()
+	if err != nil {
+		log.Printf("[ChatService] 获取 Profile 失败: %v", err)
+		return ""
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString("以下是胡冀徽的个人联系方式信息，当用户询问联系方式时请基于此回答：\n")
+	sb.WriteString(fmt.Sprintf("姓名: %s\n", profile.Name))
+	if profile.Title != "" {
+		sb.WriteString(fmt.Sprintf("职位: %s\n", profile.Title))
+	}
+	if profile.Email != "" {
+		sb.WriteString(fmt.Sprintf("邮箱: %s\n", profile.Email))
+	}
+	if profile.GithubURL != "" {
+		sb.WriteString(fmt.Sprintf("GitHub: %s\n", profile.GithubURL))
+	}
+	if profile.LinkedinURL != "" {
+		sb.WriteString(fmt.Sprintf("LinkedIn: %s\n", profile.LinkedinURL))
+	}
+	sb.WriteString("\n")
+
+	return sb.String()
+}
+
+func (s *ChatService) buildProjectsSection() string {
+	if s.projectRepo == nil {
+		return ""
+	}
+
+	projects, err := s.projectRepo.ListFeatured(100)
+	if err != nil {
+		log.Printf("[ChatService] 获取 Projects 失败: %v", err)
+		return ""
+	}
+
+	if len(projects) == 0 {
+		return ""
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString(fmt.Sprintf("以下是胡冀徽的项目列表（共 %d 个），当用户询问项目相关问题时请基于此回答：\n", len(projects)))
+	for i, p := range projects {
+		sb.WriteString(fmt.Sprintf("%d. 项目名称: %s\n", i+1, p.Name))
+		sb.WriteString(fmt.Sprintf("   类型: %s\n", p.Type))
+		sb.WriteString(fmt.Sprintf("   摘要: %s\n", p.Summary))
+		if len(p.Tags) > 0 {
+			tags := ""
+			for j, t := range p.Tags {
+				if j > 0 {
+					tags += ", "
+				}
+				tags += t
+			}
+			sb.WriteString(fmt.Sprintf("   标签: %s\n", tags))
+		}
+		if p.GitHubURL != "" {
+			sb.WriteString(fmt.Sprintf("   GitHub: %s\n", p.GitHubURL))
+		}
+		if p.DemoURL != "" {
+			sb.WriteString(fmt.Sprintf("   Demo: %s\n", p.DemoURL))
+		}
+		sb.WriteString("\n")
+	}
+
 	return sb.String()
 }
 

@@ -94,12 +94,8 @@ export const SettingsPage = () => {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">
-            系统设置
-          </h1>
-          <p className="text-[var(--color-secondary)] mt-1">
-            配置AI助手的模型参数和API
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">系统设置</h1>
+          <p className="text-[var(--color-secondary)] mt-1">配置AI助手的模型参数和API</p>
         </div>
       </motion.div>
 
@@ -113,12 +109,8 @@ export const SettingsPage = () => {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-primary)]">
-                LLM 配置
-              </h2>
-              <p className="text-sm text-[var(--color-secondary)] mt-1">
-                配置大语言模型的API参数
-              </p>
+              <h2 className="text-lg font-semibold text-[var(--color-primary)]">LLM 配置</h2>
+              <p className="text-sm text-[var(--color-secondary)] mt-1">配置大语言模型的API参数</p>
             </div>
           </div>
 
@@ -130,7 +122,7 @@ export const SettingsPage = () => {
               <select
                 value={llmConfig.provider}
                 onChange={(e) => setLlmConfig({ ...llmConfig, provider: e.target.value })}
-                className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+                className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-colors appearance-none cursor-pointer disabled:border-[var(--color-border-light)] disabled:bg-[var(--color-bg-secondary)] disabled:text-[var(--color-secondary)] disabled:cursor-not-allowed"
                 disabled={llmLoading}
               >
                 <option value="">请选择</option>
@@ -195,7 +187,9 @@ export const SettingsPage = () => {
                   min="0"
                   max="2"
                   value={llmConfig.temperature}
-                  onChange={(e) => setLlmConfig({ ...llmConfig, temperature: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    setLlmConfig({ ...llmConfig, temperature: parseFloat(e.target.value) })
+                  }
                   className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                   disabled={llmLoading}
                 />
@@ -209,7 +203,9 @@ export const SettingsPage = () => {
                   type="number"
                   min="100"
                   value={llmConfig.max_tokens}
-                  onChange={(e) => setLlmConfig({ ...llmConfig, max_tokens: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setLlmConfig({ ...llmConfig, max_tokens: parseInt(e.target.value) })
+                  }
                   className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                   disabled={llmLoading}
                 />
@@ -242,9 +238,7 @@ export const SettingsPage = () => {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--color-primary)]">
-                Embedding 配置
-              </h2>
+              <h2 className="text-lg font-semibold text-[var(--color-primary)]">Embedding 配置</h2>
               <p className="text-sm text-[var(--color-secondary)] mt-1">
                 配置向量嵌入模型的API参数
               </p>
@@ -258,8 +252,10 @@ export const SettingsPage = () => {
               </label>
               <select
                 value={embeddingConfig.provider}
-                onChange={(e) => setEmbeddingConfig({ ...embeddingConfig, provider: e.target.value })}
-                className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+                onChange={(e) =>
+                  setEmbeddingConfig({ ...embeddingConfig, provider: e.target.value })
+                }
+                className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-colors appearance-none cursor-pointer disabled:border-[var(--color-border-light)] disabled:bg-[var(--color-bg-secondary)] disabled:text-[var(--color-secondary)] disabled:cursor-not-allowed"
                 disabled={embeddingLoading}
               >
                 <option value="">请选择</option>
@@ -278,7 +274,9 @@ export const SettingsPage = () => {
               <input
                 type="password"
                 value={embeddingConfig.api_key}
-                onChange={(e) => setEmbeddingConfig({ ...embeddingConfig, api_key: e.target.value })}
+                onChange={(e) =>
+                  setEmbeddingConfig({ ...embeddingConfig, api_key: e.target.value })
+                }
                 placeholder="请输入API Key"
                 className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                 disabled={embeddingLoading}
@@ -292,7 +290,9 @@ export const SettingsPage = () => {
               <input
                 type="text"
                 value={embeddingConfig.base_url}
-                onChange={(e) => setEmbeddingConfig({ ...embeddingConfig, base_url: e.target.value })}
+                onChange={(e) =>
+                  setEmbeddingConfig({ ...embeddingConfig, base_url: e.target.value })
+                }
                 placeholder="https://api.openai.com/v1"
                 className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                 disabled={embeddingLoading}

@@ -28,6 +28,8 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	chatSessionRepo := repository.NewChatSessionRepository(db)
 	knowledgeDocRepo := repository.NewKnowledgeDocRepository(db)
 	configRepo := repository.NewConfigRepository(db)
+	agentDebugLogRepo := repository.NewAgentDebugLogRepo(db)
+	agentPromptRepo := repository.NewAgentPromptRepo(db)
 
 	// --- Services ---
 	emailService := service.NewEmailService(cfg.Email)
@@ -43,7 +45,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configService := service.NewConfigService(configRepo)
 	embeddingService := service.NewEmbeddingService(configService)
 	ragService := service.NewRAGService(knowledgeDocRepo, documentParser, textSplitter, embeddingService)
-	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient)
+	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo)
+	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo)
+	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
@@ -56,6 +60,8 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	agentHandler := handler.NewAgentHandler(chatService)
 	knowledgeHandler := handler.NewKnowledgeHandler(ragService)
 	configHandler := handler.NewConfigHandler(configService)
+	agentDebugHandler := handler.NewAgentDebugHandler(agentDebugService)
+	agentPromptHandler := handler.NewAgentPromptHandler(agentPromptService, agentDebugService)
 
 	api := r.Group("/api")
 	{
@@ -197,6 +203,29 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 		api.POST("/agent/chat", agentHandler.Chat)
 		api.GET("/agent/history", agentHandler.GetHistory)
 		api.POST("/agent/clear", agentHandler.ClearSession)
+
+		// Agent Debug (protected)
+		agentDebug := api.Group("/agent/debug")
+		agentDebug.Use(middleware.AuthMiddleware(authService))
+		{
+			agentDebug.POST("", agentDebugHandler.DebugChat)
+			agentDebug.GET("/history", agentDebugHandler.GetDebugHistory)
+			agentDebug.DELETE("/history", agentDebugHandler.DeleteDebugHistory)
+			agentDebug.GET("/retrieval", agentDebugHandler.TestRetrieval)
+		}
+
+		// Agent Prompts (protected)
+		agentPrompts := api.Group("/agent/prompts")
+		agentPrompts.Use(middleware.AuthMiddleware(authService))
+		{
+			agentPrompts.GET("", agentPromptHandler.ListPrompts)
+			agentPrompts.GET("/:id", agentPromptHandler.GetPrompt)
+			agentPrompts.POST("", agentPromptHandler.CreatePrompt)
+			agentPrompts.PUT("/:id", agentPromptHandler.UpdatePrompt)
+			agentPrompts.DELETE("/:id", agentPromptHandler.DeletePrompt)
+			agentPrompts.PUT("/:id/default", agentPromptHandler.SetDefaultPrompt)
+			agentPrompts.POST("/:id/test", agentPromptHandler.TestWithPrompt)
+		}
 
 		// Knowledge (protected)
 		knowledgeProtected := api.Group("/knowledge")

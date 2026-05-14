@@ -57,7 +57,10 @@ export const BookingManagePage = () => {
     loadBookings()
   }, [page, statusFilter, searchQuery])
 
-  const handleStatusUpdate = async (bookingId: number, status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled') => {
+  const handleStatusUpdate = async (
+    bookingId: number,
+    status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled'
+  ) => {
     try {
       await bookingApi.updateBookingStatus(bookingId, {
         status,
@@ -101,9 +104,7 @@ export const BookingManagePage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-[var(--color-primary)]">预约管理</h1>
-            <p className="text-sm text-[var(--color-secondary)] mt-1">
-              管理所有面试预约
-            </p>
+            <p className="text-sm text-[var(--color-secondary)] mt-1">管理所有面试预约</p>
           </div>
         </div>
 
@@ -126,7 +127,7 @@ export const BookingManagePage = () => {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="px-4 py-2 border border-[var(--color-border-light)] rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            className="h-10 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-colors appearance-none cursor-pointer"
           >
             <option value="">全部状态</option>
             <option value="pending">待确认</option>
@@ -143,9 +144,7 @@ export const BookingManagePage = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-accent)]"></div>
             </div>
           ) : bookings.length === 0 ? (
-            <div className="text-center py-12 text-[var(--color-secondary)]">
-              暂无预约记录
-            </div>
+            <div className="text-center py-12 text-[var(--color-secondary)]">暂无预约记录</div>
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -207,7 +206,9 @@ export const BookingManagePage = () => {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusColors[booking.status]}`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusColors[booking.status]}`}
+                          >
                             {statusLabels[booking.status]}
                           </span>
                           {booking.reject_reason && (
@@ -293,12 +294,8 @@ export const BookingManagePage = () => {
         <Portal>
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-[var(--radius-xl)] p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
-                拒绝预约
-              </h3>
-              <p className="text-sm text-[var(--color-secondary)] mb-4">
-                请输入拒绝原因（可选）
-              </p>
+              <h3 className="text-lg font-semibold text-[var(--color-primary)] mb-4">拒绝预约</h3>
+              <p className="text-sm text-[var(--color-secondary)] mb-4">请输入拒绝原因（可选）</p>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}

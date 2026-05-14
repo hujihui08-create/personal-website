@@ -1,32 +1,49 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, User, Briefcase, FolderOpen, Calendar, Clock, LogOut, Bell, Brain, Settings } from 'lucide-react'
+import {
+  Menu,
+  X,
+  Home,
+  User,
+  Briefcase,
+  FolderOpen,
+  Calendar,
+  Clock,
+  LogOut,
+  Bell,
+  Brain,
+  Settings,
+  Bug,
+  FileText,
+} from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useLocation } from 'react-router-dom'
 import { notificationsApi } from '@/api/notifications'
 
 interface AdminLayoutProps {
-	children: React.ReactNode
+  children: React.ReactNode
 }
 
 interface NavItem {
-	key: string
-	label: string
-	path: string
-	icon: React.ComponentType<{ className?: string }>
+  key: string
+  label: string
+  path: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 const navItems: NavItem[] = [
-	{ key: 'dashboard', label: '仪表盘', path: '/admin/dashboard', icon: Home },
-	{ key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
-	{ key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
-	{ key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
-	{ key: 'knowledge', label: '知识库管理', path: '/admin/knowledge', icon: Brain },
-	{ key: 'settings', label: '系统设置', path: '/admin/settings', icon: Settings },
-	{ key: 'bookings', label: '预约管理', path: '/admin/bookings', icon: Calendar },
-	{ key: 'notifications', label: '通知中心', path: '/admin/notifications', icon: Bell },
-	{ key: 'schedule', label: '时段设置', path: '/admin/schedule', icon: Clock },
+  { key: 'dashboard', label: '仪表盘', path: '/admin/dashboard', icon: Home },
+  { key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
+  { key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
+  { key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
+  { key: 'knowledge', label: '知识库管理', path: '/admin/knowledge', icon: Brain },
+  { key: 'agent-debug', label: 'Agent 调试', path: '/admin/agent/debug', icon: Bug },
+  { key: 'agent-prompts', label: 'Prompt 管理', path: '/admin/agent/prompts', icon: FileText },
+  { key: 'settings', label: '系统设置', path: '/admin/settings', icon: Settings },
+  { key: 'bookings', label: '预约管理', path: '/admin/bookings', icon: Calendar },
+  { key: 'notifications', label: '通知中心', path: '/admin/notifications', icon: Bell },
+  { key: 'schedule', label: '时段设置', path: '/admin/schedule', icon: Clock },
 ]
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
@@ -73,14 +90,17 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
               to={item.path}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`group flex items-center justify-between gap-[var(--space-sm)] px-[var(--space-md)] py-[var(--space-sm)] rounded-[var(--radius-md)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
-                ${active
-                  ? 'bg-[var(--color-accent)] text-[var(--color-bg)] shadow-sm'
-                  : 'text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)]'
+                ${
+                  active
+                    ? 'bg-[var(--color-accent)] text-[var(--color-bg)] shadow-sm'
+                    : 'text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)]'
                 }`}
               aria-current={active ? 'page' : undefined}
             >
               <div className="flex items-center gap-[var(--space-sm)]">
-                <Icon className={`w-5 h-5 transition-transform duration-[var(--duration-base)] ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
+                <Icon
+                  className={`w-5 h-5 transition-transform duration-[var(--duration-base)] ${active ? 'scale-110' : 'group-hover:scale-110'}`}
+                />
                 <span className="text-sm font-medium">{item.label}</span>
               </div>
               {showBadge && (
@@ -109,10 +129,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen bg-[var(--color-bg-tertiary)]">
       {/* Mobile header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[var(--color-bg)]/95 backdrop-blur-sm border-b border-[var(--color-border-light)] z-[var(--z-nav)] flex items-center justify-between px-[var(--space-md)]">
-        <Link
-          to="/admin/dashboard"
-          className="flex items-center gap-2"
-        >
+        <Link to="/admin/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center">
             <Home className="w-5 h-5 text-[var(--color-bg)]" />
           </div>
@@ -131,10 +148,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-[var(--color-bg)] border-r border-[var(--color-border-light)] z-[var(--z-nav)] shadow-sm">
         <div className="flex-1 flex flex-col">
           <div className="h-16 flex items-center px-[var(--space-md)] border-b border-[var(--color-border-light)]">
-            <Link
-              to="/admin/dashboard"
-              className="flex items-center gap-2"
-            >
+            <Link to="/admin/dashboard" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center">
                 <Home className="w-5 h-5 text-[var(--color-bg)]" />
               </div>

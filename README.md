@@ -4,22 +4,81 @@
 
 ## 技术栈
 
-### 前端
-- React 18.x + TypeScript 5.x
-- Vite 5.x
-- Tailwind CSS 3.x
-- shadcn/ui
-- Zustand（状态管理）
-- React Query（数据获取）
-- Framer Motion（动画）
+### 架构概览
 
-### 后端
-- Go 1.21+
-- Gin Web 框架
-- GORM（ORM）
-- PostgreSQL 15 + pgvector
-- Redis 7
-- MinIO（对象存储）
+```
+[用户浏览器]
+     ↓
+[Vite Dev Server / Nginx]    ← 静态资源服务
+     ↓
+[Gin API Server]             ← RESTful API（Go）
+     ↓                ↓                ↓
+[PostgreSQL]    [Redis]         [MinIO]
+  关系数据        缓存/会话       文件存储
+   + pgvector
+  向量检索
+```
+
+---
+
+### 🎨 前端 (`frontend/`)
+
+| 层级 | 技术 | 版本 | 用途 |
+|------|------|------|------|
+| **核心框架** | React | ^18.2.0 | UI 组件化构建 |
+| **开发语言** | TypeScript | ^5.3.3 | 类型安全的 JavaScript |
+| **构建工具** | Vite | ^5.0.11 | 开发服务器与生产构建 |
+| **路由** | React Router | ^6.21.0 | 前端路由与导航守卫 |
+| **状态管理** | Zustand | ^4.4.7 | 轻量全局状态（认证 token 等） |
+| **数据获取** | TanStack React Query | ^5.17.0 | 服务端数据缓存与同步 |
+| **HTTP 客户端** | Axios | ^1.16.0 | API 请求封装与拦截器 |
+| **动画引擎** | Framer Motion | ^11.0.0 | 页面过渡与交互动画 |
+| **图标库** | Lucide React | ^0.303.0 | 统一图标系统 |
+| **样式框架** | Tailwind CSS | ^3.4.1 | 原子化 CSS 工具类 |
+| **UI 工具** | class-variance-authority | ^0.7.0 | 组件变体管理 |
+| | clsx + tailwind-merge | — | 类名合并与冲突解决 |
+| **通知组件** | Sonner | ^1.3.1 | 全局 toast 通知 |
+| **单元测试** | Vitest + Testing Library | — | 组件与逻辑测试 |
+| **E2E 测试** | Playwright | ^1.59.1 | 端到端流程测试 |
+| **代码规范** | ESLint + Prettier | — | 代码质量与格式化 |
+
+### ⚙️ 后端 (`backend/`)
+
+| 层级 | 技术 | 版本 | 用途 |
+|------|------|------|------|
+| **开发语言** | Go | 1.25 | 高性能编译型语言 |
+| **Web 框架** | Gin | ^1.9.1 | HTTP 路由与中间件 |
+| **ORM** | GORM | ^1.31.1 | 数据库对象关系映射 |
+| **主数据库** | PostgreSQL 15 | — | 关系型数据存储 |
+| **向量数据库** | pgvector | ^0.3.0 | 向量检索（RAG 知识库） |
+| **数据库驱动** | lib/pq + pgx | — | PostgreSQL Go 驱动 |
+| **缓存** | Redis 7（go-redis v9） | — | 会话管理 / 缓存加速 |
+| **对象存储** | MinIO | ^7.0.66 | 文件与图片存储 |
+| **认证** | golang-jwt | ^5.2.0 | JWT Token 签发与验证 |
+| **AI 集成** | go-openai | ^1.41.2 | OpenAI API 调用（AI 助手） |
+| **文档解析** | unioffice | ^1.39.0 | Word 文档解析 |
+| | excelize | ^2.10.1 | Excel 文件读写 |
+| | ledongthuc/pdf | — | PDF 文件解析 |
+| **配置管理** | godotenv | ^1.5.1 | .env 环境变量加载 |
+| **CORS** | gin-contrib/cors | ^1.5.0 | 跨域资源共享 |
+
+### 🐳 基础设施与部署
+
+| 类别 | 技术 | 用途 |
+|------|------|------|
+| **容器化** | Docker + Docker Compose | 环境隔离与服务编排 |
+| **反向代理** | Nginx | 静态资源托管 + API 反向代理 |
+| **CI/CD** | GitHub Actions（计划中） | 自动构建与部署 |
+
+### 🔧 功能模块技术要点
+
+| 功能模块 | 涉及技术 | 关键实现 |
+|---------|---------|---------|
+| **个人展示** | React + Tailwind + Framer Motion | HeroCard 动画、响应式布局 |
+| **作品展示** | React Query + Zustand + MinIO | 分页列表、图片上传、分类筛选 |
+| **AI 助手** | go-openai + pgvector + WebSocket | RAG 检索增强、流式对话、知识库管理 |
+| **意向预约** | GORM + Redis + 邮件通知 | 时间段管理、冲突检测、状态流转 |
+| **管理后台** | AdminLayout + ProtectedRoute | 认证守卫、权限控制、CRUD 管理 |
 
 ## 项目结构
 

@@ -10,11 +10,19 @@ interface WorkExperienceTimelineProps {
   isLoading?: boolean
 }
 
-const Skeleton = ({ className }: { className?: string }) => (
+interface SkeletonProps {
+  className?: string
+}
+
+const Skeleton = ({ className }: SkeletonProps) => (
   <div
     className={`animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] ${className ?? ''}`}
   />
 )
+
+interface ExperienceCardProps {
+  experience: WorkExperience
+}
 
 const typeConfig = {
   study: {
@@ -37,13 +45,14 @@ const typeConfig = {
   },
 }
 
-const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
+const isValidExperienceType = (t: string): t is 'study' | 'internship' | 'work' => {
+  return ['study', 'internship', 'work'].includes(t)
+}
+
+const ExperienceCard = ({ experience }: ExperienceCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  // 兼容旧数据，默认处理为 work
-  let type: 'study' | 'internship' | 'work' = experience.type as any
-  if (!['study', 'internship', 'work'].includes(type)) {
-    type = 'work'
-  }
+  const rawType = experience.type ?? ''
+  const type: 'study' | 'internship' | 'work' = isValidExperienceType(rawType) ? rawType : 'work'
   const config = typeConfig[type]
   const Icon = config.icon
 
@@ -73,32 +82,34 @@ const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
       </motion.div>
 
       {/* Content Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
-          whileHover={{ y: -4, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)' }}
-          whileFocus={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)', borderColor: '#0066FF' }}
-          tabIndex={0}
-          className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-md)] sm:p-[var(--space-lg)]
-              transition-all duration-[var(--duration-base)] ease-standard
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: false, amount: 0.2 }}
+        transition={{ duration: 0.5, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
+        whileHover={{ y: -4, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)' }}
+        whileFocus={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)', borderColor: '#0066FF' }}
+        tabIndex={0}
+        className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-md)] sm:p-[var(--space-lg)]
+              transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
               hover:shadow-[var(--shadow-card-hover)] focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-card-hover)] outline-none cursor-pointer"
-        >
+      >
         {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {/* Time Chip */}
-                        <time className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-[var(--radius-full)] text-[var(--color-secondary)] bg-[var(--color-bg-secondary)] whitespace-nowrap">
-                            {dateRange}
-                        </time>
-                        {/* Type Chip */}
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-[var(--radius-full)] ${config.textColor} ${config.bgColor}`}>
-                            <Icon className="w-3 h-3" />
-                            {config.label}
-                        </span>
-                    </div>
-                </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Time Chip */}
+            <time className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-[var(--radius-full)] text-[var(--color-secondary)] bg-[var(--color-bg-secondary)] whitespace-nowrap">
+              {dateRange}
+            </time>
+            {/* Type Chip */}
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-[var(--radius-full)] ${config.textColor} ${config.bgColor}`}
+            >
+              <Icon className="w-3 h-3" />
+              {config.label}
+            </span>
+          </div>
+        </div>
 
         {/* Position & Company */}
         <h3 className="text-base sm:text-lg font-semibold text-[var(--color-primary)] mb-1">
@@ -109,36 +120,38 @@ const ExperienceCard = ({ experience }: { experience: WorkExperience }) => {
         </p>
 
         {/* Description - collapsed preview */}
-                {experience.description && (
-                    <>
-                        <div className="inline-block bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] px-[var(--space-md)] py-[var(--space-sm)]">
-                            <p className={`text-sm text-[var(--color-secondary)] leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
-                                {experience.description}
-                            </p>
-                        </div>
+        {experience.description && (
+          <>
+            <div className="inline-block bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] px-[var(--space-md)] py-[var(--space-sm)]">
+              <p
+                className={`text-sm text-[var(--color-secondary)] leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}
+              >
+                {experience.description}
+              </p>
+            </div>
 
-                        {/* Expand/Collapse Button */}
-                        {experience.description.length > 100 && (
-                            <button
-                                onClick={() => setIsExpanded(!isExpanded)}
-                                className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors duration-[var(--duration-fast)]"
-                                aria-expanded={isExpanded}
-                            >
-                                {isExpanded ? (
-                                    <>
-                                        <ChevronUp className="w-3.5 h-3.5" />
-                                        <span>收起详情</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <ChevronDown className="w-3.5 h-3.5" />
-                                        <span>展开查看详情</span>
-                                    </>
-                                )}
-                            </button>
-                        )}
-                    </>
+            {/* Expand/Collapse Button */}
+            {experience.description.length > 100 && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors duration-[var(--duration-fast)]"
+                aria-expanded={isExpanded}
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    <span>收起详情</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    <span>展开查看详情</span>
+                  </>
                 )}
+              </button>
+            )}
+          </>
+        )}
 
         {/* Related Projects */}
         {experience.projects && experience.projects.length > 0 && (
@@ -188,7 +201,10 @@ export const WorkExperienceTimeline = ({ experiences, isLoading }: WorkExperienc
       {/* Timeline */}
       <div className="relative">
         {/* Vertical Connection Line - 1px width */}
-        <div className="absolute left-[19px] sm:left-[23px] top-2 bottom-2 w-[1px] bg-[var(--color-border-light)]" aria-hidden="true" />
+        <div
+          className="absolute left-[19px] sm:left-[23px] top-2 bottom-2 w-[1px] bg-[var(--color-border-light)]"
+          aria-hidden="true"
+        />
 
         <ol className="space-y-[var(--space-lg)]">
           {sortedExperiences.map((experience) => (

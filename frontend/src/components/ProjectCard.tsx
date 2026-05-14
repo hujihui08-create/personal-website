@@ -29,7 +29,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
       whileHover={{ y: -4 }}
-      className="group relative bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-strong)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
+      className="group relative bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow-card-hover)] hover:shadow-[var(--shadow-card-strong)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
     >
       {/* Cover Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--color-bg-secondary)]">
@@ -48,7 +48,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
               src={project.coverImage}
               alt={project.name}
               loading="lazy"
-              className="relative z-10 w-full h-full object-contain transition-transform duration-[var(--duration-slow)] ease-standard group-hover:scale-110"
+              className="relative z-10 w-full h-full object-contain transition-transform duration-[var(--duration-slow)] ease-[var(--easing-standard)] group-hover:scale-110"
             />
           </>
         ) : (
@@ -58,12 +58,12 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-base)] ease-standard">
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-base)] ease-[var(--easing-standard)]">
           <div className="absolute bottom-0 left-0 right-0 p-[var(--space-md)]">
             <Link
               to={`/projects/${project.id}`}
               className="inline-flex items-center gap-2 h-10 px-[var(--space-md)] bg-[var(--color-accent)] text-white rounded-[var(--radius-sm)] text-sm font-medium
-								hover:bg-[var(--color-accent)]/90 transition-all duration-[var(--duration-base)] ease-standard
+								hover:bg-[var(--color-accent)]/90 transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]
 								focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
             >
               <Eye className="w-4 h-4" />
@@ -129,7 +129,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-standard"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
               aria-label="GitHub"
             >
               <Github className="w-4 h-4" />
@@ -140,7 +140,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
               href={project.demoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-standard"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
               aria-label="Demo"
             >
               <ExternalLink className="w-4 h-4" />

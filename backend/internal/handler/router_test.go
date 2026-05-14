@@ -40,6 +40,22 @@ var standardRoutes = []routeTest{
 	{method: "GET", path: "/api/agent/history?session_id=test", protected: false},
 	{method: "POST", path: "/api/agent/clear", body: `{"session_id":"test"}`, protected: false},
 
+	// Agent debug routes (protected)
+	{method: "POST", path: "/api/agent/debug", body: `{"message":"test"}`, protected: true},
+	{method: "GET", path: "/api/agent/debug/history?page=1&page_size=20", protected: true},
+	{method: "DELETE", path: "/api/agent/debug/history", protected: true},
+	{method: "DELETE", path: "/api/agent/debug/history?id=1", protected: true},
+	{method: "GET", path: "/api/agent/debug/retrieval?query=test&top_k=3", protected: true},
+
+	// Agent prompt routes (protected)
+	{method: "GET", path: "/api/agent/prompts?page=1&page_size=20", protected: true},
+	{method: "POST", path: "/api/agent/prompts", body: `{"agent_type":"profile","name":"Test","system_prompt":"Test"}`, protected: true},
+	{method: "GET", path: "/api/agent/prompts/1", protected: true},
+	{method: "PUT", path: "/api/agent/prompts/1", body: `{"name":"Updated"}`, protected: true},
+	{method: "DELETE", path: "/api/agent/prompts/1", protected: true},
+	{method: "PUT", path: "/api/agent/prompts/1/default", protected: true},
+	{method: "POST", path: "/api/agent/prompts/1/test", body: `{"message":"test"}`, protected: true},
+
 	// Protected routes
 	{method: "POST", path: "/api/auth/logout", body: `{}`, protected: true},
 	{method: "GET", path: "/api/auth/me", protected: true},
@@ -189,6 +205,29 @@ func setupTestRouter() *gin.Engine {
 		api.POST("/agent/chat", standardHandler)
 		api.GET("/agent/history", standardHandler)
 		api.POST("/agent/clear", standardHandler)
+
+		// Agent debug (protected)
+		agentDebugProtected := api.Group("/agent/debug")
+		agentDebugProtected.Use(middleware.AuthMiddleware(mockAuth))
+		{
+			agentDebugProtected.POST("", standardHandler)
+			agentDebugProtected.GET("/history", standardHandler)
+			agentDebugProtected.DELETE("/history", standardHandler)
+			agentDebugProtected.GET("/retrieval", standardHandler)
+		}
+
+		// Agent prompt management (protected)
+		agentPromptsProtected := api.Group("/agent/prompts")
+		agentPromptsProtected.Use(middleware.AuthMiddleware(mockAuth))
+		{
+			agentPromptsProtected.GET("", standardHandler)
+			agentPromptsProtected.POST("", standardHandler)
+			agentPromptsProtected.GET("/:id", standardHandler)
+			agentPromptsProtected.PUT("/:id", standardHandler)
+			agentPromptsProtected.DELETE("/:id", standardHandler)
+			agentPromptsProtected.PUT("/:id/default", standardHandler)
+			agentPromptsProtected.POST("/:id/test", standardHandler)
+		}
 
 		// Knowledge (protected)
 		knowledgeProtected := api.Group("/knowledge")

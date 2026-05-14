@@ -33,28 +33,28 @@ export interface Profile {
 }
 
 export interface Project {
-	id: number
-	name: string
-	type: 'enterprise' | 'personal'
-	startDate?: string
-	endDate?: string
-	summary: string
-	description: string
-	coverImage: string
-	images: string[]
-	githubUrl: string
-	demoUrl: string
-	tags: string[]
-	sortOrder: number
-	createdAt: string
-	updatedAt: string
+  id: number
+  name: string
+  type: 'enterprise' | 'personal'
+  startDate?: string
+  endDate?: string
+  summary: string
+  description: string
+  coverImage: string
+  images: string[]
+  githubUrl: string
+  demoUrl: string
+  tags: string[]
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PaginatedProjectsResponse {
-	items: Project[]
-	total: number
-	page: number
-	pageSize: number
+  items: Project[]
+  total: number
+  page: number
+  pageSize: number
 }
 
 export interface WorkExperience {
@@ -84,71 +84,71 @@ export interface Resume {
 }
 
 export interface ScheduleSetting {
-  id: number;
-  weekday: number;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  id: number
+  weekday: number
+  start_time: string
+  end_time: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface Slot {
-  time: string;
-  available: boolean;
-  reason?: string;
+  time: string
+  available: boolean
+  reason?: string
 }
 
 export interface SlotsResponse {
-  date: string;
-  weekday: string;
-  is_available: boolean;
-  message?: string;
-  slots?: Slot[];
+  date: string
+  weekday: string
+  is_available: boolean
+  message?: string
+  slots?: Slot[]
 }
 
 export interface Booking {
-  id: number;
-  company_name: string;
-  company_location: string;
-  booking_date: string;
-  booking_time: string;
-  contact_name: string;
-  contact_email: string;
-  contact_phone: string;
-  notes?: string;
-  status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled';
-  reject_reason?: string;
-  created_at: string;
-  updated_at: string;
+  id: number
+  company_name: string
+  company_location: string
+  booking_date: string
+  booking_time: string
+  contact_name: string
+  contact_email: string
+  contact_phone: string
+  notes?: string
+  status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled'
+  reject_reason?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ChatMessage {
-	id: string
-	role: 'user' | 'assistant'
-	content: string
-	timestamp: string
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
 }
 
 export interface Notification {
-	id: number
-	type: string
-	title: string
-	content: string
-	is_read: boolean
-	related_id?: number
-	created_at: string
+  id: number
+  type: string
+  title: string
+  content: string
+  is_read: boolean
+  related_id?: number
+  created_at: string
 }
 
 export interface PaginatedNotificationsResponse {
-	items: Notification[]
-	total: number
-	page: number
-	page_size: number
+  items: Notification[]
+  total: number
+  page: number
+  page_size: number
 }
 
 export interface UnreadCountResponse {
-	count: number
+  count: number
 }
 
 // === Agent Types ===
@@ -178,6 +178,93 @@ export interface AgentChatStreamChunk {
 
 export interface AgentClearRequest {
   session_id: string
+}
+
+// === Agent Debug Types ===
+
+export interface DebugChatRequest {
+  message: string
+  agent_type?: string
+  show_retrieval?: boolean
+  show_prompt?: boolean
+  custom_prompt_id?: number
+}
+
+export interface IntentClassification {
+  agent_type: string
+  confidence: number
+  method: string
+}
+
+export interface RetrievalInfo {
+  query: string
+  embedding_time_ms: number
+  retrieval_time_ms: number
+  document_count: number
+  documents: string[]
+}
+
+export interface GenerationStats {
+  model: string
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
+  response_time_ms: number
+  prompt_template?: string
+}
+
+export interface DebugInfo {
+  intent_classification: IntentClassification
+  retrieval: RetrievalInfo
+  generation: GenerationStats
+}
+
+export interface DebugChatResponse {
+  answer: string
+  debug_info: DebugInfo
+}
+
+export interface DebugHistoryItem {
+  id: number
+  query: string
+  answer: string
+  agent_type: string
+  created_at: string
+}
+
+// === Agent Prompt Types ===
+
+export interface PromptTemplate {
+  id: number
+  agent_type: string
+  name: string
+  system_prompt: string
+  context_template?: string
+  is_default: boolean
+  is_active: boolean
+  created_by?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PromptCreateRequest {
+  agent_type: string
+  name: string
+  system_prompt: string
+  context_template?: string
+}
+
+export interface PromptUpdateRequest {
+  name?: string
+  system_prompt?: string
+  context_template?: string
+  is_active?: boolean
+}
+
+export interface TestWithPromptRequest {
+  message: string
+  show_retrieval?: boolean
+  show_prompt?: boolean
 }
 
 // === Knowledge Types ===

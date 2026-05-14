@@ -45,6 +45,7 @@ secrets.*
 # ==================== 二进制文件和编译产物 ====================
 *.exe
 bin/
+backend/server-linux
 
 # 中文名称的文件夹和文件（开发临时文件）
 ktop*
@@ -54,17 +55,30 @@ ktop*/
 *.tmp
 *.temp
 .cache/
+tmp/
 update-config.sql
 update-deepseek-config.sql
+tmp_check_avatar.sql
+tmp_login.json
+tmp_update_avatar.sql
+scripts/check-avatar.sql
+scripts/check-env.sh
+scripts/fix-avatar.sql
+scripts/update-password.sql
+frontend/scripts/debug-routes.js
 
 # ==================== 敏感文档和规格 ====================
 portfolio-docs/
 个人简介网站_PRD.md
 COMPONENT_SPEC.md
 SERVER_DEPLOY_GUIDE.md
-.trae/rules/
-.trae/documents/
-.trae/specs/
+TECH_STACK.md
+prd_links.md
+prd_notification.md
+project_rules.md
+rag_architecture-1.png
+.trae/
+.husky/
 docs/
 DEPLOYMENT.md
 
@@ -87,6 +101,13 @@ setup-env.sh
 check_ports.sh
 generate_ssl.sh
 create_admin.sh
+sync_server.sh
+setup-ssh-wsl.sh
+setup-ssh.py
+check_website.sh
+install-docker.sh
+test_login.ps1
+_calc_size.ps1
 
 # ==================== 根目录 package.json/lock（前端专属） ====================
 /package.json
