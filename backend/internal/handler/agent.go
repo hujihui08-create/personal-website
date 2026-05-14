@@ -21,6 +21,7 @@ func NewAgentHandler(chatService *service.ChatService) *AgentHandler {
 type ChatRequest struct {
 	Message   string `json:"message" binding:"required"`
 	SessionID string `json:"session_id"`
+	VisitorID string `json:"visitor_id"`
 	Stream    bool   `json:"stream"`
 }
 
@@ -52,7 +53,7 @@ func (h *AgentHandler) Chat(c *gin.Context) {
 		return
 	}
 
-	session, err := h.chatService.GetOrCreateSession(req.SessionID)
+	session, err := h.chatService.GetOrCreateSession(req.SessionID, req.VisitorID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -131,9 +132,24 @@ func (h *AgentHandler) GetHistory(c *gin.Context) {
 	})
 }
 
+func (h *AgentHandler) ListSessions(c *gin.Context) {
+	visitorID := c.Query("visitor_id")
+	if visitorID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "visitor_id 不能为空"})
+		return
+	}
+	sessions, err := h.chatService.ListSessions(visitorID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 200, "message": "success", "data": []any{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 200, "message": "success", "data": sessions})
+}
+
 func (h *AgentHandler) ClearSession(c *gin.Context) {
 	var req struct {
 		SessionID string `json:"session_id" binding:"required"`
+		VisitorID string `json:"visitor_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -143,7 +159,7 @@ func (h *AgentHandler) ClearSession(c *gin.Context) {
 		return
 	}
 
-	if err := h.chatService.ClearSession(req.SessionID); err != nil {
+	if err := h.chatService.DeleteSession(req.SessionID, req.VisitorID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
 			"message": "清除会话失败",

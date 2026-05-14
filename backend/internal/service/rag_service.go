@@ -1,8 +1,10 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"mime/multipart"
+	"sync"
 	"time"
 
 	"portfolio-backend/internal/model"
@@ -39,81 +41,103 @@ type KnowledgeDocResponse struct {
 }
 
 func (s *RAGService) ListDocuments() ([]KnowledgeDocResponse, error) {
-	println("[RAGService] 开始查询文档列表")
 	docs, err := s.knowledgeDocRepo.FindAll()
 	if err != nil {
-		println("[RAGService] 查询文档列表失败:", err.Error())
 		return nil, err
 	}
-	println("[RAGService] 找到原始文档数量:", len(docs))
 
-	// 去重：每个文件名只保留一个（最新的）
 	seen := make(map[string]bool)
-	var uniqueDocs []model.KnowledgeDoc
+	var resp []KnowledgeDocResponse
 	for _, doc := range docs {
-		if !seen[doc.Filename] {
-			seen[doc.Filename] = true
-			uniqueDocs = append(uniqueDocs, doc)
+		key := doc.DocumentGroup
+		if key == "" {
+			key = doc.Filename
+		}
+		if !seen[key] {
+			seen[key] = true
+			resp = append(resp, KnowledgeDocResponse{
+				ID:        doc.ID,
+				Filename:  doc.Filename,
+				CreatedAt: doc.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			})
 		}
 	}
-	println("[RAGService] 去重后文档数量:", len(uniqueDocs))
 
-	resp := make([]KnowledgeDocResponse, len(uniqueDocs))
-	for i, doc := range uniqueDocs {
-		println("[RAGService] 文档", i+1, ": ID=", doc.ID, "Filename=", doc.Filename)
-		resp[i] = KnowledgeDocResponse{
-			ID:        doc.ID,
-			Filename:  doc.Filename,
-			CreatedAt: doc.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		}
-	}
-	println("[RAGService] 返回文档列表，数量:", len(resp))
 	return resp, nil
 }
 
 func (s *RAGService) UploadDocument(filename string, file multipart.File) error {
-	println("[RAGService] 开始上传文档:", filename)
+	log.Printf("[RAGService] 开始上传文档: %s", filename)
 
 	content, err := s.documentParser.Parse(filename, file)
 	if err != nil {
-		println("[RAGService] 解析文档失败:", err.Error())
+		log.Printf("[RAGService] 解析文档失败: %v", err)
 		return err
 	}
-	println("[RAGService] 文档内容长度:", len(content))
+	log.Printf("[RAGService] 文档内容长度: %d", len(content))
 
 	chunks := s.textSplitter.Split(content)
 	if len(chunks) == 0 {
-		// 如果没有分块，至少保存整个文档
 		chunks = []string{content}
 	}
-	println("[RAGService] 分块数量:", len(chunks))
+	log.Printf("[RAGService] 分块数量: %d", len(chunks))
+
+	docGroup := generateDocGroupID()
+
+	type chunkResult struct {
+		index    int
+		embedVec []float32
+		content  string
+		err      error
+	}
+
+	const maxConcurrency = 5
+	sem := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+	results := make([]chunkResult, len(chunks))
+
+	for i, chunk := range chunks {
+		wg.Add(1)
+		go func(idx int, text string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			embeddingVec, err := s.embeddingService.CreateEmbedding(text)
+			results[idx] = chunkResult{
+				index:    idx,
+				embedVec: embeddingVec,
+				content:  text,
+				err:      err,
+			}
+		}(i, chunk)
+	}
+	wg.Wait()
 
 	successCount := 0
-	for i, chunk := range chunks {
-		embeddingVec, err := s.embeddingService.CreateEmbedding(chunk)
-		if err != nil {
-			println("[RAGService] 生成 embedding 失败:", err.Error())
-			// 即使 embedding 失败，也保存文档（使用零值 1536 维向量，以匹配 PostgreSQL vector(1536) 列类型）
-			embeddingVec = make([]float32, 1536)
+	for _, r := range results {
+		if r.err != nil {
+			log.Printf("[RAGService] 分块 %d embedding 失败: %v", r.index, r.err)
+			r.embedVec = make([]float32, 1536)
 		}
 
 		doc := &model.KnowledgeDoc{
-			Filename:  filename,
-			Content:   chunk,
-			Embedding: pgvector.NewVector(embeddingVec),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			Filename:      filename,
+			DocumentGroup: docGroup,
+			Content:       r.content,
+			Embedding:     pgvector.NewVector(r.embedVec),
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
-		println("[RAGService] 正在保存分块", i+1, "of", len(chunks))
+
 		if err := s.knowledgeDocRepo.Create(doc); err != nil {
-			println("[RAGService] 保存分块失败:", err.Error())
+			log.Printf("[RAGService] 保存分块 %d 失败: %v", r.index, err)
 			return err
 		}
-		println("[RAGService] 分块", i+1, "保存成功，ID:", doc.ID)
 		successCount++
 	}
 
-	println("[RAGService] 上传完成，成功保存", successCount, "个分块")
+	log.Printf("[RAGService] 上传完成 document_group=%s 分块数=%d", docGroup, successCount)
 	return nil
 }
 
@@ -124,7 +148,6 @@ func (s *RAGService) DeleteDocument(id uint) error {
 func (s *RAGService) ReindexAll() error {
 	log.Println("[RAGService] 开始重新索引所有文档")
 
-	// 1. 获取所有文档
 	allDocs, err := s.knowledgeDocRepo.FindAll()
 	if err != nil {
 		log.Printf("[RAGService] 获取文档失败: %v", err)
@@ -132,37 +155,37 @@ func (s *RAGService) ReindexAll() error {
 	}
 	log.Printf("[RAGService] 找到 %d 个文档分块", len(allDocs))
 
-	// 2. 按文件名分组
-	docsByFilename := make(map[string][]model.KnowledgeDoc)
+	docsByGroup := make(map[string][]model.KnowledgeDoc)
 	for _, doc := range allDocs {
-		docsByFilename[doc.Filename] = append(docsByFilename[doc.Filename], doc)
+		key := doc.DocumentGroup
+		if key == "" {
+			key = doc.Filename
+		}
+		docsByGroup[key] = append(docsByGroup[key], doc)
 	}
-	log.Printf("[RAGService] 找到 %d 个唯一文档", len(docsByFilename))
+	log.Printf("[RAGService] 找到 %d 个唯一文档", len(docsByGroup))
 
-	// 3. 清空所有文档
 	if err := s.knowledgeDocRepo.DeleteAll(); err != nil {
 		log.Printf("[RAGService] 清空文档失败: %v", err)
 		return err
 	}
 
-	// 4. 重新处理每个文档（合并内容后重新分块和索引）
-	for filename, chunks := range docsByFilename {
-		log.Printf("[RAGService] 重新索引文档: %s (%d 个分块)", filename, len(chunks))
+	for groupKey, chunks := range docsByGroup {
+		log.Printf("[RAGService] 重新索引文档: %s (%d 个分块)", groupKey, len(chunks))
 
-		// 合并所有分块的内容
 		var fullContent string
 		for _, chunk := range chunks {
 			fullContent += chunk.Content
 		}
 
-		// 重新分块
 		newChunks := s.textSplitter.Split(fullContent)
 		if len(newChunks) == 0 {
 			newChunks = []string{fullContent}
 		}
 		log.Printf("[RAGService]   重新生成 %d 个分块", len(newChunks))
 
-		// 为每个分块生成 embedding 并保存
+		docGroup := generateDocGroupID()
+
 		for i, chunk := range newChunks {
 			embeddingVec, err := s.embeddingService.CreateEmbedding(chunk)
 			if err != nil {
@@ -171,11 +194,12 @@ func (s *RAGService) ReindexAll() error {
 			}
 
 			doc := &model.KnowledgeDoc{
-				Filename:  filename,
-				Content:   chunk,
-				Embedding: pgvector.NewVector(embeddingVec),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				Filename:      chunks[0].Filename,
+				DocumentGroup: docGroup,
+				Content:       chunk,
+				Embedding:     pgvector.NewVector(embeddingVec),
+				CreatedAt:     time.Now(),
+				UpdatedAt:     time.Now(),
 			}
 
 			if err := s.knowledgeDocRepo.Create(doc); err != nil {
@@ -192,7 +216,6 @@ func (s *RAGService) ReindexAll() error {
 func (s *RAGService) RetrieveRelevantDocs(query string, topK int) ([]string, error) {
 	log.Printf("[RAGService] 开始检索相关文档，查询: %s", query)
 
-	// 首先检查一下有多少文档
 	allDocs, _ := s.knowledgeDocRepo.FindAll()
 	log.Printf("[RAGService] 数据库中总共有 %d 个文档分块", len(allDocs))
 
@@ -201,20 +224,23 @@ func (s *RAGService) RetrieveRelevantDocs(query string, topK int) ([]string, err
 		log.Printf("[RAGService] 创建查询 embedding 失败: %v", err)
 		return nil, err
 	}
-	log.Printf("[RAGService] 成功创建查询 embedding，维度: %d", len(embedding))
 
-	docs, err := s.knowledgeDocRepo.FindSimilarByEmbedding(embedding, topK)
+	docs, err := s.knowledgeDocRepo.FindSimilarByEmbeddingDeduped(embedding, topK, true)
 	if err != nil {
 		log.Printf("[RAGService] 检索相似文档失败: %v", err)
 		return nil, err
 	}
-	log.Printf("[RAGService] 找到 %d 个相似文档", len(docs))
+	log.Printf("[RAGService] 找到 %d 个相似文档（已去重）", len(docs))
 
 	result := make([]string, len(docs))
 	for i, doc := range docs {
 		result[i] = doc.Content
-		log.Printf("[RAGService] 文档 %d 内容: %s", i+1, doc.Content)
+		log.Printf("[RAGService] 文档 %d (group=%s): %s", i+1, doc.DocumentGroup, doc.Content)
 	}
 
 	return result, nil
+}
+
+func generateDocGroupID() string {
+	return fmt.Sprintf("doc_%d", time.Now().UnixNano())
 }

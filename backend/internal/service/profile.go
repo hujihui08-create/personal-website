@@ -1,10 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"mime/multipart"
-	"path/filepath"
 	"time"
 
 	"portfolio-backend/internal/config"
@@ -124,13 +124,21 @@ func (s *ProfileService) UploadAvatar(file multipart.File, header *multipart.Fil
 		return "", fmt.Errorf("MinIO client not initialized")
 	}
 
-	ext := filepath.Ext(header.Filename)
+	processedData, contentType, err := processAvatar(file)
+	if err != nil {
+		return "", fmt.Errorf("process avatar: %w", err)
+	}
+
+	ext := ".jpg"
+	if contentType == "image/png" {
+		ext = ".png"
+	}
 	objectName := fmt.Sprintf("avatars/profile%s", ext)
 
 	ctx := context.Background()
-	contentType := header.Header.Get("Content-Type")
+	reader := bytes.NewReader(processedData)
 
-	_, err := s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, file, header.Size, minio.PutObjectOptions{
+	_, err = s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, reader, int64(len(processedData)), minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {

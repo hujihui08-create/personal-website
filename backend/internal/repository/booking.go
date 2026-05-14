@@ -81,6 +81,30 @@ func (r *BookingRepository) FindByDateAndTime(bookingDate, bookingTime string) (
 	return &booking, nil
 }
 
+func (r *BookingRepository) FindByIDAndPhone(id uint, phone string) (*model.Booking, error) {
+	var booking model.Booking
+	if err := r.db.Where("id = ? AND contact_phone = ?", id, phone).First(&booking).Error; err != nil {
+		return nil, err
+	}
+	return &booking, nil
+}
+
+func (r *BookingRepository) FindByPhoneAndContactName(phone, contactName string) (*model.Booking, error) {
+	var booking model.Booking
+	if err := r.db.Where("contact_phone = ? AND contact_name = ?", phone, contactName).First(&booking).Error; err != nil {
+		return nil, err
+	}
+	return &booking, nil
+}
+
+func (r *BookingRepository) FindByPhoneAndCompanyName(phone, companyName string) (*model.Booking, error) {
+	var booking model.Booking
+	if err := r.db.Where("contact_phone = ? AND company_name = ?", phone, companyName).First(&booking).Error; err != nil {
+		return nil, err
+	}
+	return &booking, nil
+}
+
 func (r *BookingRepository) List(page, pageSize int, status string, search string) ([]model.Booking, int64, error) {
 	var bookings []model.Booking
 	var total int64

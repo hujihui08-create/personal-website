@@ -7,6 +7,7 @@ import (
 
 	"portfolio-backend/internal/model"
 	"portfolio-backend/internal/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,9 +25,13 @@ type CreateBookingRequest struct {
 	BookingDate     string `json:"booking_date" binding:"required"`
 	BookingTime     string `json:"booking_time" binding:"required"`
 	ContactName     string `json:"contact_name" binding:"required,min=2,max=50"`
-	ContactEmail    string `json:"contact_email" binding:"required,email"`
+	ContactEmail    string `json:"contact_email"`
 	ContactPhone    string `json:"contact_phone" binding:"required"`
 	Notes           string `json:"notes"`
+}
+
+type CancelBookingByUserRequest struct {
+	CancelReason string `json:"cancel_reason"`
 }
 
 type UpdateBookingStatusRequest struct {
@@ -256,5 +261,207 @@ func (h *BookingHandler) UpdateScheduleSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "更新成功",
+	})
+}
+
+func (h *BookingHandler) LookupBooking(c *gin.Context) {
+	idStr := c.Query("id")
+	phone := c.Query("phone")
+	contactName := c.Query("contact_name")
+	companyName := c.Query("company_name")
+
+	if phone == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "phone parameter is required",
+		})
+		return
+	}
+
+	if idStr != "" {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    400,
+				"message": "无效的ID",
+			})
+			return
+		}
+		booking, err := h.bookingService.LookupBooking(uint(id), phone)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code":    404,
+				"message": "未找到匹配的预约，请检查ID和手机号",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    200,
+			"message": "success",
+			"data":    booking,
+		})
+		return
+	}
+
+	if contactName != "" {
+		booking, err := h.bookingService.LookupBookingByContactName(phone, contactName)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code":    404,
+				"message": "未找到匹配的预约，请检查联系人和手机号",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    200,
+			"message": "success",
+			"data":    booking,
+		})
+		return
+	}
+
+	if companyName != "" {
+		booking, err := h.bookingService.LookupBookingByCompanyName(phone, companyName)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code":    404,
+				"message": "未找到匹配的预约，请检查公司名称和手机号",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    200,
+			"message": "success",
+			"data":    booking,
+		})
+		return
+	}
+
+	c.JSON(http.StatusBadRequest, gin.H{
+		"code":    400,
+		"message": "请提供 id、contact_name 或 company_name 其中一项",
+	})
+}
+
+func (h *BookingHandler) CancelBookingByUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "无效的ID",
+		})
+		return
+	}
+
+	phone := c.Query("phone")
+	if phone == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "phone parameter is required",
+		})
+		return
+	}
+
+	var req CancelBookingByUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		req.CancelReason = ""
+	}
+
+	booking, err := h.bookingService.CancelBookingByUser(uint(id), phone, req.CancelReason)
+	if err != nil {
+		status := http.StatusInternalServerError
+		message := "取消预约失败"
+
+		switch {
+		case errors.Is(err, service.ErrBookingNotFound):
+			status = http.StatusNotFound
+			message = "未找到匹配的预约"
+		case errors.Is(err, service.ErrPhoneMismatch):
+			status = http.StatusForbidden
+			message = "手机号不匹配"
+		case errors.Is(err, service.ErrCannotCancelBooking):
+			status = http.StatusBadRequest
+			message = "当前状态不允许取消"
+		}
+
+		c.JSON(status, gin.H{
+			"code":    status,
+			"message": message,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "取消成功",
+		"data":    booking,
+	})
+}
+
+func (h *BookingHandler) UpdateBookingByUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "无效的ID",
+		})
+		return
+	}
+
+	phone := c.Query("phone")
+	if phone == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "phone parameter is required",
+		})
+		return
+	}
+
+	var req service.UpdateBookingByUserData
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "请求参数错误",
+		})
+		return
+	}
+
+	booking, err := h.bookingService.UpdateBookingByUser(uint(id), phone, req)
+	if err != nil {
+		status := http.StatusInternalServerError
+		message := "修改预约失败"
+
+		switch {
+		case errors.Is(err, service.ErrBookingNotFound):
+			status = http.StatusNotFound
+			message = "未找到匹配的预约"
+		case errors.Is(err, service.ErrPhoneMismatch):
+			status = http.StatusForbidden
+			message = "手机号不匹配"
+		case errors.Is(err, service.ErrCannotUpdateBooking):
+			status = http.StatusBadRequest
+			message = "当前状态不允许修改"
+		case errors.Is(err, service.ErrSlotUnavailable):
+			status = http.StatusConflict
+			message = "该时段已被预约"
+		case errors.Is(err, service.ErrNotWeekday):
+			status = http.StatusBadRequest
+			message = "仅支持工作日预约"
+		case errors.Is(err, service.ErrInvalidBookingTime):
+			status = http.StatusBadRequest
+			message = "无效的预约时间"
+		}
+
+		c.JSON(status, gin.H{
+			"code":    status,
+			"message": message,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "修改成功",
+		"data":    booking,
 	})
 }

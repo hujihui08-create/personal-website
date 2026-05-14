@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -21,6 +22,8 @@ type ChatService struct {
 	redisClient     *redis.Client
 	profileRepo     *repository.ProfileRepository
 	projectRepo     *repository.ProjectRepository
+	promptRepo      *repository.AgentPromptRepo
+	bookingService  *BookingService
 }
 
 func NewChatService(
@@ -30,6 +33,8 @@ func NewChatService(
 	redisClient *redis.Client,
 	profileRepo *repository.ProfileRepository,
 	projectRepo *repository.ProjectRepository,
+	promptRepo *repository.AgentPromptRepo,
+	bookingService *BookingService,
 ) *ChatService {
 	return &ChatService{
 		chatSessionRepo: chatSessionRepo,
@@ -38,6 +43,8 @@ func NewChatService(
 		redisClient:     redisClient,
 		profileRepo:     profileRepo,
 		projectRepo:     projectRepo,
+		promptRepo:      promptRepo,
+		bookingService:  bookingService,
 	}
 }
 
@@ -60,10 +67,12 @@ func (s *ChatService) IncrementDailyCount(userID string) error {
 	return nil
 }
 
-func (s *ChatService) GetOrCreateSession(sessionID string) (*models.ChatSession, error) {
+func (s *ChatService) GetOrCreateSession(sessionID string, visitorID string) (*models.ChatSession, error) {
 	if sessionID == "" {
 		session := &models.ChatSession{
 			SessionID: generateSessionID(),
+			VisitorID: visitorID,
+			Title:     "",
 			Messages:  models.ChatMessages{},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -78,6 +87,8 @@ func (s *ChatService) GetOrCreateSession(sessionID string) (*models.ChatSession,
 	if err != nil {
 		session := &models.ChatSession{
 			SessionID: sessionID,
+			VisitorID: visitorID,
+			Title:     "",
 			Messages:  models.ChatMessages{},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -91,22 +102,49 @@ func (s *ChatService) GetOrCreateSession(sessionID string) (*models.ChatSession,
 	return session, nil
 }
 
-func (s *ChatService) ClearSession(sessionID string) error {
-	return s.chatSessionRepo.DeleteBySessionID(sessionID)
+func (s *ChatService) DeleteSession(sessionID, visitorID string) error {
+	return s.chatSessionRepo.DeleteBySessionIDAndVisitor(sessionID, visitorID)
+}
+
+type SessionMeta struct {
+	SessionID string `json:"session_id"`
+	Title     string `json:"title"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func (s *ChatService) ListSessions(visitorID string) ([]SessionMeta, error) {
+	sessions, err := s.chatSessionRepo.FindByVisitorID(visitorID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SessionMeta, len(sessions))
+	for i, sess := range sessions {
+		result[i] = SessionMeta{
+			SessionID: sess.SessionID,
+			Title:     sess.Title,
+			CreatedAt: sess.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt: sess.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+	return result, nil
 }
 
 type StreamMessageType string
 
 const (
-	StreamMessageTypeThinking StreamMessageType = "thinking"
-	StreamMessageTypeChunk    StreamMessageType = "chunk"
-	StreamMessageTypeDone     StreamMessageType = "done"
+	StreamMessageTypeThinking      StreamMessageType = "thinking"
+	StreamMessageTypeChunk         StreamMessageType = "chunk"
+	StreamMessageTypeDone          StreamMessageType = "done"
+	StreamMessageTypeBookingResult StreamMessageType = "booking_result"
 )
 
 type StreamMessage struct {
 	Type      StreamMessageType `json:"type"`
 	Content   string            `json:"content,omitempty"`
 	SessionID string            `json:"session_id,omitempty"`
+	Data      interface{}       `json:"data,omitempty"`
 }
 
 func (s *ChatService) ChatStream(
@@ -124,6 +162,17 @@ func (s *ChatService) ChatStream(
 		Timestamp: time.Now(),
 	}
 	session.Messages = append(session.Messages, userMsg)
+
+	// 自动生成会话标题（使用用户第一条消息的前30个字）
+	if session.Title == "" {
+		title := userMessage
+		runes := []rune(title)
+		if len(runes) > 30 {
+			title = string(runes[:30]) + "..."
+		}
+		session.Title = title
+		s.chatSessionRepo.UpdateTitle(session.SessionID, title)
+	}
 
 	go func() {
 		defer close(respChan)
@@ -171,7 +220,12 @@ func (s *ChatService) ChatStream(
 			}
 		}
 
-		systemPrompt := s.buildSystemPrompt(relevantDocs)
+		intentResult := s.classifyIntent(userMessage)
+		agentType := intentResult.AgentType
+		log.Printf("[ChatService] 意图分类结果: agentType=%s confidence=%.2f method=%s",
+			intentResult.AgentType, intentResult.Confidence, intentResult.Method)
+
+		systemPrompt := s.buildSystemPrompt(agentType, relevantDocs, userMessage)
 		log.Printf("[ChatService] 系统提示词: %s", systemPrompt)
 
 		messages := []openai.ChatCompletionMessage{
@@ -237,34 +291,29 @@ func (s *ChatService) ChatStream(
 		defer stream.Close()
 
 		var fullResponse strings.Builder
+		var suppressing bool
+
+		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]"}
+		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]"}
+
+		containsAny := func(s string, substrs []string) bool {
+			for _, sub := range substrs {
+				if strings.Contains(s, sub) {
+					return true
+				}
+			}
+			return false
+		}
 
 		for {
 			select {
 			case <-ctx.Done():
-				if fullResponse.Len() > 0 {
-					assistantMsg := models.ChatMessage{
-						Role:      "assistant",
-						Content:   fullResponse.String(),
-						Timestamp: time.Now(),
-					}
-					session.Messages = append(session.Messages, assistantMsg)
-					s.chatSessionRepo.Update(session)
-					respChan <- StreamMessage{Type: StreamMessageTypeDone, SessionID: session.SessionID}
-				}
+				saveAndDone(respChan, session, &fullResponse, s.chatSessionRepo)
 				return
 			default:
 				resp, err := stream.Recv()
 				if err != nil {
-					if fullResponse.Len() > 0 {
-						assistantMsg := models.ChatMessage{
-							Role:      "assistant",
-							Content:   fullResponse.String(),
-							Timestamp: time.Now(),
-						}
-						session.Messages = append(session.Messages, assistantMsg)
-						s.chatSessionRepo.Update(session)
-					}
-					respChan <- StreamMessage{Type: StreamMessageTypeDone, SessionID: session.SessionID}
+					saveAndDone(respChan, session, &fullResponse, s.chatSessionRepo)
 					return
 				}
 
@@ -272,13 +321,51 @@ func (s *ChatService) ChatStream(
 					content := resp.Choices[0].Delta.Content
 					if content != "" {
 						fullResponse.WriteString(content)
-						respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: content}
+
+						if !suppressing && containsAny(fullResponse.String(), bookingStartTags) {
+							suppressing = true
+						} else if !suppressing {
+							respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: content}
+						}
+
+						if suppressing && containsAny(fullResponse.String(), bookingEndTags) {
+							suppressing = false
+							afterLastEnd := ""
+							fullStr := fullResponse.String()
+							lastEnd := 0
+							for _, endTag := range bookingEndTags {
+								if idx := strings.LastIndex(fullStr, endTag); idx >= 0 {
+									end := idx + len(endTag)
+									if end > lastEnd {
+										lastEnd = end
+									}
+								}
+							}
+							if lastEnd < len(fullStr) {
+								afterLastEnd = fullStr[lastEnd:]
+								respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: afterLastEnd}
+							}
+						}
 					}
 
 					if resp.Choices[0].FinishReason != "" {
+						cleanResponse := stripBookingTags(fullResponse.String())
+
+						if intentResult.AgentType == "booking" {
+							bookingText, bookingData := s.parseAndExecuteBookingAction(fullResponse.String())
+							if bookingData != nil {
+								respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
+							}
+							if bookingText != "" {
+								for _, ch := range bookingText {
+									respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: string(ch)}
+								}
+							}
+						}
+
 						assistantMsg := models.ChatMessage{
 							Role:      "assistant",
-							Content:   fullResponse.String(),
+							Content:   cleanResponse,
 							Timestamp: time.Now(),
 						}
 						session.Messages = append(session.Messages, assistantMsg)
@@ -294,40 +381,258 @@ func (s *ChatService) ChatStream(
 	return respChan, nil
 }
 
-func (s *ChatService) buildSystemPrompt(contexts []string) string {
-	sb := &strings.Builder{}
-	sb.WriteString("你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈和项目的问题。\n")
-	sb.WriteString("当用户询问\"你是谁\"或类似问题时，请回答：\"我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历等。\"\n\n")
-
-	profile := s.buildProfileSection()
-	if profile != "" {
-		sb.WriteString(profile)
-		sb.WriteString("\n")
+func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string, interface{}) {
+	if s.bookingService == nil {
+		return "", nil
 	}
 
-	projects := s.buildProjectsSection()
-	if projects != "" {
-		sb.WriteString(projects)
-		sb.WriteString("\n")
-	}
-
-	if len(contexts) > 0 {
-		sb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
-		for i, ctx := range contexts {
-			sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
+	// Try CREATE action
+	if idx := strings.Index(fullResponse, "[BOOKING_CREATE]"); idx >= 0 {
+		endIdx := strings.Index(fullResponse, "[/BOOKING_CREATE]")
+		if endIdx > idx {
+			jsonStr := strings.TrimSpace(fullResponse[idx+len("[BOOKING_CREATE]") : endIdx])
+			var data struct {
+				CompanyName     string `json:"company_name"`
+				CompanyLocation string `json:"company_location"`
+				BookingDate     string `json:"booking_date"`
+				BookingTime     string `json:"booking_time"`
+				ContactName     string `json:"contact_name"`
+				ContactEmail    string `json:"contact_email"`
+				ContactPhone    string `json:"contact_phone"`
+				Notes           string `json:"notes"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+				booking, err := s.bookingService.CreateBooking(
+					data.CompanyName, data.CompanyLocation, data.BookingDate, data.BookingTime,
+					data.ContactName, data.ContactEmail, data.ContactPhone, data.Notes, "agent",
+				)
+				if err != nil {
+					return fmt.Sprintf("\u9884\u7ea6\u5931\u8d25\uff1a%v", err), nil
+				}
+				cardData := map[string]interface{}{
+					"action":           "created",
+					"id":               booking.ID,
+					"status":           booking.Status,
+					"company_name":     booking.CompanyName,
+					"company_location": booking.CompanyLocation,
+					"booking_date":     booking.BookingDate,
+					"booking_time":     booking.BookingTime,
+					"contact_name":     booking.ContactName,
+					"contact_phone":    booking.ContactPhone,
+					"contact_email":    booking.ContactEmail,
+					"notes":            booking.Notes,
+					"created_at":       booking.CreatedAt,
+				}
+				text := fmt.Sprintf("\u9884\u7ea6\u6210\u529f\uff01\u60a8\u7684\u9884\u7ea6\u7f16\u53f7\u662f **%d**\uff0c\u9884\u7ea6\u65e5\u671f\u4e3a %s %s\u3002\u8bf7\u4fdd\u5b58\u6b64\u7f16\u53f7\uff0c\u540e\u7eed\u53ef\u901a\u8fc7\u7f16\u53f7\u548c\u624b\u673a\u53f7\u67e5\u8be2\u6216\u53d6\u6d88\u9884\u7ea6\u3002", booking.ID, booking.BookingDate, booking.BookingTime)
+				return text, cardData
+			}
 		}
-		sb.WriteString("---\n\n")
-	} else {
-		sb.WriteString("目前知识库中没有相关信息。\n\n")
 	}
 
-	sb.WriteString("请用专业、简洁的语言回答问题。请使用中文回答。\n")
-	sb.WriteString("回答时请遵守以下格式要求：\n")
-	sb.WriteString("1. 不要使用 ** 标记\n")
-	sb.WriteString("2. 不要使用 - 列表\n")
-	sb.WriteString("3. 如需列出要点，请使用数字排序（1. 2. 3. 等）\n")
-	sb.WriteString("4. 如果用户提出与胡冀徽（个人背景、工作经验、技术栈、项目经历、工作履历等）完全不相关的问题，请礼貌拒绝回答，并引导用户询问与胡冀徽相关的问题。例如回复：\"我只负责解答关于胡冀徽的问题，请询问与胡冀徽工作经历、项目经验等相关的内容。\"\n")
-	return sb.String()
+	// Try QUERY action
+	if idx := strings.Index(fullResponse, "[BOOKING_QUERY]"); idx >= 0 {
+		endIdx := strings.Index(fullResponse, "[/BOOKING_QUERY]")
+		if endIdx > idx {
+			jsonStr := strings.TrimSpace(fullResponse[idx+len("[BOOKING_QUERY]") : endIdx])
+			var data struct {
+				ID    uint   `json:"id"`
+				Phone string `json:"phone"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+				booking, err := s.bookingService.LookupBooking(data.ID, data.Phone)
+				if err != nil {
+					return "\u672a\u627e\u5230\u5339\u914d\u7684\u9884\u7ea6\uff0c\u8bf7\u68c0\u67e5\u9884\u7ea6\u7f16\u53f7\u548c\u624b\u673a\u53f7\u662f\u5426\u6b63\u786e\u3002", nil
+				}
+				cardData := map[string]interface{}{
+					"action":           "lookup",
+					"id":               booking.ID,
+					"status":           booking.Status,
+					"company_name":     booking.CompanyName,
+					"company_location": booking.CompanyLocation,
+					"booking_date":     booking.BookingDate,
+					"booking_time":     booking.BookingTime,
+					"contact_name":     booking.ContactName,
+					"contact_phone":    booking.ContactPhone,
+					"contact_email":    booking.ContactEmail,
+					"notes":            booking.Notes,
+					"reject_reason":    booking.RejectReason,
+					"created_at":       booking.CreatedAt,
+					"updated_at":       booking.UpdatedAt,
+				}
+				text := fmt.Sprintf("\u67e5\u8be2\u5230\u60a8\u7684\u9884\u7ea6\uff08\u7f16\u53f7 %d\uff09\uff0c\u8be6\u60c5\u5982\u4e0a\u3002", booking.ID)
+				return text, cardData
+			}
+		}
+	}
+
+	// Try CANCEL action
+	if idx := strings.Index(fullResponse, "[BOOKING_CANCEL]"); idx >= 0 {
+		endIdx := strings.Index(fullResponse, "[/BOOKING_CANCEL]")
+		if endIdx > idx {
+			jsonStr := strings.TrimSpace(fullResponse[idx+len("[BOOKING_CANCEL]") : endIdx])
+			var data struct {
+				ID    uint   `json:"id"`
+				Phone string `json:"phone"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+				booking, err := s.bookingService.CancelBookingByUser(data.ID, data.Phone, "")
+				if err != nil {
+					return fmt.Sprintf("\u53d6\u6d88\u9884\u7ea6\u5931\u8d25\uff1a%v", err), nil
+				}
+				cardData := map[string]interface{}{
+					"action": "cancelled",
+					"id":     booking.ID,
+					"status": booking.Status,
+				}
+				text := fmt.Sprintf("\u9884\u7ea6\u7f16\u53f7 %d \u5df2\u6210\u529f\u53d6\u6d88\u3002", data.ID)
+				return text, cardData
+			}
+		}
+	}
+
+	return "", nil
+}
+
+func (s *ChatService) classifyIntent(query string) IntentClassResult {
+	lower := strings.ToLower(query)
+
+	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能", "技术栈",
+		"work experience", "project", "skill", "background", "experience"}
+	for _, kw := range resumeKeywords {
+		if strings.Contains(lower, kw) {
+			return IntentClassResult{AgentType: "resume", Confidence: 0.85, Method: "keyword"}
+		}
+	}
+
+	bookingKeywords := []string{"预约", "预订", "booking", "meeting", "会议", "时间", "schedule",
+		"安排", "约个时间", "见面", "取消", "查询预约", "我的预约"}
+	for _, kw := range bookingKeywords {
+		if strings.Contains(lower, kw) {
+			return IntentClassResult{AgentType: "booking", Confidence: 0.85, Method: "keyword"}
+		}
+	}
+
+	projectKeywords := []string{"项目", "project", "作品", "portfolio", "案例", "case"}
+	for _, kw := range projectKeywords {
+		if strings.Contains(lower, kw) {
+			return IntentClassResult{AgentType: "project", Confidence: 0.85, Method: "keyword"}
+		}
+	}
+
+	return IntentClassResult{AgentType: "general", Confidence: 0.5, Method: "keyword"}
+}
+
+func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, userMessage string) string {
+	profileSection := s.buildProfileSection()
+	projectSection := s.buildProjectsSection()
+	techStackSection := s.buildTechStackSection()
+
+	var contextText string
+	if len(contexts) > 0 {
+		csb := &strings.Builder{}
+		csb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
+		for i, ctx := range contexts {
+			csb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
+		}
+		csb.WriteString("---\n")
+		contextText = csb.String()
+	}
+
+	var template string
+
+	// booking 意图：优先从 DB 加载自定义 Prompt，但必须包含 [BOOKING_CREATE] 标签
+	// 如果不含标签（旧版 Prompt），则回退到内置模板
+	if agentType == "booking" && s.promptRepo != nil {
+		if prompt, err := s.promptRepo.FindDefaultByAgentType("booking"); err == nil && prompt != nil {
+			if strings.Contains(prompt.SystemPrompt, "[BOOKING_CREATE]") {
+				template = prompt.SystemPrompt
+				log.Printf("[ChatService] 使用 DB 中的 booking Prompt: id=%d name=%s", prompt.ID, prompt.Name)
+			} else {
+				log.Printf("[ChatService] DB 中的 booking Prompt 不含 [BOOKING_CREATE] 标签（旧版），回退到内置模板")
+			}
+		}
+	}
+
+	if template == "" && agentType == "booking" {
+		template = `你是胡冀徽的预约助手，专门帮助用户进行面试预约。你可以直接帮助用户完成预约创建、查询和取消。
+
+当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历，以及预约咨询等。"
+
+请用专业、友好的语言与用户对话，使用中文回答。
+
+## 创建预约
+用户想要预约时，请逐步收集以下信息（每次询问1-2个问题，不要一次性问太多）：
+- 公司名称
+- 公司地点
+- 预约日期（格式 YYYY-MM-DD，如 2026-05-20，仅限工作日周一至周五）
+- 预约时段（如 09:00, 10:00, 11:00, 14:00, 15:00, 16:00）
+- 联系人姓名
+- 联系电话（11位手机号）
+- 联系邮箱（可选）
+- 备注（可选）
+
+信息收集齐全后，在回答末尾加上（请务必放在单独一行，JSON 不要换行）：
+[BOOKING_CREATE]{"company_name":"公司名","company_location":"地点","booking_date":"2026-05-20","booking_time":"09:00","contact_name":"姓名","contact_phone":"13800138000"}[/BOOKING_CREATE]
+
+## 查询预约
+需要用户提供预约编号和手机号，然后加上：
+[BOOKING_QUERY]{"id":123456,"phone":"13800138000"}[/BOOKING_QUERY]
+
+## 取消预约
+需要用户提供预约编号和手机号，确认后加上：
+[BOOKING_CANCEL]{"id":123456,"phone":"13800138000"}[/BOOKING_CANCEL]
+
+注意：标签必须放在回答的最末尾，JSON 放在一行内。
+
+{{question}}`
+		log.Printf("[ChatService] 使用内置 booking Prompt")
+	}
+
+	if template == "" && s.promptRepo != nil {
+		if prompt, err := s.promptRepo.FindDefaultByAgentType(agentType); err == nil && prompt != nil {
+			template = prompt.SystemPrompt
+			log.Printf("[ChatService] 使用 agent_type=%s 的默认 Prompt: id=%d name=%s", agentType, prompt.ID, prompt.Name)
+		}
+	}
+
+	if template == "" && agentType != "general" && s.promptRepo != nil {
+		if prompt, err := s.promptRepo.FindDefaultByAgentType("general"); err == nil && prompt != nil {
+			template = prompt.SystemPrompt
+			log.Printf("[ChatService] 回退到 general 类型的默认 Prompt: id=%d name=%s", prompt.ID, prompt.Name)
+		}
+	}
+
+	if template == "" {
+		template = `你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈、项目以及预约咨询的问题。
+当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历，以及预约咨询等。"
+
+{{profile}}
+
+{{projects}}
+
+{{tech_stack}}
+
+{{context}}
+
+{{question}}
+
+请用专业、简洁的语言回答问题。请使用中文回答。
+回答时请遵守以下格式要求：
+1. 不要使用 ** 标记
+2. 不要使用 - 列表
+3. 如需列出要点，请使用数字排序（1. 2. 3. 等）
+4. 你可以回答关于胡冀徽个人背景、工作经验、技术栈、项目经历、工作履历等相关问题。如果用户询问预约或咨询相关事宜（如面试时间、会议安排等），请告诉用户可以说"我要预约面试"来启动预约流程，或使用预约页面（/booking）自行操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。`
+	}
+
+	result := strings.ReplaceAll(template, "{{profile}}", profileSection)
+	result = strings.ReplaceAll(result, "{{projects}}", projectSection)
+	result = strings.ReplaceAll(result, "{{tech_stack}}", techStackSection)
+	result = strings.ReplaceAll(result, "{{question}}", userMessage)
+	result = strings.ReplaceAll(result, "{{context}}", contextText)
+
+	result = strings.TrimSpace(result)
+
+	return result
 }
 
 func (s *ChatService) buildProfileSection() string {
@@ -404,6 +709,44 @@ func (s *ChatService) buildProjectsSection() string {
 	return sb.String()
 }
 
+func (s *ChatService) buildTechStackSection() string {
+	if s.projectRepo == nil {
+		return ""
+	}
+
+	projects, err := s.projectRepo.ListFeatured(100)
+	if err != nil {
+		log.Printf("[ChatService] 获取 Projects 失败: %v", err)
+		return ""
+	}
+
+	if len(projects) == 0 {
+		return ""
+	}
+
+	tagSet := make(map[string]bool)
+	for _, p := range projects {
+		for _, t := range p.Tags {
+			tagSet[t] = true
+		}
+	}
+
+	if len(tagSet) == 0 {
+		return ""
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString(fmt.Sprintf("以下是胡冀徽的技术栈（共 %d 项），从各项目中汇总的标签：\n", len(tagSet)))
+	i := 1
+	for tag := range tagSet {
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i, tag))
+		i++
+	}
+	sb.WriteString("\n")
+
+	return sb.String()
+}
+
 func (s *ChatService) GetSessionHistory(sessionID string) (*ChatSessionResponse, error) {
 	session, err := s.chatSessionRepo.FindBySessionID(sessionID)
 	if err != nil {
@@ -427,4 +770,45 @@ func (s *ChatService) GetSessionHistory(sessionID string) (*ChatSessionResponse,
 
 func generateSessionID() string {
 	return fmt.Sprintf("ses_%d", time.Now().UnixNano())
+}
+
+func saveAndDone(respChan chan<- StreamMessage, session *models.ChatSession, fullResponse *strings.Builder, chatSessionRepo *repository.ChatSessionRepository) {
+	if fullResponse.Len() > 0 {
+		cleanResponse := stripBookingTags(fullResponse.String())
+		assistantMsg := models.ChatMessage{
+			Role:      "assistant",
+			Content:   cleanResponse,
+			Timestamp: time.Now(),
+		}
+		session.Messages = append(session.Messages, assistantMsg)
+		chatSessionRepo.Update(session)
+	}
+	respChan <- StreamMessage{Type: StreamMessageTypeDone, SessionID: session.SessionID}
+}
+
+func stripBookingTags(text string) string {
+	tags := []struct{ start, end string }{
+		{"[BOOKING_CREATE]", "[/BOOKING_CREATE]"},
+		{"[BOOKING_QUERY]", "[/BOOKING_QUERY]"},
+		{"[BOOKING_CANCEL]", "[/BOOKING_CANCEL]"},
+	}
+
+	result := text
+	for _, tag := range tags {
+		for {
+			startIdx := strings.Index(result, tag.start)
+			if startIdx < 0 {
+				break
+			}
+			endIdx := strings.Index(result, tag.end)
+			if endIdx < 0 {
+				break
+			}
+			endIdx += len(tag.end)
+			result = result[:startIdx] + result[endIdx:]
+		}
+	}
+
+	result = strings.TrimSpace(result)
+	return result
 }

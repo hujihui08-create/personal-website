@@ -119,8 +119,20 @@ export interface Booking {
   notes?: string
   status: 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled'
   reject_reason?: string
+  cancel_reason?: string
   created_at: string
   updated_at: string
+}
+
+export interface UpdateBookingByUserRequest {
+  company_name?: string
+  company_location?: string
+  booking_date?: string
+  booking_time?: string
+  contact_name?: string
+  contact_email?: string
+  contact_phone?: string
+  notes?: string
 }
 
 export interface ChatMessage {
@@ -167,17 +179,44 @@ export interface AgentChatSession {
 export interface AgentChatRequest {
   message: string
   session_id?: string
+  visitor_id?: string
   stream?: boolean
 }
 
 export interface AgentChatStreamChunk {
-  type: 'thinking' | 'chunk' | 'done'
+  type: 'thinking' | 'chunk' | 'done' | 'booking_result'
   content?: string
   session_id?: string
+  data?: BookingResultData
+}
+
+export interface BookingResultData {
+  action: 'created' | 'lookup' | 'cancelled'
+  id: number
+  status: string
+  company_name?: string
+  company_location?: string
+  booking_date?: string
+  booking_time?: string
+  contact_name?: string
+  contact_phone?: string
+  contact_email?: string
+  notes?: string
+  reject_reason?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface AgentClearRequest {
   session_id: string
+  visitor_id: string
+}
+
+export interface AgentSessionMeta {
+  session_id: string
+  title: string
+  created_at: string
+  updated_at: string
 }
 
 // === Agent Debug Types ===

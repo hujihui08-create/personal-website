@@ -65,15 +65,22 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 		return
 	}
 
-	// 根据 Content-Type 决定展示方式：图片展示为 inline，其他为 attachment 下载
 	contentType := objectInfo.ContentType
+	isImage := strings.HasPrefix(contentType, "image/")
+
 	disposition := "inline"
-	if !strings.HasPrefix(contentType, "image/") {
+	if !isImage {
 		disposition = fmt.Sprintf("attachment; filename=\"%s\"", filename)
 	}
 
 	c.Header("Content-Disposition", disposition)
 	c.Header("Content-Type", contentType)
+
+	if isImage {
+		etag := fmt.Sprintf(`"%x"`, objectInfo.ETag)
+		c.Header("ETag", etag)
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+	}
 
 	// 获取对象数据
 	obj, err := h.minioClient.GetObject(ctx, h.bucket, filepath, minio.GetObjectOptions{})

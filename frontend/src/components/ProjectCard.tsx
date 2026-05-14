@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, Github, ExternalLink, Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -9,6 +9,8 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard = memo(({ project }: ProjectCardProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return ''
     const date = new Date(dateStr)
@@ -33,10 +35,12 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
     >
       {/* Cover Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--color-bg-secondary)]">
-        {project.coverImage ? (
+        {project.coverImage && !imageError ? (
           <>
             <div
-              className="absolute inset-0 scale-110"
+              className={`absolute inset-0 scale-110 transition-opacity duration-[var(--duration-slow)] ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
               style={{
                 backgroundImage: `url(${project.coverImage})`,
                 backgroundSize: 'cover',
@@ -48,7 +52,11 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
               src={project.coverImage}
               alt={project.name}
               loading="lazy"
-              className="relative z-10 w-full h-full object-contain transition-transform duration-[var(--duration-slow)] ease-[var(--easing-standard)] group-hover:scale-110"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              className={`relative z-10 w-full h-full object-contain transition-all duration-[var(--duration-slow)] ease-[var(--easing-standard)] group-hover:scale-110 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
           </>
         ) : (

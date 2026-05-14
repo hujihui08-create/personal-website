@@ -18,7 +18,13 @@ const AGENT_TYPE_OPTIONS = [
   { value: 'general', label: '通用' },
 ]
 
-const AVAILABLE_VARIABLES = ['{{profile}}', '{{projects}}', '{{tech_stack}}', '{{question}}']
+const AVAILABLE_VARIABLES = [
+  '{{profile}}',
+  '{{projects}}',
+  '{{tech_stack}}',
+  '{{context}}',
+  '{{question}}',
+]
 
 export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
   const isEdit = !!prompt

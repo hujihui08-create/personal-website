@@ -32,3 +32,19 @@ func (r *ChatSessionRepository) Update(session *model.ChatSession) error {
 func (r *ChatSessionRepository) DeleteBySessionID(sessionID string) error {
 	return r.db.Where("session_id = ?", sessionID).Delete(&model.ChatSession{}).Error
 }
+
+func (r *ChatSessionRepository) FindByVisitorID(visitorID string) ([]model.ChatSession, error) {
+	var sessions []model.ChatSession
+	if err := r.db.Where("visitor_id = ?", visitorID).Order("updated_at DESC").Find(&sessions).Error; err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}
+
+func (r *ChatSessionRepository) DeleteBySessionIDAndVisitor(sessionID, visitorID string) error {
+	return r.db.Where("session_id = ? AND visitor_id = ?", sessionID, visitorID).Delete(&model.ChatSession{}).Error
+}
+
+func (r *ChatSessionRepository) UpdateTitle(sessionID, title string) error {
+	return r.db.Model(&model.ChatSession{}).Where("session_id = ?", sessionID).Update("title", title).Error
+}

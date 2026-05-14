@@ -69,7 +69,7 @@ export const useDebugStore = create<DebugState>((set, get) => ({
     try {
       const result = await getDebugHistory(page, 20)
       set({
-        history: result.items || result.data || [],
+        history: result.list || result.items || result.data || [],
         historyTotal: result.total || result.pagination?.total || 0,
       })
     } catch {

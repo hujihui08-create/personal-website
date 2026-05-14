@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Github, ExternalLink, Mail, Download, Eye, Calendar } from 'lucide-react'
 import type { Profile } from '@/types'
@@ -20,6 +21,8 @@ const Skeleton = ({ className }: SkeletonProps) => (
 
 export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
   const { data: resume, isLoading: resumeLoading } = useResume()
+  const [avatarLoaded, setAvatarLoaded] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
 
   if (isLoading || resumeLoading) {
     return <HeroCardSkeleton />
@@ -47,11 +50,16 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
           transition={{ delay: 0.2, duration: 0.5, type: 'spring', stiffness: 100 }}
         >
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[var(--radius-full)] overflow-hidden ring-4 ring-[#F5F5F5] shadow-[var(--shadow-card-strong)]">
-            {profile.avatarUrl ? (
+            {profile.avatarUrl && !avatarError ? (
               <img
                 src={profile.avatarUrl}
                 alt={`${profile.name}的头像`}
-                className="w-full h-full object-cover transition-transform duration-[var(--duration-slow)] ease-[var(--easing-standard)] hover:scale-110"
+                loading="lazy"
+                onLoad={() => setAvatarLoaded(true)}
+                onError={() => setAvatarError(true)}
+                className={`w-full h-full object-cover transition-all duration-[var(--duration-slow)] ease-[var(--easing-standard)] hover:scale-110 ${
+                  avatarLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
               />
             ) : (
               <div className="w-full h-full bg-[var(--color-accent)] flex items-center justify-center text-[var(--color-bg)] text-3xl font-semibold">

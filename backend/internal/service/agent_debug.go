@@ -105,7 +105,7 @@ func (s *AgentDebugService) classifyIntent(query string) IntentClassResult {
 
 	// 预约/会议相关
 	bookingKeywords := []string{"预约", "预订", "booking", "meeting", "会议", "时间", "schedule",
-		"安排", "约个时间", "见面"}
+		"安排", "约个时间", "见面", "取消", "查询预约", "我的预约"}
 	for _, kw := range bookingKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "booking", Confidence: 0.85, Method: "keyword"}
@@ -139,114 +139,72 @@ func (s *AgentDebugService) buildSystemPrompt(
 	agentType string,
 	contexts []string,
 	customPromptID *uint,
+	userMessage string,
 ) string {
 	profileSection := s.buildProfileSection()
 	projectSection := s.buildProjectsSection()
+	techStackSection := s.buildTechStackSection()
+
+	var contextText string
+	if len(contexts) > 0 {
+		csb := &strings.Builder{}
+		csb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
+		for i, ctx := range contexts {
+			csb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
+		}
+		csb.WriteString("---\n")
+		contextText = csb.String()
+	}
+
+	var template string
 
 	if customPromptID != nil {
 		prompt, err := s.promptRepo.FindByID(*customPromptID)
 		if err == nil && prompt != nil {
-			sb := &strings.Builder{}
-			sb.WriteString(prompt.SystemPrompt)
-			sb.WriteString("\n\n")
-
-			if profileSection != "" {
-				sb.WriteString(profileSection)
-				sb.WriteString("\n")
-			}
-			if projectSection != "" {
-				sb.WriteString(projectSection)
-				sb.WriteString("\n")
-			}
-
-			if len(contexts) > 0 {
-				if prompt.ContextTemplate != "" {
-					sb.WriteString(prompt.ContextTemplate)
-					sb.WriteString("\n\n")
-					for i, ctx := range contexts {
-						sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
-					}
-				} else {
-					sb.WriteString("以下是知识库中的参考信息：\n")
-					for i, ctx := range contexts {
-						sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
-					}
-				}
-				sb.WriteString("---\n\n")
-			}
-
-			return sb.String()
+			template = prompt.SystemPrompt
+		} else {
+			log.Printf("[AgentDebugService] 未找到自定义 Prompt id=%d，使用默认 Prompt", *customPromptID)
 		}
-		log.Printf("[AgentDebugService] 未找到自定义 Prompt id=%d，使用默认 Prompt", *customPromptID)
 	}
 
-	if agentType != "" {
+	if template == "" && agentType != "" {
 		prompt, err := s.promptRepo.FindDefaultByAgentType(agentType)
 		if err == nil && prompt != nil {
-			sb := &strings.Builder{}
-			sb.WriteString(prompt.SystemPrompt)
-			sb.WriteString("\n\n")
-
-			if profileSection != "" {
-				sb.WriteString(profileSection)
-				sb.WriteString("\n")
-			}
-			if projectSection != "" {
-				sb.WriteString(projectSection)
-				sb.WriteString("\n")
-			}
-
-			if len(contexts) > 0 {
-				if prompt.ContextTemplate != "" {
-					sb.WriteString(prompt.ContextTemplate)
-					sb.WriteString("\n\n")
-					for i, ctx := range contexts {
-						sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
-					}
-				} else {
-					sb.WriteString("以下是知识库中的参考信息：\n")
-					for i, ctx := range contexts {
-						sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
-					}
-				}
-				sb.WriteString("---\n\n")
-			}
-
-			return sb.String()
+			template = prompt.SystemPrompt
 		}
 	}
 
-	sb := &strings.Builder{}
-	sb.WriteString("你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈和项目的问题。\n")
-	sb.WriteString("当用户询问\"你是谁\"或类似问题时，请回答：\"我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历等。\"\n\n")
+	if template == "" {
+		template = `你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈、项目以及预约咨询的问题。
+当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历，以及预约咨询等。"
 
-	if profileSection != "" {
-		sb.WriteString(profileSection)
-		sb.WriteString("\n")
+{{profile}}
+
+{{projects}}
+
+{{tech_stack}}
+
+{{context}}
+
+{{question}}
+
+请用专业、简洁的语言回答问题。请使用中文回答。
+回答时请遵守以下格式要求：
+1. 不要使用 ** 标记
+2. 不要使用 - 列表
+3. 如需列出要点，请使用数字排序（1. 2. 3. 等）
+4. 你可以回答关于胡冀徽个人背景、工作经验、技术栈、项目经历、工作履历、预约咨询等相关问题。如果用户询问预约相关事宜，请友好地引导用户访问预约页面（/booking）进行预约创建、查询或取消操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。`
 	}
-	if projectSection != "" {
-		sb.WriteString(projectSection)
-		sb.WriteString("\n")
-	}
 
-	if len(contexts) > 0 {
-		sb.WriteString("以下是知识库中的参考信息，请主要基于这些信息回答用户：\n")
-		for i, ctx := range contexts {
-			sb.WriteString(fmt.Sprintf("[%d] %s\n\n", i+1, ctx))
-		}
-		sb.WriteString("---\n\n")
-	} else {
-		sb.WriteString("目前知识库中没有相关信息。\n\n")
-	}
+	result := strings.ReplaceAll(template, "{{profile}}", profileSection)
+	result = strings.ReplaceAll(result, "{{projects}}", projectSection)
+	result = strings.ReplaceAll(result, "{{tech_stack}}", techStackSection)
+	result = strings.ReplaceAll(result, "{{question}}", userMessage)
+	result = strings.ReplaceAll(result, "{{context}}", contextText)
 
-	sb.WriteString("请用专业、简洁的语言回答问题。请使用中文回答。\n")
-	sb.WriteString("回答时请遵守以下格式要求：\n")
-	sb.WriteString("1. 不要使用 ** 标记\n")
-	sb.WriteString("2. 不要使用 - 列表\n")
-	sb.WriteString("3. 如需列出要点，请使用数字排序（1. 2. 3. 等）\n")
-	sb.WriteString("4. 如果用户提出与胡冀徽（个人背景、工作经验、技术栈、项目经历、工作履历等）完全不相关的问题，请礼貌拒绝回答，并引导用户询问与胡冀徽相关的问题。例如回复：\"我只负责解答关于胡冀徽的问题，请询问与胡冀徽工作经历、项目经验等相关的内容。\"\n")
+	result = strings.TrimSpace(result)
 
-	return sb.String()
+	return result
 }
 
 func (s *AgentDebugService) buildProfileSection() string {
@@ -323,6 +281,44 @@ func (s *AgentDebugService) buildProjectsSection() string {
 	return sb.String()
 }
 
+func (s *AgentDebugService) buildTechStackSection() string {
+	if s.projectRepo == nil {
+		return ""
+	}
+
+	projects, err := s.projectRepo.ListFeatured(100)
+	if err != nil {
+		log.Printf("[AgentDebugService] 获取 Projects 失败: %v", err)
+		return ""
+	}
+
+	if len(projects) == 0 {
+		return ""
+	}
+
+	tagSet := make(map[string]bool)
+	for _, p := range projects {
+		for _, t := range p.Tags {
+			tagSet[t] = true
+		}
+	}
+
+	if len(tagSet) == 0 {
+		return ""
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString(fmt.Sprintf("以下是胡冀徽的技术栈（共 %d 项），从各项目中汇总的标签：\n", len(tagSet)))
+	i := 1
+	for tag := range tagSet {
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i, tag))
+		i++
+	}
+	sb.WriteString("\n")
+
+	return sb.String()
+}
+
 // ──────────────────────────── Core: DebugChat ────────────────────────────
 
 func (s *AgentDebugService) DebugChat(
@@ -388,7 +384,7 @@ func (s *AgentDebugService) DebugChat(
 		embeddingTimeMs, retrievalTimeMs, len(relevantDocs))
 
 	// ── Step 3: Build prompt ──
-	systemPrompt := s.buildSystemPrompt(effectiveAgentType, relevantDocs, customPromptID)
+	systemPrompt := s.buildSystemPrompt(effectiveAgentType, relevantDocs, customPromptID, message)
 
 	// ── Step 4: Call LLM (non-streaming) ──
 	llmConfig, err := s.configService.GetLLMConfig()

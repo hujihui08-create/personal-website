@@ -2,6 +2,8 @@ package repository
 
 import (
 	"math"
+	"sort"
+
 	"portfolio-backend/internal/model"
 
 	"gorm.io/gorm"
@@ -34,14 +36,27 @@ func (r *KnowledgeDocRepository) FindByID(id uint) (*model.KnowledgeDoc, error) 
 	return &doc, nil
 }
 
+func (r *KnowledgeDocRepository) FindByDocumentGroup(group string) ([]model.KnowledgeDoc, error) {
+	var docs []model.KnowledgeDoc
+	err := r.db.Where("document_group = ?", group).Find(&docs).Error
+	return docs, err
+}
+
 func (r *KnowledgeDocRepository) Delete(id uint) error {
-	// 先找到该ID对应的文件名
 	var doc model.KnowledgeDoc
 	if err := r.db.First(&doc, id).Error; err != nil {
 		return err
 	}
-	// 删除该文件名的所有分块
-	return r.db.Where("filename = ?", doc.Filename).Delete(&model.KnowledgeDoc{}).Error
+
+	if doc.DocumentGroup != "" {
+		return r.db.Where("document_group = ?", doc.DocumentGroup).Delete(&model.KnowledgeDoc{}).Error
+	}
+
+	return r.db.Delete(&model.KnowledgeDoc{}, id).Error
+}
+
+func (r *KnowledgeDocRepository) DeleteByDocumentGroup(group string) error {
+	return r.db.Where("document_group = ?", group).Delete(&model.KnowledgeDoc{}).Error
 }
 
 func (r *KnowledgeDocRepository) DeleteAll() error {
@@ -49,6 +64,10 @@ func (r *KnowledgeDocRepository) DeleteAll() error {
 }
 
 func (r *KnowledgeDocRepository) FindSimilarByEmbedding(embedding []float32, topK int) ([]model.KnowledgeDoc, error) {
+	return r.FindSimilarByEmbeddingDeduped(embedding, topK, false)
+}
+
+func (r *KnowledgeDocRepository) FindSimilarByEmbeddingDeduped(embedding []float32, topK int, dedupByDocGroup bool) ([]model.KnowledgeDoc, error) {
 	var allDocs []model.KnowledgeDoc
 	err := r.db.Find(&allDocs).Error
 	if err != nil {
@@ -69,17 +88,44 @@ func (r *KnowledgeDocRepository) FindSimilarByEmbedding(embedding []float32, top
 		}
 	}
 
-	for i := 0; i < len(scores); i++ {
-		for j := i + 1; j < len(scores); j++ {
-			if scores[i].score < scores[j].score {
-				scores[i], scores[j] = scores[j], scores[i]
-			}
+	sort.Slice(scores, func(i, j int) bool {
+		return scores[i].score > scores[j].score
+	})
+
+	if !dedupByDocGroup {
+		result := make([]model.KnowledgeDoc, 0, min(topK, len(scores)))
+		for i := 0; i < min(topK, len(scores)); i++ {
+			result = append(result, scores[i].doc)
 		}
+		return result, nil
 	}
 
-	result := make([]model.KnowledgeDoc, 0, min(topK, len(scores)))
-	for i := 0; i < min(topK, len(scores)); i++ {
-		result = append(result, scores[i].doc)
+	seenGroups := make(map[string]bool)
+	candidateCount := min(topK*3, len(scores))
+	result := make([]model.KnowledgeDoc, 0, topK)
+
+	for i := 0; i < candidateCount && len(result) < topK; i++ {
+		doc := scores[i].doc
+		group := doc.DocumentGroup
+
+		if group != "" {
+			if seenGroups[group] {
+				continue
+			}
+			seenGroups[group] = true
+		}
+
+		result = append(result, doc)
+	}
+
+	for i := candidateCount; i < len(scores) && len(result) < topK; i++ {
+		doc := scores[i].doc
+		group := doc.DocumentGroup
+
+		if group != "" && seenGroups[group] {
+			continue
+		}
+		result = append(result, doc)
 	}
 
 	return result, nil

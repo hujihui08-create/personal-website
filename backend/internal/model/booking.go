@@ -17,7 +17,7 @@ func (ScheduleSetting) TableName() string {
 }
 
 type Booking struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
+	ID              uint      `gorm:"primaryKey;autoIncrement:false" json:"id"`
 	CompanyName     string    `gorm:"column:company_name;size:100" json:"company_name"`
 	CompanyLocation string    `gorm:"column:company_location;size:100" json:"company_location"`
 	BookingDate     string    `gorm:"column:booking_date;index" json:"booking_date"`
@@ -28,6 +28,7 @@ type Booking struct {
 	Notes           string    `gorm:"column:notes;type:text" json:"notes,omitempty"`
 	Status          string    `gorm:"column:status;default:pending;check:status in ('pending','confirmed','rejected','completed','cancelled')" json:"status"`
 	RejectReason    string    `gorm:"column:reject_reason;type:text" json:"reject_reason,omitempty"`
+	CancelReason    string    `gorm:"column:cancel_reason;type:text" json:"cancel_reason,omitempty"`
 	CreatedAt       time.Time `gorm:"column:created_at;index:idx_bookings_created_at" json:"created_at"`
 	UpdatedAt       time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -48,6 +49,7 @@ type BookingResponse struct {
 	Notes           string    `json:"notes,omitempty"`
 	Status          string    `json:"status"`
 	RejectReason    string    `json:"reject_reason,omitempty"`
+	CancelReason    string    `json:"cancel_reason,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

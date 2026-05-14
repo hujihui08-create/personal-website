@@ -36,9 +36,13 @@ var standardRoutes = []routeTest{
 	{method: "GET", path: "/api/projects/1", protected: false},
 	{method: "GET", path: "/api/bookings/slots?date=2026-01-01", protected: false},
 	{method: "POST", path: "/api/bookings", body: `{"company_name":"Test","company_location":"TestCity","booking_date":"2026-01-01","booking_time":"10:00","contact_name":"Test","contact_email":"test@example.com","contact_phone":"1234567890"}`, protected: false},
+	{method: "GET", path: "/api/bookings/lookup?id=1&phone=13800138000", protected: false},
+	{method: "PUT", path: "/api/bookings/1/cancel?phone=13800138000", protected: false},
+	{method: "PUT", path: "/api/bookings/1?phone=13800138000", body: `{"company_name":"Updated"}`, protected: false},
 	{method: "POST", path: "/api/agent/chat", body: `{"message":"hello"}`, protected: false},
 	{method: "GET", path: "/api/agent/history?session_id=test", protected: false},
 	{method: "POST", path: "/api/agent/clear", body: `{"session_id":"test"}`, protected: false},
+	{method: "GET", path: "/api/agent/sessions?visitor_id=test-visitor", protected: false},
 
 	// Agent debug routes (protected)
 	{method: "POST", path: "/api/agent/debug", body: `{"message":"test"}`, protected: true},
@@ -172,6 +176,9 @@ func setupTestRouter() *gin.Engine {
 		{
 			bookings.GET("/slots", standardHandler)
 			bookings.POST("", standardHandler)
+			bookings.GET("/lookup", standardHandler)
+			bookings.PUT("/:id/cancel", standardHandler)
+			bookings.PUT("/:id", standardHandler)
 		}
 
 		// Booking management (protected)
@@ -205,6 +212,7 @@ func setupTestRouter() *gin.Engine {
 		api.POST("/agent/chat", standardHandler)
 		api.GET("/agent/history", standardHandler)
 		api.POST("/agent/clear", standardHandler)
+		api.GET("/agent/sessions", standardHandler)
 
 		// Agent debug (protected)
 		agentDebugProtected := api.Group("/agent/debug")

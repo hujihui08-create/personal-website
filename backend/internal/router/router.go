@@ -45,7 +45,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configService := service.NewConfigService(configRepo)
 	embeddingService := service.NewEmbeddingService(configService)
 	ragService := service.NewRAGService(knowledgeDocRepo, documentParser, textSplitter, embeddingService)
-	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo)
+	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, agentPromptRepo, bookingService)
 	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo)
 	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
 
@@ -170,6 +170,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 		{
 			bookings.GET("/slots", bookingHandler.GetSlots)
 			bookings.POST("", bookingHandler.CreateBooking)
+			bookings.GET("/lookup", bookingHandler.LookupBooking)
+			bookings.PUT("/:id/cancel", bookingHandler.CancelBookingByUser)
+			bookings.PUT("/:id", bookingHandler.UpdateBookingByUser)
 		}
 
 		// Booking management (protected)
@@ -202,6 +205,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 		// Agent (public)
 		api.POST("/agent/chat", agentHandler.Chat)
 		api.GET("/agent/history", agentHandler.GetHistory)
+		api.GET("/agent/sessions", agentHandler.ListSessions)
 		api.POST("/agent/clear", agentHandler.ClearSession)
 
 		// Agent Debug (protected)

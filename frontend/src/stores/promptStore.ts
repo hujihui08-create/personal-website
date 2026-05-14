@@ -33,7 +33,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
     try {
       const result = await listPrompts({ agent_type: agentType, page, page_size: 20 })
       set({
-        prompts: result.items || result.data || [],
+        prompts: result.list || result.items || result.data || [],
         total: result.total || result.pagination?.total || 0,
       })
     } finally {

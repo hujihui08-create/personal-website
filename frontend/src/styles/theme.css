@@ -1,21 +1,28 @@
 :root {
   /* ========== 字体令牌 ========== */
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'PingFang TC', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
+
   /* ========== 颜色令牌 ========== */
-  --color-primary: #1A1A1A;
+  --color-primary: #1a1a1a;
   --color-secondary: #666666;
-  --color-accent: #0066FF;
-  --color-bg: #FFFFFF;
-  --color-bg-secondary: #F5F5F5;
-  --color-bg-tertiary: #FAFAFA;
-  --color-border-light: #E5E5E5;
-  --color-border-medium: #D4D4D4;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
-  --color-accent-soft: rgba(0, 102, 255, 0.10);
+  --color-accent: #0066ff;
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #fafafa;
+  --color-border-light: #e5e5e5;
+  --color-border-medium: #d4d4d4;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-accent-soft: rgba(0, 102, 255, 0.1);
+  --color-success-soft: rgba(16, 185, 129, 0.1);
+  --color-warning-soft: rgba(245, 158, 11, 0.1);
+  --color-error-soft: rgba(239, 68, 68, 0.1);
+  --color-info-soft: rgba(59, 130, 246, 0.1);
+  --color-bg-hover: #f0f0f0;
 
   /* ========== 间距令牌 (8px 基础单位) ========== */
   --space-xs: 4px;

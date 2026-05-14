@@ -23,6 +23,7 @@ export const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const projectId = id ? parseInt(id, 10) : undefined
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   const { data: project, isLoading, isError, refetch } = useProject(projectId)
 
@@ -36,12 +37,20 @@ export const ProjectDetailPage = () => {
 
   const nextImage = () => {
     if (allImages.length === 0) return
+    setImageLoaded(false)
     setCurrentImageIndex((prev) => (prev + 1) % allImages.length)
   }
 
   const prevImage = () => {
     if (allImages.length === 0) return
+    setImageLoaded(false)
     setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length)
+  }
+
+  const handleIndicatorClick = (index: number) => {
+    if (index === currentImageIndex) return
+    setImageLoaded(false)
+    setCurrentImageIndex(index)
   }
 
   if (isError) {
@@ -139,7 +148,9 @@ export const ProjectDetailPage = () => {
             style={{ minHeight: '320px', maxHeight: '70vh' }}
           >
             <div
-              className="absolute inset-0 scale-110"
+              className={`absolute inset-0 scale-110 transition-opacity duration-[var(--duration-slow)] ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
               key={`bg-${currentImageIndex}`}
               style={{
                 backgroundImage: `url(${allImages[currentImageIndex]})`,
@@ -171,6 +182,7 @@ export const ProjectDetailPage = () => {
                 src={allImages[currentImageIndex]}
                 alt={project.name}
                 loading="lazy"
+                onLoad={() => setImageLoaded(true)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
@@ -203,7 +215,7 @@ export const ProjectDetailPage = () => {
                   {allImages.map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentImageIndex(index)}
+                      onClick={() => handleIndicatorClick(index)}
                       className={`w-2 h-2 rounded-full transition-all duration-[var(--duration-base)] ease-standard
 												${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'}`}
                     />

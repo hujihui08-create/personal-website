@@ -3,16 +3,15 @@ import type {
   AgentChatRequest,
   AgentChatSession,
   AgentChatStreamChunk,
-  AgentClearRequest
+  AgentClearRequest,
+  AgentSessionMeta,
 } from '@/types'
 import apiClient from './client'
+import { useAuthStore } from '@/stores/auth'
 
 export const agentApi = {
   chat: async (request: AgentChatRequest) => {
-    const response = await apiClient.post<ApiResponse<AgentChatSession>>(
-      '/agent/chat',
-      request
-    )
+    const response = await apiClient.post<ApiResponse<AgentChatSession>>('/agent/chat', request)
     return response.data
   },
 
@@ -23,7 +22,7 @@ export const agentApi = {
     onError: (error: Error) => void
   ) => {
     const url = `/api/agent/chat`
-    const token = localStorage.getItem('auth_token')
+    const token = useAuthStore.getState().token
 
     const eventSource = new EventSourcePolyfill(url, {
       method: 'POST',
@@ -59,20 +58,31 @@ export const agentApi = {
   },
 
   getHistory: async (sessionId: string) => {
-    const response = await apiClient.get<ApiResponse<AgentChatSession>>(
-      '/agent/history',
-      { params: { session_id: sessionId } }
-    )
+    const response = await apiClient.get<ApiResponse<AgentChatSession>>('/agent/history', {
+      params: { session_id: sessionId },
+    })
     return response.data
   },
 
   clearSession: async (request: AgentClearRequest) => {
-    const response = await apiClient.post<ApiResponse<null>>(
-      '/agent/clear',
-      request
-    )
+    const response = await apiClient.post<ApiResponse<null>>('/agent/clear', request)
     return response.data
   },
+
+  listSessions: async (visitorId: string) => {
+    const response = await apiClient.get<ApiResponse<AgentSessionMeta[]>>('/agent/sessions', {
+      params: { visitor_id: visitorId },
+    })
+    return response.data
+  },
+}
+
+export function generateVisitorId(): string {
+  const stored = localStorage.getItem('visitor_id')
+  if (stored) return stored
+  const id = crypto.randomUUID()
+  localStorage.setItem('visitor_id', id)
+  return id
 }
 
 class EventSourcePolyfill {
@@ -84,6 +94,7 @@ class EventSourcePolyfill {
   }
   private eventListeners: Record<string, Array<(event: any) => void>> = {}
   private controller?: AbortController
+  private closed = false
 
   constructor(url: string, options: any) {
     this.url = url
@@ -103,7 +114,7 @@ class EventSourcePolyfill {
       })
 
       console.log('[EventSourcePolyfill] 响应状态:', response.status, response.statusText)
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         console.error('[EventSourcePolyfill] 请求失败:', errorText)
@@ -118,11 +129,13 @@ class EventSourcePolyfill {
       const decoder = new TextDecoder()
       let buffer = ''
 
-      while (true) {
-        const { done, value } = await reader.read()
+      let done = false
+      while (!done) {
+        const result = await reader.read()
+        done = result.done
         if (done) break
 
-        buffer += decoder.decode(value, { stream: true })
+        buffer += decoder.decode(result.value, { stream: true })
 
         const lines = buffer.split('\n\n')
         buffer = lines.pop() || ''
@@ -135,12 +148,18 @@ class EventSourcePolyfill {
         }
       }
 
-    } catch (error) {
-      // 不要将 AbortError 作为错误处理，因为这是正常关闭
-      if (error instanceof Error && error.name !== 'AbortError' && !(error instanceof DOMException && error.name === 'AbortError')) {
-        console.error('[EventSourcePolyfill] 发生错误:', error)
-        this.dispatchEvent('error', error)
+      if (!this.closed) {
+        this.dispatchEvent('done')
       }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+      console.error('[EventSourcePolyfill] 发生错误:', error)
+      this.dispatchEvent('error', error)
     }
   }
 
@@ -159,7 +178,7 @@ class EventSourcePolyfill {
     }
   }
 
-  dispatchEvent(type: string, event: any) {
+  dispatchEvent(type: string, event?: any) {
     if (!this.eventListeners[type]) return
     for (const listener of this.eventListeners[type]) {
       listener(event)
@@ -167,6 +186,7 @@ class EventSourcePolyfill {
   }
 
   close() {
+    this.closed = true
     this.controller?.abort()
   }
 }

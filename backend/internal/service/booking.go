@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"portfolio-backend/internal/database"
@@ -17,6 +18,10 @@ var (
 	ErrRateLimitEmail     = errors.New("该邮箱今日预约次数已达上限")
 	ErrNotWeekday         = errors.New("仅支持工作日预约")
 	ErrInvalidBookingTime = errors.New("无效的预约时间")
+	ErrBookingNotFound    = errors.New("未找到匹配的预约")
+	ErrPhoneMismatch      = errors.New("手机号不匹配")
+	ErrCannotCancelBooking = errors.New("当前状态不允许取消")
+	ErrCannotUpdateBooking = errors.New("当前状态不允许修改")
 )
 
 type BookingService struct {
@@ -49,6 +54,17 @@ type SlotsResponse struct {
 	IsAvailable bool   `json:"is_available"`
 	Message     string `json:"message,omitempty"`
 	Slots       []Slot `json:"slots,omitempty"`
+}
+
+type UpdateBookingByUserData struct {
+	CompanyName     string `json:"company_name"`
+	CompanyLocation string `json:"company_location"`
+	BookingDate     string `json:"booking_date"`
+	BookingTime     string `json:"booking_time"`
+	ContactName     string `json:"contact_name"`
+	ContactEmail    string `json:"contact_email"`
+	ContactPhone    string `json:"contact_phone"`
+	Notes           string `json:"notes"`
 }
 
 func (s *BookingService) GetAvailableSlots(date string) (*SlotsResponse, error) {
@@ -142,7 +158,7 @@ func (s *BookingService) CreateBooking(
 	today := time.Now().Format("2006-01-02")
 	emailKey := fmt.Sprintf("booking:email:%s:%s", contactEmail, today)
 	emailCount, _ := database.RedisClient.Get(ctx, emailKey).Int()
-	if emailCount >= 3 {
+	if contactEmail != "" && emailCount >= 3 {
 		return nil, ErrRateLimitEmail
 	}
 
@@ -161,7 +177,18 @@ func (s *BookingService) CreateBooking(
 		return nil, ErrSlotUnavailable
 	}
 
+	id := generateBookingID()
+
+	for {
+		_, err := s.bookingRepo.FindByID(id)
+		if err != nil {
+			break
+		}
+		id = generateBookingID()
+	}
+
 	booking := &model.Booking{
+		ID:              id,
 		CompanyName:     companyName,
 		CompanyLocation: companyLocation,
 		BookingDate:     bookingDate,
@@ -180,8 +207,10 @@ func (s *BookingService) CreateBooking(
 	database.RedisClient.Incr(ctx, ipKey)
 	database.RedisClient.Expire(ctx, ipKey, 1*time.Hour)
 
-	database.RedisClient.Incr(ctx, emailKey)
-	database.RedisClient.Expire(ctx, emailKey, 24*time.Hour)
+	if contactEmail != "" {
+		database.RedisClient.Incr(ctx, emailKey)
+		database.RedisClient.Expire(ctx, emailKey, 24*time.Hour)
+	}
 
 	cacheKey := fmt.Sprintf("booking:slots:%s", bookingDate)
 	database.RedisClient.Del(ctx, cacheKey)
@@ -258,6 +287,151 @@ func (s *BookingService) UpdateScheduleSettings(settings []model.ScheduleSetting
 	return nil
 }
 
+func (s *BookingService) LookupBooking(id uint, phone string) (*model.BookingResponse, error) {
+	booking, err := s.bookingRepo.FindByIDAndPhone(id, phone)
+	if err != nil {
+		return nil, ErrBookingNotFound
+	}
+	return toBookingResponse(booking), nil
+}
+
+func (s *BookingService) LookupBookingByContactName(phone, contactName string) (*model.BookingResponse, error) {
+	booking, err := s.bookingRepo.FindByPhoneAndContactName(phone, contactName)
+	if err != nil {
+		return nil, ErrBookingNotFound
+	}
+	return toBookingResponse(booking), nil
+}
+
+func (s *BookingService) LookupBookingByCompanyName(phone, companyName string) (*model.BookingResponse, error) {
+	booking, err := s.bookingRepo.FindByPhoneAndCompanyName(phone, companyName)
+	if err != nil {
+		return nil, ErrBookingNotFound
+	}
+	return toBookingResponse(booking), nil
+}
+
+func (s *BookingService) CancelBookingByUser(id uint, phone string, cancelReason string) (*model.BookingResponse, error) {
+	ctx := context.Background()
+
+	booking, err := s.bookingRepo.FindByIDAndPhone(id, phone)
+	if err != nil {
+		return nil, ErrBookingNotFound
+	}
+
+	if booking.Status != "pending" && booking.Status != "confirmed" {
+		return nil, ErrCannotCancelBooking
+	}
+
+	booking.Status = "cancelled"
+	booking.CancelReason = cancelReason
+	if err := s.bookingRepo.Update(booking); err != nil {
+		return nil, err
+	}
+
+	cacheKey := fmt.Sprintf("booking:slots:%s", booking.BookingDate)
+	database.RedisClient.Del(ctx, cacheKey)
+
+	if s.notificationService != nil {
+		_ = s.notificationService.NotifyBookingStatusChanged(booking, "cancelled")
+	}
+
+	return toBookingResponse(booking), nil
+}
+
+func (s *BookingService) UpdateBookingByUser(id uint, phone string, data UpdateBookingByUserData) (*model.BookingResponse, error) {
+	ctx := context.Background()
+
+	booking, err := s.bookingRepo.FindByIDAndPhone(id, phone)
+	if err != nil {
+		return nil, ErrBookingNotFound
+	}
+
+	if booking.Status != "pending" && booking.Status != "confirmed" {
+		return nil, ErrCannotUpdateBooking
+	}
+
+	// Store original date for cache clearing
+	originalDate := booking.BookingDate
+
+	// Determine effective date and time for validation
+	effectiveDate := booking.BookingDate
+	effectiveTime := booking.BookingTime
+
+	if data.BookingDate != "" {
+		effectiveDate = data.BookingDate
+	}
+	if data.BookingTime != "" {
+		effectiveTime = data.BookingTime
+	}
+
+	// If date or time changed, validate
+	if data.BookingDate != "" || data.BookingTime != "" {
+		parsedDate, err := time.Parse("2006-01-02", effectiveDate)
+		if err != nil {
+			return nil, ErrInvalidBookingTime
+		}
+
+		weekday := int(parsedDate.Weekday())
+		if weekday == 0 || weekday == 6 {
+			return nil, ErrNotWeekday
+		}
+
+		existingBooking, _ := s.bookingRepo.FindByDateAndTime(effectiveDate, effectiveTime)
+		if existingBooking != nil && existingBooking.ID != id && existingBooking.Status != "cancelled" {
+			return nil, ErrSlotUnavailable
+		}
+	}
+
+	// Update fields
+	if data.CompanyName != "" {
+		booking.CompanyName = data.CompanyName
+	}
+	if data.CompanyLocation != "" {
+		booking.CompanyLocation = data.CompanyLocation
+	}
+	if data.BookingDate != "" {
+		booking.BookingDate = data.BookingDate
+	}
+	if data.BookingTime != "" {
+		booking.BookingTime = data.BookingTime
+	}
+	if data.ContactName != "" {
+		booking.ContactName = data.ContactName
+	}
+	if data.ContactEmail != "" {
+		booking.ContactEmail = data.ContactEmail
+	}
+	if data.ContactPhone != "" {
+		booking.ContactPhone = data.ContactPhone
+	}
+	if data.Notes != "" {
+		booking.Notes = data.Notes
+	}
+
+	if err := s.bookingRepo.Update(booking); err != nil {
+		return nil, err
+	}
+
+	// Clear slot cache for both old and new dates
+	cacheKey := fmt.Sprintf("booking:slots:%s", originalDate)
+	database.RedisClient.Del(ctx, cacheKey)
+	if originalDate != booking.BookingDate {
+		cacheKey = fmt.Sprintf("booking:slots:%s", booking.BookingDate)
+		database.RedisClient.Del(ctx, cacheKey)
+	}
+
+	if s.notificationService != nil {
+		_ = s.notificationService.NotifyBookingStatusChanged(booking, "updated")
+	}
+
+	return toBookingResponse(booking), nil
+}
+
+func generateBookingID() uint {
+	return uint(100000 + rand.Intn(900000))
+}
+
 func getWeekdayName(weekday int) string {
 	names := []string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	if weekday >= 0 && weekday < len(names) {
@@ -279,6 +453,7 @@ func toBookingResponse(booking *model.Booking) *model.BookingResponse {
 		Notes:           booking.Notes,
 		Status:          booking.Status,
 		RejectReason:    booking.RejectReason,
+		CancelReason:    booking.CancelReason,
 		CreatedAt:       booking.CreatedAt,
 		UpdatedAt:       booking.UpdatedAt,
 	}

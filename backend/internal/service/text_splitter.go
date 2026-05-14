@@ -31,68 +31,183 @@ func (s *TextSplitter) Split(text string) []string {
 		return []string{}
 	}
 
-	chunks := []string{}
-	words := strings.Fields(text)
-	if len(words) == 0 {
+	paragraphs := s.splitParagraphs(text)
+
+	segments := s.flattenParagraphs(paragraphs)
+
+	if len(segments) == 0 {
 		return []string{}
 	}
 
-	currentChunk := []string{}
-	currentLength := 0
+	chunks := s.mergeToChunks(segments)
 
-	for _, word := range words {
-		wordLength := utf8.RuneCountInString(word)
-		if currentLength+wordLength+1 > s.chunkSize {
-			if len(currentChunk) > 0 {
-				chunks = append(chunks, strings.Join(currentChunk, " "))
-			}
-			if s.chunkOverlap > 0 && len(chunks) > 0 {
-				prevChunkWords := strings.Fields(chunks[len(chunks)-1])
-				overlapWords := s.getOverlapWords(prevChunkWords)
-				currentChunk = overlapWords
-				currentLength = s.countWordsLength(overlapWords)
-			} else {
-				currentChunk = []string{}
-				currentLength = 0
-			}
-		}
-		currentChunk = append(currentChunk, word)
-		currentLength += wordLength + 1
-	}
-
-	if len(currentChunk) > 0 {
-		chunks = append(chunks, strings.Join(currentChunk, " "))
+	if len(chunks) == 0 {
+		return segments
 	}
 
 	return chunks
 }
 
-func (s *TextSplitter) getOverlapWords(words []string) []string {
-	if len(words) == 0 {
-		return []string{}
-	}
-	targetLength := s.chunkOverlap
-	currentLength := 0
-	result := []string{}
-	for i := len(words) - 1; i >= 0; i-- {
-		word := words[i]
-		wordLength := utf8.RuneCountInString(word)
-		if currentLength+wordLength+1 > targetLength {
-			break
+func (t *TextSplitter) runeLen(str string) int {
+	return utf8.RuneCountInString(str)
+}
+
+func (s *TextSplitter) splitParagraphs(text string) []string {
+	raw := strings.Split(text, "\n\n")
+
+	var result []string
+	for _, p := range raw {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
 		}
-		result = append([]string{word}, result...)
-		currentLength += wordLength + 1
+		result = append(result, p)
 	}
 	return result
 }
 
-func (s *TextSplitter) countWordsLength(words []string) int {
-	length := 0
-	for i, word := range words {
-		if i > 0 {
-			length++
+func (s *TextSplitter) flattenParagraphs(paragraphs []string) []string {
+	var segments []string
+
+	for _, p := range paragraphs {
+		if s.runeLen(p) <= s.chunkSize {
+			segments = append(segments, p)
+			continue
 		}
-		length += utf8.RuneCountInString(word)
+
+		sentences := s.splitBySentences(p)
+		for _, sent := range sentences {
+			if s.runeLen(sent) <= s.chunkSize {
+				segments = append(segments, sent)
+			} else {
+				segments = append(segments, s.splitByWords(sent)...)
+			}
+		}
 	}
-	return length
+
+	return segments
+}
+
+var sentenceSeps = []rune{'。', '！', '？', '；', '\n'}
+
+func (s *TextSplitter) splitBySentences(text string) []string {
+	if s.runeLen(text) <= s.chunkSize {
+		return []string{text}
+	}
+
+	var result []string
+	runes := []rune(text)
+	start := 0
+
+	for i, r := range runes {
+		isSep := false
+		for _, sep := range sentenceSeps {
+			if r == sep {
+				isSep = true
+				break
+			}
+		}
+
+		if isSep {
+			sent := strings.TrimSpace(string(runes[start : i+1]))
+			if sent != "" {
+				result = append(result, sent)
+			}
+			start = i + 1
+		}
+	}
+
+	if start < len(runes) {
+		remaining := strings.TrimSpace(string(runes[start:]))
+		if remaining != "" {
+			result = append(result, remaining)
+		}
+	}
+
+	return result
+}
+
+func (s *TextSplitter) splitByWords(text string) []string {
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return []string{text}
+	}
+
+	var chunks []string
+	var current []string
+	currentLen := 0
+
+	flush := func() {
+		if len(current) > 0 {
+			chunks = append(chunks, strings.Join(current, " "))
+			current = nil
+			currentLen = 0
+		}
+	}
+
+	for _, w := range words {
+		wLen := s.runeLen(w)
+		if currentLen > 0 {
+			wLen++
+		}
+		if currentLen+wLen > s.chunkSize && len(current) > 0 {
+			flush()
+		}
+		current = append(current, w)
+		if len(current) == 1 {
+			currentLen = s.runeLen(w)
+		} else {
+			currentLen += s.runeLen(w) + 1
+		}
+	}
+	flush()
+
+	return chunks
+}
+
+func (s *TextSplitter) mergeToChunks(segments []string) []string {
+	if len(segments) == 0 {
+		return nil
+	}
+
+	var chunks []string
+	var buf []string
+	bufLen := 0
+	minChunkLen := s.chunkSize * 2 / 5
+
+	flush := func() {
+		if len(buf) > 0 {
+			chunks = append(chunks, strings.Join(buf, " "))
+			buf = nil
+			bufLen = 0
+		}
+	}
+
+	for _, seg := range segments {
+		segLen := s.runeLen(seg)
+
+		if bufLen > 0 {
+			segLen++ // 空格分隔
+		}
+		wouldExceed := bufLen+segLen > s.chunkSize
+
+		if wouldExceed {
+			if bufLen >= minChunkLen {
+				flush()
+				buf = []string{seg}
+				bufLen = s.runeLen(seg)
+			} else {
+				buf = append(buf, seg)
+				bufLen += segLen
+				flush()
+			}
+		} else {
+			buf = append(buf, seg)
+			bufLen += segLen
+		}
+	}
+
+	flush()
+
+	return chunks
 }

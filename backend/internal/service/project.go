@@ -1,10 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"mime/multipart"
-	"path/filepath"
 	"time"
 
 	"github.com/lib/pq"
@@ -295,13 +295,21 @@ func (s *ProjectService) UploadCoverImage(file multipart.File, header *multipart
 		return "", fmt.Errorf("MinIO client not initialized")
 	}
 
-	ext := filepath.Ext(header.Filename)
+	processedData, contentType, err := processCoverImage(file)
+	if err != nil {
+		return "", fmt.Errorf("process cover image: %w", err)
+	}
+
+	ext := ".jpg"
+	if contentType == "image/png" {
+		ext = ".png"
+	}
 	objectName := fmt.Sprintf("projects/covers/%d%s", time.Now().UnixNano(), ext)
 
 	ctx := context.Background()
-	contentType := header.Header.Get("Content-Type")
+	reader := bytes.NewReader(processedData)
 
-	_, err := s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, file, header.Size, minio.PutObjectOptions{
+	_, err = s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, reader, int64(len(processedData)), minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {
@@ -316,13 +324,21 @@ func (s *ProjectService) UploadProjectImage(file multipart.File, header *multipa
 		return "", fmt.Errorf("MinIO client not initialized")
 	}
 
-	ext := filepath.Ext(header.Filename)
+	processedData, contentType, err := processProjectImage(file)
+	if err != nil {
+		return "", fmt.Errorf("process project image: %w", err)
+	}
+
+	ext := ".jpg"
+	if contentType == "image/png" {
+		ext = ".png"
+	}
 	objectName := fmt.Sprintf("projects/images/%d%s", time.Now().UnixNano(), ext)
 
 	ctx := context.Background()
-	contentType := header.Header.Get("Content-Type")
+	reader := bytes.NewReader(processedData)
 
-	_, err := s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, file, header.Size, minio.PutObjectOptions{
+	_, err = s.minioClient.PutObject(ctx, s.cfg.MinIO.Bucket, objectName, reader, int64(len(processedData)), minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {

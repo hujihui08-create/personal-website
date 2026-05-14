@@ -1,5 +1,12 @@
 import apiClient from './client'
-import type { ApiResponse, PaginatedResponse, Booking, ScheduleSetting, SlotsResponse } from '@/types'
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  Booking,
+  ScheduleSetting,
+  SlotsResponse,
+  UpdateBookingByUserRequest,
+} from '@/types'
 
 export interface CreateBookingRequest {
   company_name: string
@@ -7,7 +14,7 @@ export interface CreateBookingRequest {
   booking_date: string
   booking_time: string
   contact_name: string
-  contact_email: string
+  contact_email?: string
   contact_phone: string
   notes?: string
 }
@@ -55,14 +62,44 @@ export const bookingApi = {
     return response.data
   },
 
+  async lookupBooking(params: {
+    phone: string
+    id?: number
+    contact_name?: string
+    company_name?: string
+  }): Promise<ApiResponse<Booking>> {
+    const response = await apiClient.get('/bookings/lookup', { params })
+    return response.data
+  },
+
+  async cancelBookingByUser(
+    id: number,
+    phone: string,
+    cancelReason?: string
+  ): Promise<ApiResponse<Booking>> {
+    const response = await apiClient.put(
+      `/bookings/${id}/cancel`,
+      cancelReason ? { cancel_reason: cancelReason } : null,
+      { params: { phone } }
+    )
+    return response.data
+  },
+
+  async updateBookingByUser(
+    id: number,
+    phone: string,
+    data: UpdateBookingByUserRequest
+  ): Promise<ApiResponse<Booking>> {
+    const response = await apiClient.put(`/bookings/${id}`, data, { params: { phone } })
+    return response.data
+  },
+
   async getScheduleSettings(): Promise<ApiResponse<ScheduleSetting[]>> {
     const response = await apiClient.get('/schedule')
     return response.data
   },
 
-  async updateScheduleSettings(
-    data: UpdateScheduleSettingsRequest
-  ): Promise<ApiResponse<void>> {
+  async updateScheduleSettings(data: UpdateScheduleSettingsRequest): Promise<ApiResponse<void>> {
     const response = await apiClient.put('/schedule', data)
     return response.data
   },
