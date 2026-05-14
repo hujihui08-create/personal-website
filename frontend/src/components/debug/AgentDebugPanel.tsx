@@ -4,7 +4,7 @@ import { DebugHistory } from './DebugHistory'
 
 export const AgentDebugPanel = () => {
   return (
-    <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-6rem)]">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]">
       {/* Page title */}
       <div className="flex-shrink-0 mb-4">
         <h1 className="text-xl font-semibold text-[#1A1A1A]">Agent 调试</h1>

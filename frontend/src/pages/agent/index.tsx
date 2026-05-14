@@ -231,7 +231,7 @@ export const AgentPage = () => {
   }
 
   return (
-    <div className="h-[calc(100dvh-10rem)] md:h-[calc(100dvh-4rem)] bg-[var(--color-bg)]">
+    <div className="h-[calc(100vh-10rem)] md:h-[calc(100vh-4rem)] bg-[var(--color-bg)]">
       <div className="flex h-full">
         <SessionList
           sessions={sessions}
