@@ -496,8 +496,8 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 func (s *ChatService) classifyIntent(query string) IntentClassResult {
 	lower := strings.ToLower(query)
 
-	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能", "技术栈",
-		"work experience", "project", "skill", "background", "experience"}
+	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能",
+		"work experience", "skill", "background", "experience"}
 	for _, kw := range resumeKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "resume", Confidence: 0.85, Method: "keyword"}
@@ -516,6 +516,14 @@ func (s *ChatService) classifyIntent(query string) IntentClassResult {
 	for _, kw := range projectKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "project", Confidence: 0.85, Method: "keyword"}
+		}
+	}
+
+	techKeywords := []string{"技术栈", "技术", "tech stack", "编程语言", "框架", "后端", "前端",
+		"数据库", "云计算", "devops", "开发", "架构", "微服务", "容器", "kubernetes", "docker"}
+	for _, kw := range techKeywords {
+		if strings.Contains(lower, kw) {
+			return IntentClassResult{AgentType: "tech", Confidence: 0.85, Method: "keyword"}
 		}
 	}
 

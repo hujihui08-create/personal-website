@@ -16,6 +16,8 @@ const AGENT_TYPE_OPTIONS = [
   { value: 'project', label: '项目知识' },
   { value: 'tech', label: '技术能力' },
   { value: 'general', label: '通用' },
+  { value: 'booking', label: '预约引导' },
+  { value: 'chat', label: '默认对话' },
 ]
 
 const AVAILABLE_VARIABLES = [
