@@ -44,7 +44,7 @@ func (r *ProjectRepository) List(opts ListProjectsOptions) ([]model.Project, int
 
 func (r *ProjectRepository) ListFeatured(limit int) ([]model.Project, error) {
 	var projects []model.Project
-	if err := r.db.Order("sort_order DESC").Limit(limit).Find(&projects).Error; err != nil {
+	if err := r.db.Where("is_featured = ?", true).Order("sort_order DESC").Limit(limit).Find(&projects).Error; err != nil {
 		return nil, err
 	}
 	return projects, nil

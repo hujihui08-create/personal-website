@@ -1,12 +1,27 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Briefcase, FolderOpen, FileText, Edit3, TrendingUp, Clock, Award } from 'lucide-react'
+import {
+  User,
+  Briefcase,
+  FolderOpen,
+  FileText,
+  Edit3,
+  TrendingUp,
+  Clock,
+  Award,
+} from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { useExperiences } from '@/hooks/useExperiences'
 import { useResume } from '@/hooks/useResume'
 
 const StatCard = ({
-  icon: Icon, label, value, color, to, trend }: {
+  icon: Icon,
+  label,
+  value,
+  color,
+  to,
+  trend,
+}: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: number | string
@@ -35,28 +50,36 @@ const StatCard = ({
       </div>
       <div className="space-y-1">
         <p className="text-sm text-[var(--color-secondary)]">{label}</p>
-        <p className="text-3xl font-bold text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors">{value}</p>
+        <p className="text-3xl font-bold text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors">
+          {value}
+        </p>
       </div>
     </motion.div>
   )
 
   if (to) {
-    return <Link to={to} className="block h-full">{content}</Link>
+    return (
+      <Link to={to} className="block h-full">
+        {content}
+      </Link>
+    )
   }
 
   return content
 }
 
 const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] ${className}`} />
+  <div
+    className={`animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-md)] ${className}`}
+  />
 )
 
-const QuickAction = ({ 
-  icon: Icon, 
-  label, 
-  to, 
-  color 
-}: { 
+const QuickAction = ({
+  icon: Icon,
+  label,
+  to,
+  color,
+}: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   to: string
@@ -66,7 +89,9 @@ const QuickAction = ({
     to={to}
     className="group flex items-center gap-3 p-4 rounded-[var(--radius-lg)] border border-[var(--color-border-light)] bg-[var(--color-bg)] hover:shadow-md hover:border-[var(--color-accent)]/30 transition-all duration-[var(--duration-base)]"
   >
-    <div className={`p-2.5 rounded-[var(--radius-md)] ${color} group-hover:scale-110 transition-transform duration-[var(--duration-base)]`}>
+    <div
+      className={`p-2.5 rounded-[var(--radius-md)] ${color} group-hover:scale-110 transition-transform duration-[var(--duration-base)]`}
+    >
       <Icon className="w-5 h-5" />
     </div>
     <span className="text-sm font-medium text-[var(--color-primary)]">{label}</span>
@@ -85,9 +110,9 @@ export const DashboardPage = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   }
 
   return (
@@ -101,11 +126,19 @@ export const DashboardPage = () => {
       >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">仪表盘</h1>
-          <p className="text-[var(--color-secondary)] mt-1">欢迎回来，{profile?.name || '管理员'}！</p>
+          <p className="text-[var(--color-secondary)] mt-1">
+            欢迎回来，{profile?.name || '管理员'}！
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-[var(--color-secondary)] bg-[var(--color-bg)] px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border-light)]">
           <Clock className="w-4 h-4" />
-          <span>{new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          <span>
+            {new Date().toLocaleDateString('zh-CN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </span>
         </div>
       </motion.div>
 
@@ -169,7 +202,7 @@ export const DashboardPage = () => {
             />
             <StatCard
               icon={FolderOpen}
-              label="作品项目"
+              label="项目"
               value="0"
               color="bg-[var(--color-success)]/10 text-[var(--color-success)]"
               to="/admin/projects"
@@ -178,7 +211,11 @@ export const DashboardPage = () => {
               icon={FileText}
               label="简历状态"
               value={resume ? '已上传' : '未上传'}
-              color={resume ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]'}
+              color={
+                resume
+                  ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]'
+                  : 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]'
+              }
               to="/admin/profile"
             />
           </>
@@ -211,7 +248,7 @@ export const DashboardPage = () => {
           />
           <QuickAction
             icon={FolderOpen}
-            label="管理作品项目"
+            label="管理项目"
             to="/admin/projects"
             color="bg-[var(--color-info)]/10 text-[var(--color-info)]"
           />

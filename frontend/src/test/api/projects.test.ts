@@ -28,13 +28,14 @@ describe('projectApi', () => {
     type: 'personal' as const,
     startDate: '2025-01-01',
     endDate: '2025-06-01',
-    summary: '一个个人作品集网站',
+    summary: '一个个人项目集网站',
     description: '使用 React 和 Go 构建的个人网站',
     coverImage: 'https://example.com/cover.png',
     images: ['https://example.com/img1.png'],
     githubUrl: 'https://github.com/test/portfolio',
     demoUrl: 'https://example.com',
     tags: ['React', 'Go'],
+    isFeatured: false,
     sortOrder: 1,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-06-01T00:00:00Z',
@@ -67,7 +68,9 @@ describe('projectApi', () => {
 
       await projectApi.list({ type: 'enterprise', page: 2, pageSize: 5 })
 
-      expect(mockGet).toHaveBeenCalledWith('/projects', { params: { type: 'enterprise', page: 2, pageSize: 5 } })
+      expect(mockGet).toHaveBeenCalledWith('/projects', {
+        params: { type: 'enterprise', page: 2, pageSize: 5 },
+      })
     })
   })
 
@@ -95,7 +98,18 @@ describe('projectApi', () => {
 
   describe('create', () => {
     it('should call POST /projects with data and return created project', async () => {
-      const newProject = { name: '新项目', type: 'personal' as const, summary: '', description: '', coverImage: '', images: [], githubUrl: '', demoUrl: '', tags: [], sortOrder: 0 }
+      const newProject = {
+        name: '新项目',
+        type: 'personal' as const,
+        summary: '',
+        description: '',
+        coverImage: '',
+        images: [],
+        githubUrl: '',
+        demoUrl: '',
+        tags: [],
+        sortOrder: 0,
+      }
       mockPost.mockResolvedValue({ data: { data: { ...newProject, id: 2 } } })
 
       const result = await projectApi.create(newProject)
@@ -137,18 +151,30 @@ describe('projectApi', () => {
     })
   })
 
+  describe('toggleFeatured', () => {
+    it('should call PUT /projects/:id/featured and return updated project', async () => {
+      const toggledProject = { ...mockProject, isFeatured: true }
+      mockPut.mockResolvedValue({ data: { data: toggledProject } })
+
+      const result = await projectApi.toggleFeatured(1)
+
+      expect(mockPut).toHaveBeenCalledWith('/projects/1/featured')
+      expect(result.isFeatured).toBe(true)
+    })
+  })
+
   describe('uploadCoverImage', () => {
     it('should call POST /projects/upload-cover with FormData', async () => {
       const file = new File(['content'], 'cover.jpg', { type: 'image/jpeg' })
-      mockPost.mockResolvedValue({ data: { data: { url: 'https://example.com/uploaded-cover.jpg' } } })
+      mockPost.mockResolvedValue({
+        data: { data: { url: 'https://example.com/uploaded-cover.jpg' } },
+      })
 
       const result = await projectApi.uploadCoverImage(file)
 
-      expect(mockPost).toHaveBeenCalledWith(
-        '/projects/upload-cover',
-        expect.any(FormData),
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
+      expect(mockPost).toHaveBeenCalledWith('/projects/upload-cover', expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       expect(result).toBe('https://example.com/uploaded-cover.jpg')
     })
   })
@@ -160,11 +186,9 @@ describe('projectApi', () => {
 
       const result = await projectApi.uploadProjectImage(file)
 
-      expect(mockPost).toHaveBeenCalledWith(
-        '/projects/upload-image',
-        expect.any(FormData),
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
+      expect(mockPost).toHaveBeenCalledWith('/projects/upload-image', expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       expect(result).toBe('https://example.com/image.png')
     })
   })

@@ -161,6 +161,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			projectsProtected.PUT("/:id", projectHandler.Update)
 			projectsProtected.DELETE("/:id", projectHandler.Delete)
 			projectsProtected.PUT("/reorder", projectHandler.Reorder)
+			projectsProtected.PUT("/:id/featured", projectHandler.ToggleFeatured)
 			projectsProtected.POST("/upload-cover", projectHandler.UploadCoverImage)
 			projectsProtected.POST("/upload-image", projectHandler.UploadProjectImage)
 		}

@@ -12,6 +12,7 @@ vi.mock('@/hooks/useResume', () => ({
 }))
 
 vi.mock('framer-motion', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createElement, forwardRef } = require('react')
   const motion = new Proxy(
     {},
@@ -40,6 +41,7 @@ vi.mock('framer-motion', () => {
 })
 
 vi.mock('lucide-react', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createElement } = require('react')
   const icons = ['Github', 'ExternalLink', 'Mail', 'Download', 'Eye', 'Calendar']
   const result: Record<string, any> = {}
@@ -256,7 +258,7 @@ describe('HeroCard', () => {
     expect(screen.queryByText('下载简历')).not.toBeInTheDocument()
   })
 
-  it('should render action buttons (查看作品 and 预约面试)', () => {
+  it('should render action buttons (查看项目 and 预约面试)', () => {
     const profile: Profile = {
       name: '张三',
       title: '全栈工程师',
@@ -271,7 +273,7 @@ describe('HeroCard', () => {
 
     render(<HeroCard profile={profile} />)
 
-    expect(screen.getByText('查看作品')).toBeInTheDocument()
+    expect(screen.getByText('查看项目')).toBeInTheDocument()
     expect(screen.getByText('预约面试')).toBeInTheDocument()
   })
 })

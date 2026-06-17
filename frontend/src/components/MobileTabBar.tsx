@@ -10,7 +10,7 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { key: 'home', icon: <Home className="w-5 h-5" />, label: '首页', path: '/' },
-  { key: 'projects', icon: <Briefcase className="w-5 h-5" />, label: '作品', path: '/projects' },
+  { key: 'projects', icon: <Briefcase className="w-5 h-5" />, label: '项目', path: '/projects' },
   { key: 'agent', icon: <MessageCircle className="w-5 h-5" />, label: 'Agent', path: '/agent' },
   { key: 'book', icon: <Calendar className="w-5 h-5" />, label: '预约', path: '/booking' },
 ]

@@ -41,6 +41,7 @@ type ProjectResponse struct {
 	GitHubURL   string    `json:"githubUrl"`
 	DemoURL     string    `json:"demoUrl"`
 	Tags        []string  `json:"tags"`
+	IsFeatured  bool      `json:"isFeatured"`
 	SortOrder   int       `json:"sortOrder"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -65,6 +66,7 @@ type CreateProjectRequest struct {
 	GitHubURL   string   `json:"githubUrl"`
 	DemoURL     string   `json:"demoUrl"`
 	Tags        []string `json:"tags"`
+	IsFeatured  bool     `json:"isFeatured"`
 	SortOrder   int      `json:"sortOrder"`
 }
 
@@ -80,6 +82,7 @@ type UpdateProjectRequest struct {
 	GitHubURL   *string   `json:"githubUrl"`
 	DemoURL     *string   `json:"demoUrl"`
 	Tags        *[]string `json:"tags"`
+	IsFeatured  *bool     `json:"isFeatured"`
 	SortOrder   *int      `json:"sortOrder"`
 }
 
@@ -95,6 +98,7 @@ func toProjectResponse(project *model.Project) *ProjectResponse {
 		GitHubURL:   project.GitHubURL,
 		DemoURL:     project.DemoURL,
 		Tags:        []string(project.Tags),
+		IsFeatured:  project.IsFeatured,
 		SortOrder:   project.SortOrder,
 		CreatedAt:   project.CreatedAt,
 		UpdatedAt:   project.UpdatedAt,
@@ -206,6 +210,7 @@ func (s *ProjectService) Create(req *CreateProjectRequest) (*ProjectResponse, er
 		GitHubURL:   req.GitHubURL,
 		DemoURL:     req.DemoURL,
 		Tags:        pq.StringArray(req.Tags),
+		IsFeatured:  req.IsFeatured,
 		SortOrder:   req.SortOrder,
 	}
 
@@ -271,6 +276,9 @@ func (s *ProjectService) Update(id uint, req *UpdateProjectRequest) (*ProjectRes
 	if req.Tags != nil {
 		project.Tags = pq.StringArray(*req.Tags)
 	}
+	if req.IsFeatured != nil {
+		project.IsFeatured = *req.IsFeatured
+	}
 	if req.SortOrder != nil {
 		project.SortOrder = *req.SortOrder
 	}
@@ -284,6 +292,20 @@ func (s *ProjectService) Update(id uint, req *UpdateProjectRequest) (*ProjectRes
 
 func (s *ProjectService) Delete(id uint) error {
 	return s.projectRepo.Delete(id)
+}
+
+func (s *ProjectService) ToggleFeatured(id uint) (*ProjectResponse, error) {
+	project, err := s.projectRepo.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("project not found: %w", err)
+	}
+
+	project.IsFeatured = !project.IsFeatured
+	if err := s.projectRepo.Update(project); err != nil {
+		return nil, fmt.Errorf("failed to toggle featured: %w", err)
+	}
+
+	return toProjectResponse(project), nil
 }
 
 func (s *ProjectService) Reorder(ids []uint) error {

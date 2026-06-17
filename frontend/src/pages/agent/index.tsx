@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Mic, Bot, User, Loader2, Menu } from 'lucide-react'
 import { useAgentStore } from '@/stores/agent'
 import { agentApi } from '@/api/agent'
@@ -45,10 +45,28 @@ export const AgentPage = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
   const currentStreamRef = useRef<(() => void) | null>(null)
+  const pendingContentRef = useRef('')
+  const rafRef = useRef<number | null>(null)
+  const lastContentLengthRef = useRef(0)
+
+  const flushContent = useCallback(() => {
+    if (pendingContentRef.current) {
+      updateLastMessage(pendingContentRef.current)
+      pendingContentRef.current = ''
+    }
+    rafRef.current = null
+  }, [updateLastMessage])
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, isLoading])
+    const lastMsg = messages[messages.length - 1]
+    const contentLen = lastMsg?.content?.length ?? 0
+    if (contentLen !== lastContentLengthRef.current) {
+      lastContentLengthRef.current = contentLen
+      requestAnimationFrame(() => {
+        scrollToBottom()
+      })
+    }
+  }, [messages])
 
   useEffect(() => {
     initVisitor()
@@ -61,9 +79,11 @@ export const AgentPage = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
-      // 组件卸载时关闭当前连接
       if (currentStreamRef.current) {
         currentStreamRef.current()
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
       }
     }
   }, [])
@@ -132,6 +152,12 @@ export const AgentPage = () => {
       currentStreamRef.current()
       currentStreamRef.current = null
     }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    pendingContentRef.current = ''
+    lastContentLengthRef.current = 0
 
     const userMessage: AgentChatMessage = {
       role: 'user',
@@ -167,21 +193,26 @@ export const AgentPage = () => {
           if (chunk.type === 'thinking') {
             console.log('Thinking...')
           } else if (chunk.type === 'booking_result' && chunk.data) {
+            flushContent()
             setBookingCardData(chunk.data)
           } else if (chunk.type === 'chunk' && chunk.content) {
-            updateLastMessage(chunk.content)
+            pendingContentRef.current += chunk.content
+            if (!rafRef.current) {
+              rafRef.current = requestAnimationFrame(flushContent)
+            }
           }
         },
         (newSessionId) => {
+          flushContent()
           if (!activeSessionId) {
             setActiveSessionId(newSessionId)
-            // 新会话创建后刷新会话列表
             loadSessions()
           }
           setLoading(false)
           currentStreamRef.current = null
         },
         (err) => {
+          flushContent()
           setError(err.message)
           setLoading(false)
           currentStreamRef.current = null
@@ -206,6 +237,11 @@ export const AgentPage = () => {
       currentStreamRef.current = null
       setLoading(false)
     }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    pendingContentRef.current = ''
 
     await switchSession(sessionId)
     setSessionPanelOpen(false)
@@ -217,6 +253,11 @@ export const AgentPage = () => {
       currentStreamRef.current = null
       setLoading(false)
     }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    pendingContentRef.current = ''
     createNewSession()
     setSessionPanelOpen(false)
   }
@@ -227,6 +268,11 @@ export const AgentPage = () => {
       currentStreamRef.current = null
       setLoading(false)
     }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    pendingContentRef.current = ''
     await deleteSession(sessionId)
   }
 

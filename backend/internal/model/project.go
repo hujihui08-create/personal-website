@@ -19,6 +19,7 @@ type Project struct {
 	GitHubURL   string         `gorm:"column:github_url;not null;default:''" json:"github_url"`
 	DemoURL     string         `gorm:"column:demo_url;not null;default:''" json:"demo_url"`
 	Tags        pq.StringArray `gorm:"column:tags;type:varchar(50)[];default:'{}'" json:"tags"`
+	IsFeatured  bool           `gorm:"column:is_featured;default:false" json:"is_featured"`
 	SortOrder   int            `gorm:"column:sort_order;default:0" json:"sort_order"`
 	CreatedAt   time.Time      `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at" json:"updated_at"`

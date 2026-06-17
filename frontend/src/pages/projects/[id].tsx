@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useProject } from '@/hooks/useProjects'
+import { normalizeUrl } from '@/lib/utils'
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div
@@ -63,7 +64,7 @@ export const ProjectDetailPage = () => {
             </div>
             <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">加载失败</h2>
             <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
-              作品加载出错，请检查网络连接后重试
+              项目加载出错，请检查网络连接后重试
             </p>
             <div className="flex gap-2">
               <Link
@@ -73,7 +74,7 @@ export const ProjectDetailPage = () => {
 									focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>返回作品列表</span>
+                <span>返回项目列表</span>
               </Link>
               <button
                 onClick={() => refetch()}
@@ -134,7 +135,7 @@ export const ProjectDetailPage = () => {
             className="inline-flex items-center gap-2 h-10 px-[var(--space-md)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors duration-[var(--duration-base)] ease-standard"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>返回作品列表</span>
+            <span>返回项目列表</span>
           </Link>
         </motion.div>
 
@@ -278,7 +279,7 @@ export const ProjectDetailPage = () => {
             <div className="flex flex-wrap gap-2">
               {project.githubUrl && (
                 <a
-                  href={project.githubUrl}
+                  href={normalizeUrl(project.githubUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 h-11 px-[var(--space-md)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-sm)] text-sm font-medium
@@ -291,7 +292,7 @@ export const ProjectDetailPage = () => {
               )}
               {project.demoUrl && (
                 <a
-                  href={project.demoUrl}
+                  href={normalizeUrl(project.demoUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 h-11 px-[var(--space-md)] bg-[var(--color-accent)] text-white rounded-[var(--radius-sm)] text-sm font-medium

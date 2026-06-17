@@ -20,6 +20,12 @@ export function formatDate(date: Date | string | null | undefined): string {
   }).format(d)
 }
 
+export function normalizeUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `https://${url}`
+}
+
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number

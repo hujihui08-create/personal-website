@@ -24,10 +24,10 @@ export const HomePage = () => {
     isError: experiencesError,
     refetch: refetchExperiences,
   } = useExperiences()
-  const {
-    data: featuredProjects,
-    isLoading: projectsLoading,
-  } = useFeaturedProjects(4) as { data?: Project[]; isLoading: boolean }
+  const { data: featuredProjects, isLoading: projectsLoading } = useFeaturedProjects(4) as {
+    data?: Project[]
+    isLoading: boolean
+  }
 
   const isError = profileError || experiencesError
   const isEmptyContent =
@@ -46,9 +46,7 @@ export const HomePage = () => {
             <div className="w-16 h-16 rounded-[var(--radius-full)] bg-[var(--color-error)]/10 flex items-center justify-center mb-[var(--space-md)]">
               <AlertCircle className="w-8 h-8 text-[var(--color-error)]" />
             </div>
-            <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">
-              加载失败
-            </h2>
+            <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">加载失败</h2>
             <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)]">
               数据加载出错，请检查网络连接后重试
             </p>
@@ -106,58 +104,55 @@ export const HomePage = () => {
   }
 
   return (
-		<div className="min-h-screen bg-white">
-			<main className="max-w-6xl mx-auto px-[var(--space-md)] py-[var(--space-md)] md:py-[var(--space-xl)] space-y-[var(--space-lg)] md:space-y-[var(--space-xl)]">
-				{/* Hero Section */}
-				<HeroCard profile={profile} isLoading={profileLoading} />
+    <div className="min-h-screen bg-white">
+      <main className="max-w-6xl mx-auto px-[var(--space-md)] py-[var(--space-md)] md:py-[var(--space-xl)] space-y-[var(--space-lg)] md:space-y-[var(--space-xl)]">
+        {/* Hero Section */}
+        <HeroCard profile={profile} isLoading={profileLoading} />
 
-				{/* Featured Projects */}
-				{!isEmptyContent && (!projectsLoading || (featuredProjects?.length ?? 0) > 0) && (
-					<motion.section
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.3 }}
-					>
-						<div className="flex items-center justify-between mb-[var(--space-lg)]">
-							<h2 className="text-xl sm:text-2xl font-bold text-[var(--color-primary)]">
-								精选作品
-							</h2>
-							<Link
-								to="/projects"
-								className="inline-flex items-center gap-1 text-sm text-[var(--color-accent)] hover:text-[var(--color-primary)] transition-colors duration-[var(--duration-base)] ease-standard"
-							>
-								<span>查看全部</span>
-								<ArrowRight className="w-4 h-4" />
-							</Link>
-						</div>
+        {/* Featured Projects */}
+        {!isEmptyContent && (!projectsLoading || (featuredProjects?.length ?? 0) > 0) && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex items-center justify-between mb-[var(--space-lg)]">
+              <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-primary)]">
+                精选项目
+              </h2>
+              <Link
+                to="/projects"
+                className="inline-flex items-center gap-1 text-sm text-[var(--color-accent)] hover:text-[var(--color-primary)] transition-colors duration-[var(--duration-base)] ease-standard"
+              >
+                <span>查看全部</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
 
-						{projectsLoading ? (
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[var(--space-md)]">
-								{[1, 2, 3, 4].map((i) => (
-									<div
-										key={i}
-										className="animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-xl)] aspect-[4/3]"
-									/>
-								))}
-							</div>
-						) : featuredProjects && featuredProjects.length > 0 ? (
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[var(--space-md)]">
-								{featuredProjects.map((project) => (
-									<ProjectCard key={project.id} project={project} />
-								))}
-							</div>
-						) : null}
-					</motion.section>
-				)}
+            {projectsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[var(--space-md)]">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse bg-[var(--color-bg-secondary)] rounded-[var(--radius-xl)] aspect-[4/3]"
+                  />
+                ))}
+              </div>
+            ) : featuredProjects && featuredProjects.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[var(--space-md)]">
+                {featuredProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
+            ) : null}
+          </motion.section>
+        )}
 
-				{/* Work Experience Timeline */}
-				<WorkExperienceTimeline
-					experiences={experiences}
-					isLoading={experiencesLoading}
-				/>
-			</main>
-		</div>
-	)
+        {/* Work Experience Timeline */}
+        <WorkExperienceTimeline experiences={experiences} isLoading={experiencesLoading} />
+      </main>
+    </div>
+  )
 }
 
 export default HomePage

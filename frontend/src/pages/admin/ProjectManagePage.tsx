@@ -13,13 +13,16 @@ import {
   Github,
   Image,
   Upload,
+  Star,
 } from 'lucide-react'
 import {
   useProjects,
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
+  useReorderProjects,
 } from '@/hooks/useProjects'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { Project } from '@/types'
 import { projectApi } from '@/api/projects'
@@ -38,6 +41,7 @@ interface ProjectFormData {
   demoUrl: string
   tags: string
   sortOrder: number
+  isFeatured: boolean
 }
 
 const emptyFormData: ProjectFormData = {
@@ -53,6 +57,7 @@ const emptyFormData: ProjectFormData = {
   demoUrl: '',
   tags: '',
   sortOrder: 0,
+  isFeatured: false,
 }
 
 export const ProjectManagePage = () => {
@@ -71,6 +76,12 @@ export const ProjectManagePage = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
 
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  const queryClient = useQueryClient()
+  const reorderMutation = useReorderProjects()
+
   useEffect(() => {
     if (editingProject) {
       setFormData({
@@ -86,6 +97,7 @@ export const ProjectManagePage = () => {
         demoUrl: editingProject.demoUrl,
         tags: (editingProject.tags || []).join(','),
         sortOrder: editingProject.sortOrder,
+        isFeatured: editingProject.isFeatured,
       })
     } else {
       setFormData(emptyFormData)
@@ -149,6 +161,7 @@ export const ProjectManagePage = () => {
         demoUrl: formData.demoUrl,
         tags: tagsArray,
         sortOrder: formData.sortOrder,
+        isFeatured: formData.isFeatured,
       }
 
       if (editingProject) {
@@ -213,6 +226,20 @@ export const ProjectManagePage = () => {
 
   const sortedProjects = [...projects].sort((a, b) => b.sortOrder - a.sortOrder)
 
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) return
+
+    const newProjects = [...sortedProjects]
+    const [moved] = newProjects.splice(dragIndex, 1)
+    newProjects.splice(targetIndex, 0, moved)
+
+    const ids = newProjects.map((p) => p.id)
+    reorderMutation.mutate(ids)
+
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+
   return (
     <div className="space-y-[var(--space-xl)]">
       <motion.div
@@ -222,8 +249,8 @@ export const ProjectManagePage = () => {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">作品管理</h1>
-          <p className="text-[var(--color-secondary)] mt-1">管理和编辑您的作品集项目</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">项目管理</h1>
+          <p className="text-[var(--color-secondary)] mt-1">管理和编辑您的项目</p>
         </div>
         <button
           onClick={handleOpenAdd}
@@ -232,7 +259,7 @@ export const ProjectManagePage = () => {
             focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
         >
           <Plus className="w-4 h-4" />
-          <span>添加作品</span>
+          <span>添加项目</span>
         </button>
       </motion.div>
 
@@ -241,7 +268,7 @@ export const ProjectManagePage = () => {
           仪表盘
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-[var(--color-primary)] font-medium">作品管理</span>
+        <span className="text-[var(--color-primary)] font-medium">项目管理</span>
       </nav>
 
       {isLoading && (
@@ -269,9 +296,9 @@ export const ProjectManagePage = () => {
           <div className="w-20 h-20 rounded-[var(--radius-full)] bg-[var(--color-accent-soft)] flex items-center justify-center mb-[var(--space-lg)]">
             <FolderOpen className="w-10 h-10 text-[var(--color-accent)]" />
           </div>
-          <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">暂无作品</h2>
+          <h2 className="text-xl font-semibold text-[var(--color-primary)] mb-2">暂无项目</h2>
           <p className="text-sm text-[var(--color-secondary)] mb-[var(--space-lg)] max-w-sm">
-            开始添加您的第一个作品，展示您的项目经验和技能
+            开始添加您的第一个项目
           </p>
           <button
             onClick={handleOpenAdd}
@@ -279,7 +306,7 @@ export const ProjectManagePage = () => {
                 hover:bg-[var(--color-accent)]/90 hover:shadow-md transition-all duration-[var(--duration-base)]"
           >
             <Plus className="w-4 h-4" />
-            <span>添加第一个作品</span>
+            <span>添加第一个项目</span>
           </button>
         </motion.div>
       )}
@@ -291,15 +318,29 @@ export const ProjectManagePage = () => {
           transition={{ duration: 0.3 }}
           className="space-y-[var(--space-md)]"
         >
+          <p className="text-xs text-[var(--color-secondary)] mb-2">拖拽项目可调整排序顺序</p>
           {sortedProjects.map((project, index) => (
             <motion.div
               key={project.id}
               layout
+              draggable={true}
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOverIndex(index)
+              }}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={() => {
+                setDragIndex(null)
+                setDragOverIndex(null)
+              }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="group bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] p-[var(--space-lg)]
-                hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--color-accent)]/30 transition-all duration-[var(--duration-base)]"
+              className={`group bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] p-[var(--space-lg)]
+                hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--color-accent)]/30 transition-all duration-[var(--duration-base)] cursor-grab active:cursor-grabbing
+                ${dragIndex === index ? 'opacity-50' : ''} ${dragOverIndex === index ? 'border-t-2 border-[var(--color-accent)]' : ''}`}
             >
               <div className="flex items-start justify-between gap-[var(--space-md)]">
                 <div className="flex-1 min-w-0">
@@ -374,6 +415,25 @@ export const ProjectManagePage = () => {
 
                 <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)]">
                   <button
+                    onClick={async () => {
+                      try {
+                        await projectApi.toggleFeatured(project.id)
+                        queryClient.invalidateQueries({ queryKey: ['projects'] })
+                      } catch {
+                        toast.error('操作失败')
+                      }
+                    }}
+                    className={`w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] transition-all duration-[var(--duration-fast)] ${
+                      project.isFeatured
+                        ? 'text-[var(--color-warning)] bg-[var(--color-warning-soft)] hover:bg-[var(--color-warning-soft)]'
+                        : 'text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]'
+                    }`}
+                    aria-label={project.isFeatured ? '取消精选' : '设为精选'}
+                    title={project.isFeatured ? '已精选' : '设为精选'}
+                  >
+                    <Star className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleOpenEdit(project)}
                     className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                     hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)] hover:scale-110"
@@ -392,6 +452,25 @@ export const ProjectManagePage = () => {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0 sm:hidden">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await projectApi.toggleFeatured(project.id)
+                        queryClient.invalidateQueries({ queryKey: ['projects'] })
+                      } catch {
+                        toast.error('操作失败')
+                      }
+                    }}
+                    className={`w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] transition-all duration-[var(--duration-fast)] ${
+                      project.isFeatured
+                        ? 'text-[var(--color-warning)] bg-[var(--color-warning-soft)]'
+                        : 'text-[var(--color-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]'
+                    }`}
+                    aria-label={project.isFeatured ? '取消精选' : '设为精选'}
+                    title={project.isFeatured ? '已精选' : '设为精选'}
+                  >
+                    <Star className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleOpenEdit(project)}
                     className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
@@ -435,7 +514,7 @@ export const ProjectManagePage = () => {
               >
                 <div className="flex items-center justify-between px-[var(--space-lg)] pt-[var(--space-lg)] pb-[var(--space-md)] border-b border-[var(--color-border-light)]">
                   <h2 className="text-lg font-semibold text-[var(--color-primary)]">
-                    {editingProject ? '编辑作品' : '添加作品'}
+                    {editingProject ? '编辑项目' : '添加项目'}
                   </h2>
                   <button
                     onClick={handleCloseModal}
@@ -722,6 +801,25 @@ export const ProjectManagePage = () => {
                     focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
                       placeholder="React, TypeScript, Node.js"
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="isFeatured"
+                      name="isFeatured"
+                      type="checkbox"
+                      checked={formData.isFeatured}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, isFeatured: e.target.checked }))
+                      }
+                      className="w-4 h-4 rounded border-[var(--color-border-medium)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                    />
+                    <label
+                      htmlFor="isFeatured"
+                      className="text-sm font-medium text-[var(--color-primary)]"
+                    >
+                      首页精选展示
+                    </label>
                   </div>
 
                   <div className="space-y-1.5">

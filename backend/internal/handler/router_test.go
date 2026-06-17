@@ -74,6 +74,7 @@ var standardRoutes = []routeTest{
 	{method: "PUT", path: "/api/projects/1", body: `{"title":"Test"}`, protected: true},
 	{method: "DELETE", path: "/api/projects/1", protected: true},
 	{method: "PUT", path: "/api/projects/reorder", body: `{"ids":[1,2]}`, protected: true},
+	{method: "PUT", path: "/api/projects/1/featured", protected: true},
 	{method: "POST", path: "/api/projects/upload-cover", protected: true},
 	{method: "POST", path: "/api/projects/upload-image", protected: true},
 	{method: "GET", path: "/api/bookings", protected: true},
@@ -167,6 +168,7 @@ func setupTestRouter() *gin.Engine {
 			projectsProtected.PUT("/:id", standardHandler)
 			projectsProtected.DELETE("/:id", standardHandler)
 			projectsProtected.PUT("/reorder", standardHandler)
+			projectsProtected.PUT("/:id/featured", standardHandler)
 			projectsProtected.POST("/upload-cover", standardHandler)
 			projectsProtected.POST("/upload-image", standardHandler)
 		}

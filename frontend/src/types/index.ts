@@ -45,6 +45,7 @@ export interface Project {
   githubUrl: string
   demoUrl: string
   tags: string[]
+  isFeatured: boolean
   sortOrder: number
   createdAt: string
   updatedAt: string

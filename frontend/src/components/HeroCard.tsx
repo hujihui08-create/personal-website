@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Github, ExternalLink, Mail, Download, Eye, Calendar } from 'lucide-react'
 import type { Profile } from '@/types'
 import { useResume } from '@/hooks/useResume'
+import { normalizeUrl } from '@/lib/utils'
 
 interface HeroCardProps {
   profile?: Profile
@@ -117,7 +118,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
         >
           {profile.githubUrl && (
             <motion.a
-              href={profile.githubUrl}
+              href={normalizeUrl(profile.githubUrl)}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
@@ -133,7 +134,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
           )}
           {profile.linkedinUrl && (
             <motion.a
-              href={profile.linkedinUrl}
+              href={normalizeUrl(profile.linkedinUrl)}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
@@ -195,7 +196,7 @@ export const HeroCard = ({ profile, isLoading }: HeroCardProps) => {
               focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
           >
             <Eye className="w-4 h-4" />
-            <span>查看作品</span>
+            <span>查看项目</span>
           </motion.a>
           <motion.a
             href="/booking"

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Eye, Github, ExternalLink, Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Project } from '@/types'
+import { normalizeUrl } from '@/lib/utils'
 
 interface ProjectCardProps {
   project: Project
@@ -134,7 +135,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
         <div className="flex items-center gap-2">
           {project.githubUrl && (
             <a
-              href={project.githubUrl}
+              href={normalizeUrl(project.githubUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"
@@ -145,7 +146,7 @@ export const ProjectCard = memo(({ project }: ProjectCardProps) => {
           )}
           {project.demoUrl && (
             <a
-              href={project.demoUrl}
+              href={normalizeUrl(project.demoUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-all duration-[var(--duration-base)] ease-[var(--easing-standard)]"

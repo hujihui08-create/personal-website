@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { key: 'dashboard', label: '仪表盘', path: '/admin/dashboard', icon: Home },
   { key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
   { key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
-  { key: 'projects', label: '作品管理', path: '/admin/projects', icon: FolderOpen },
+  { key: 'projects', label: '项目管理', path: '/admin/projects', icon: FolderOpen },
   { key: 'knowledge', label: '知识库管理', path: '/admin/knowledge', icon: Brain },
   { key: 'agent-debug', label: 'Agent 调试', path: '/admin/agent/debug', icon: Bug },
   { key: 'agent-prompts', label: 'Prompt 管理', path: '/admin/agent/prompts', icon: FileText },
