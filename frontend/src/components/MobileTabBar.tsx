@@ -1,4 +1,4 @@
-import { Home, Briefcase, MessageCircle, Calendar } from 'lucide-react'
+import { Home, Briefcase, Layout, MessageCircle, Calendar } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 interface TabItem {
@@ -11,6 +11,7 @@ interface TabItem {
 const tabs: TabItem[] = [
   { key: 'home', icon: <Home className="w-5 h-5" />, label: '首页', path: '/' },
   { key: 'projects', icon: <Briefcase className="w-5 h-5" />, label: '项目', path: '/projects' },
+  { key: 'prototypes', icon: <Layout className="w-5 h-5" />, label: '原型', path: '/prototypes' },
   { key: 'agent', icon: <MessageCircle className="w-5 h-5" />, label: 'Agent', path: '/agent' },
   { key: 'book', icon: <Calendar className="w-5 h-5" />, label: '预约', path: '/booking' },
 ]
@@ -22,6 +23,7 @@ export const MobileTabBar = () => {
   const getActiveKey = () => {
     if (location.pathname === '/') return 'home'
     if (location.pathname.startsWith('/projects')) return 'projects'
+    if (location.pathname.startsWith('/prototypes')) return 'prototypes'
     if (location.pathname.startsWith('/agent')) return 'agent'
     if (location.pathname.startsWith('/booking')) return 'book'
     return 'home'
