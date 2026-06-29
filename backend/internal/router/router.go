@@ -245,14 +245,14 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			knowledgeProtected.POST("/reindex", knowledgeHandler.ReindexAll)
 		}
 
-		// Prototype routes (file serving is public)
+		// Prototype routes (public)
+		api.GET("/prototypes", prototypeHandler.List)
 		api.GET("/prototypes/:id/*filepath", prototypeHandler.ServeFile)
 
 		// Prototype management (protected)
 		prototypesProtected := api.Group("/prototypes")
 		prototypesProtected.Use(middleware.AuthMiddleware(authService))
 		{
-			prototypesProtected.GET("", prototypeHandler.List)
 			prototypesProtected.POST("", prototypeHandler.Upload)
 			prototypesProtected.DELETE("/:id", prototypeHandler.Delete)
 		}
