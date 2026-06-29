@@ -322,7 +322,7 @@ export const PrototypeManagePage = () => {
                 <div className="flex items-center gap-[var(--space-sm)] flex-shrink-0">
                   {/* Preview Link */}
                   <a
-                    href={`/prototypes/${proto.storage_prefix}`}
+                    href="/prototypes"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 h-9 px-[var(--space-sm)] border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium
