@@ -23,6 +23,7 @@ type Project struct {
 	SortOrder   int            `gorm:"column:sort_order;default:0" json:"sort_order"`
 	CreatedAt   time.Time      `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at" json:"updated_at"`
+	PRDs        []ProjectPrd   `gorm:"foreignKey:ProjectID" json:"prds,omitempty"`
 }
 
 func (Project) TableName() string {

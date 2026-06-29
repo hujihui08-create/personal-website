@@ -52,7 +52,7 @@ func (r *ProjectRepository) ListFeatured(limit int) ([]model.Project, error) {
 
 func (r *ProjectRepository) GetByID(id uint) (*model.Project, error) {
 	var project model.Project
-	if err := r.db.First(&project, id).Error; err != nil {
+	if err := r.db.Preload("PRDs").Preload("PRDs.Prototype").First(&project, id).Error; err != nil {
 		return nil, err
 	}
 	return &project, nil

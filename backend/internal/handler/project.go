@@ -13,10 +13,14 @@ import (
 
 type ProjectHandler struct {
 	projectService *service.ProjectService
+	prdService     *service.ProjectPrdService
 }
 
-func NewProjectHandler(projectService *service.ProjectService) *ProjectHandler {
-	return &ProjectHandler{projectService: projectService}
+func NewProjectHandler(projectService *service.ProjectService, prdService *service.ProjectPrdService) *ProjectHandler {
+	return &ProjectHandler{
+		projectService: projectService,
+		prdService:     prdService,
+	}
 }
 
 func (h *ProjectHandler) List(c *gin.Context) {

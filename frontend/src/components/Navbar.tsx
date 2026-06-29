@@ -9,7 +9,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: 'home', label: '首页', path: '/' },
   { key: 'projects', label: '项目', path: '/projects' },
-  { key: 'prototypes', label: '原型', path: '/prototypes' },
   { key: 'agent', label: 'Agent', path: '/agent' },
   { key: 'book', label: '预约', path: '/booking' },
 ]
@@ -21,7 +20,6 @@ export const Navbar = () => {
   const getActiveKey = () => {
     if (location.pathname === '/') return 'home'
     if (location.pathname.startsWith('/projects')) return 'projects'
-    if (location.pathname.startsWith('/prototypes')) return 'prototypes'
     if (location.pathname.startsWith('/agent')) return 'agent'
     if (location.pathname.startsWith('/booking')) return 'book'
     return 'home'

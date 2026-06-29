@@ -22,6 +22,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	experienceRepo := repository.NewWorkExperienceRepository(db)
 	resumeRepo := repository.NewResumeRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
+	projectPrdRepo := repository.NewProjectPrdRepository(db)
 	scheduleSettingRepo := repository.NewScheduleSettingRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
@@ -39,7 +40,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	profileService := service.NewProfileService(profileRepo, minioClient, cfg)
 	experienceService := service.NewExperienceService(experienceRepo)
 	resumeService := service.NewResumeService(resumeRepo, minioClient, cfg)
-	projectService := service.NewProjectService(projectRepo, minioClient, cfg)
+	projectService := service.NewProjectService(projectRepo, projectPrdRepo, minioClient, cfg)
 	bookingService := service.NewBookingService(scheduleSettingRepo, bookingRepo, notificationService)
 	documentParser := service.NewDocumentParser()
 	textSplitter := service.NewTextSplitter(512, 50)
@@ -50,13 +51,14 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo)
 	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
 	prototypeService := service.NewPrototypeService(prototypeRepo, minioClient, cfg.MinIO.Bucket)
+	projectPrdService := service.NewProjectPrdService(projectPrdRepo, prototypeRepo, minioClient, cfg.MinIO.Bucket)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
 	profileHandler := handler.NewProfileHandler(profileService)
 	experienceHandler := handler.NewExperienceHandler(experienceService)
 	fileHandler := handler.NewFileHandler(minioClient, cfg.MinIO.Bucket)
-	projectHandler := handler.NewProjectHandler(projectService)
+	projectHandler := handler.NewProjectHandler(projectService, projectPrdService)
 	bookingHandler := handler.NewBookingHandler(bookingService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	agentHandler := handler.NewAgentHandler(chatService)
@@ -167,6 +169,14 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			projectsProtected.PUT("/:id/featured", projectHandler.ToggleFeatured)
 			projectsProtected.POST("/upload-cover", projectHandler.UploadCoverImage)
 			projectsProtected.POST("/upload-image", projectHandler.UploadProjectImage)
+
+			// PRD management under project
+			projectsProtected.POST("/:id/prds", projectHandler.CreatePRD)
+			projectsProtected.GET("/:id/prds", projectHandler.ListPRDs)
+			projectsProtected.PUT("/:id/prds/:prdId", projectHandler.UpdatePRD)
+			projectsProtected.DELETE("/:id/prds/:prdId", projectHandler.DeletePRD)
+			projectsProtected.PUT("/:id/prds/:prdId/move-up", projectHandler.MovePRDUp)
+			projectsProtected.PUT("/:id/prds/:prdId/move-down", projectHandler.MovePRDDown)
 		}
 
 		// Booking routes (public)
@@ -245,17 +255,8 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			knowledgeProtected.POST("/reindex", knowledgeHandler.ReindexAll)
 		}
 
-		// Prototype routes (public)
-		api.GET("/prototypes", prototypeHandler.List)
+		// Prototype file serving (public) - 保留文件代理
 		api.GET("/prototypes/:id/*filepath", prototypeHandler.ServeFile)
-
-		// Prototype management (protected)
-		prototypesProtected := api.Group("/prototypes")
-		prototypesProtected.Use(middleware.AuthMiddleware(authService))
-		{
-			prototypesProtected.POST("", prototypeHandler.Upload)
-			prototypesProtected.DELETE("/:id", prototypeHandler.Delete)
-		}
 
 		// Config (protected)
 		configProtected := api.Group("/config")

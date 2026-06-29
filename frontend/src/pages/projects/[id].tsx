@@ -10,6 +10,9 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  ClipboardList,
+  Eye,
 } from 'lucide-react'
 import { useProject } from '@/hooks/useProjects'
 import { normalizeUrl } from '@/lib/utils'
@@ -25,6 +28,8 @@ export const ProjectDetailPage = () => {
   const projectId = id ? parseInt(id, 10) : undefined
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [activeTab, setActiveTab] = useState<'intro' | 'prd'>('intro')
+  const [previewPrdId, setPreviewPrdId] = useState<number | null>(null)
 
   const { data: project, isLoading, isError, refetch } = useProject(projectId)
 
@@ -306,16 +311,123 @@ export const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {/* Description */}
-          {project.description && (
+          {/* Description with Tabs */}
+          {(project.description || (project.prds && project.prds.length > 0)) && (
             <div className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-lg)]">
-              <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">项目详情</h2>
-              <div className="prose prose-gray max-w-none">
-                {/* Markdown content will be rendered here */}
-                <div className="text-[var(--color-secondary)] whitespace-pre-wrap">
-                  {project.description}
+              {/* Tab Bar */}
+              {project.prds && project.prds.length > 0 && (
+                <div className="flex gap-1 mb-[var(--space-lg)] border-b border-[var(--color-border-light)]">
+                  <button
+                    onClick={() => setActiveTab('intro')}
+                    className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-[var(--duration-base)] ease-standard ${
+                      activeTab === 'intro'
+                        ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                        : 'border-transparent text-[var(--color-secondary)] hover:text-[var(--color-primary)]'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    项目介绍
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('prd')
+                      setPreviewPrdId(null)
+                    }}
+                    className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-[var(--duration-base)] ease-standard ${
+                      activeTab === 'prd'
+                        ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                        : 'border-transparent text-[var(--color-secondary)] hover:text-[var(--color-primary)]'
+                    }`}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    PRD
+                  </button>
                 </div>
-              </div>
+              )}
+
+              {/* Tab Content: 项目介绍 */}
+              {activeTab === 'intro' && project.description && (
+                <div>
+                  <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
+                    项目详情
+                  </h2>
+                  <div className="prose prose-gray max-w-none">
+                    <div className="text-[var(--color-secondary)] whitespace-pre-wrap">
+                      {project.description}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab Content: PRD */}
+              {activeTab === 'prd' && project.prds && project.prds.length > 0 && (
+                <div className="space-y-[var(--space-md)]">
+                  <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
+                    PRD 文档
+                  </h2>
+                  {[...project.prds]
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                    .map((prd, idx) => (
+                      <motion.div
+                        key={prd.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] p-[var(--space-lg)]"
+                      >
+                        <h3 className="text-base font-semibold text-[var(--color-primary)] mb-3">
+                          {prd.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {prd.prototype && (
+                            <button
+                              onClick={() =>
+                                setPreviewPrdId(previewPrdId === prd.id ? null : prd.id)
+                              }
+                              className="inline-flex items-center gap-2 h-9 px-3 text-sm font-medium text-[var(--color-accent)] bg-[var(--color-accent-soft)] rounded-[var(--radius-sm)]
+                                hover:brightness-95 transition-all duration-[var(--duration-base)] ease-standard
+                                focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                              查看原型
+                            </button>
+                          )}
+                          {prd.prd_url && (
+                            <a
+                              href={prd.prd_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 h-9 px-3 text-sm font-medium text-[var(--color-secondary)] border border-[var(--color-border-medium)] rounded-[var(--radius-sm)]
+                                hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-all duration-[var(--duration-base)] ease-standard
+                                focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              查看 PRD 文档
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Prototype iframe preview */}
+                        {previewPrdId === prd.id && prd.prototype && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="mt-[var(--space-md)] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border-light)]"
+                          >
+                            <iframe
+                              src={`/api/prototypes/${prd.prototype.id}/index.html`}
+                              sandbox="allow-scripts"
+                              className="w-full h-[70vh] border-0"
+                              title={`${prd.name} 原型`}
+                            />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    ))}
+                </div>
+              )}
             </div>
           )}
         </motion.div>

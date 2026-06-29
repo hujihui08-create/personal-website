@@ -15,36 +15,55 @@ import (
 )
 
 type ProjectService struct {
-	projectRepo *repository.ProjectRepository
-	minioClient *minio.Client
-	cfg         *config.Config
+	projectRepo    *repository.ProjectRepository
+	projectPrdRepo *repository.ProjectPrdRepository
+	minioClient    *minio.Client
+	cfg            *config.Config
 }
 
-func NewProjectService(projectRepo *repository.ProjectRepository, minioClient *minio.Client, cfg *config.Config) *ProjectService {
+func NewProjectService(
+	projectRepo *repository.ProjectRepository,
+	projectPrdRepo *repository.ProjectPrdRepository,
+	minioClient *minio.Client,
+	cfg *config.Config,
+) *ProjectService {
 	return &ProjectService{
-		projectRepo: projectRepo,
-		minioClient: minioClient,
-		cfg:         cfg,
+		projectRepo:    projectRepo,
+		projectPrdRepo: projectPrdRepo,
+		minioClient:    minioClient,
+		cfg:            cfg,
 	}
 }
 
+type ProjectPrdResponse struct {
+	ID          uint                `json:"id"`
+	Name        string              `json:"name"`
+	PrdURL      string              `json:"prd_url"`
+	PrototypeID *uint               `json:"prototype_id,omitempty"`
+	SortOrder   int                 `json:"sort_order"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	Prototype   *model.Prototype    `json:"prototype,omitempty"`
+}
+
 type ProjectResponse struct {
-	ID          uint      `json:"id"`
-	Name        string    `json:"name"`
-	Type        string    `json:"type"`
-	StartDate   *string   `json:"startDate,omitempty"`
-	EndDate     *string   `json:"endDate,omitempty"`
-	Summary     string    `json:"summary"`
-	Description string    `json:"description"`
-	CoverImage  string    `json:"coverImage"`
-	Images      []string  `json:"images"`
-	GitHubURL   string    `json:"githubUrl"`
-	DemoURL     string    `json:"demoUrl"`
-	Tags        []string  `json:"tags"`
-	IsFeatured  bool      `json:"isFeatured"`
-	SortOrder   int       `json:"sortOrder"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID          uint                 `json:"id"`
+	Name        string               `json:"name"`
+	Type        string               `json:"type"`
+	StartDate   *string              `json:"startDate,omitempty"`
+	EndDate     *string              `json:"endDate,omitempty"`
+	Summary     string               `json:"summary"`
+	Description string               `json:"description"`
+	CoverImage  string               `json:"coverImage"`
+	Images      []string             `json:"images"`
+	GitHubURL   string               `json:"githubUrl"`
+	DemoURL     string               `json:"demoUrl"`
+	Tags        []string             `json:"tags"`
+	IsFeatured  bool                 `json:"isFeatured"`
+	SortOrder   int                  `json:"sortOrder"`
+	PRDs        []ProjectPrdResponse `json:"prds,omitempty"`
+	CreatedAt   time.Time            `json:"createdAt"`
+	UpdatedAt   time.Time            `json:"updatedAt"`
 }
 
 type PaginatedProjectsResponse struct {
@@ -112,6 +131,27 @@ func toProjectResponse(project *model.Project) *ProjectResponse {
 	if project.EndDate != nil {
 		endDate := project.EndDate.Format("2006-01-02")
 		resp.EndDate = &endDate
+	}
+
+	// 映射 PRDs
+	if len(project.PRDs) > 0 {
+		prds := make([]ProjectPrdResponse, 0, len(project.PRDs))
+		for _, prd := range project.PRDs {
+			prdResp := ProjectPrdResponse{
+				ID:          prd.ID,
+				Name:        prd.Name,
+				PrdURL:      prd.PrdURL,
+				PrototypeID: prd.PrototypeID,
+				SortOrder:   prd.SortOrder,
+				CreatedAt:   prd.CreatedAt,
+				UpdatedAt:   prd.UpdatedAt,
+			}
+			if prd.Prototype != nil {
+				prdResp.Prototype = prd.Prototype
+			}
+			prds = append(prds, prdResp)
+		}
+		resp.PRDs = prds
 	}
 
 	return resp

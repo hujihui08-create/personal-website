@@ -1,12 +1,23 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Edit3, Trash2, X, Loader2, ChevronRight, Calendar } from 'lucide-react'
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  X,
+  Loader2,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  Calendar,
+} from 'lucide-react'
 import {
   useExperiences,
   useCreateExperience,
   useUpdateExperience,
   useDeleteExperience,
+  useReorderExperiences,
 } from '@/hooks/useExperiences'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -37,6 +48,7 @@ export const ExperienceManagePage = () => {
   const createMutation = useCreateExperience()
   const updateMutation = useUpdateExperience()
   const deleteMutation = useDeleteExperience()
+  const reorderMutation = useReorderExperiences()
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -133,10 +145,24 @@ export const ExperienceManagePage = () => {
   }
 
   const sortedExperiences = experiences
-    ? [...experiences].sort(
-        (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-      )
+    ? [...experiences].sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0))
     : []
+
+  const handleMoveUp = (index: number) => {
+    if (index <= 0) return
+    const newItems = [...sortedExperiences]
+    ;[newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]]
+    const ids = newItems.map((item) => item.id)
+    reorderMutation.mutate(ids)
+  }
+
+  const handleMoveDown = (index: number) => {
+    if (index >= sortedExperiences.length - 1) return
+    const newItems = [...sortedExperiences]
+    ;[newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]]
+    const ids = newItems.map((item) => item.id)
+    reorderMutation.mutate(ids)
+  }
 
   return (
     <div className="space-y-[var(--space-xl)]">
@@ -221,6 +247,7 @@ export const ExperienceManagePage = () => {
           transition={{ duration: 0.3 }}
           className="space-y-[var(--space-md)]"
         >
+          <p className="text-xs text-[var(--color-secondary)] mb-2">使用上下箭头调整经历排序</p>
           {sortedExperiences.map((experience, index) => (
             <motion.div
               key={experience.id}
@@ -274,6 +301,28 @@ export const ExperienceManagePage = () => {
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)]">
                   <button
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0 || reorderMutation.isPending}
+                    className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
+                        hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)]
+                        disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`上移 ${experience.companyName} - ${experience.position}`}
+                    title="上移"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === sortedExperiences.length - 1 || reorderMutation.isPending}
+                    className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
+                        hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)]
+                        disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`下移 ${experience.companyName} - ${experience.position}`}
+                    title="下移"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleOpenEdit(experience)}
                     className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
                         hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)] hover:scale-110"
@@ -293,6 +342,26 @@ export const ExperienceManagePage = () => {
 
                 {/* Mobile: always show action buttons */}
                 <div className="flex items-center gap-2 flex-shrink-0 sm:hidden">
+                  <button
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0 || reorderMutation.isPending}
+                    className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
+                        hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)]
+                        disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`上移 ${experience.companyName} - ${experience.position}`}
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === sortedExperiences.length - 1 || reorderMutation.isPending}
+                    className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]
+                        hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-all duration-[var(--duration-fast)]
+                        disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`下移 ${experience.companyName} - ${experience.position}`}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleOpenEdit(experience)}
                     className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)]

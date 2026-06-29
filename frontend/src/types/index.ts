@@ -49,6 +49,19 @@ export interface Project {
   sortOrder: number
   createdAt: string
   updatedAt: string
+  prds?: ProjectPrd[]
+}
+
+export interface ProjectPrd {
+  id: number
+  project_id: number
+  name: string
+  prd_url: string
+  prototype_id?: number | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+  prototype?: Prototype | null
 }
 
 export interface PaginatedProjectsResponse {
@@ -349,7 +362,7 @@ export interface EmbeddingConfig {
   model: string
 }
 
-// === Prototype Types ===
+// === Prototype Types (Deprecated: 原型文件现已归属 PRD，此类型将移除) ===
 
 export interface Prototype {
   id: number
