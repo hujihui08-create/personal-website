@@ -12,7 +12,6 @@ import {
   ChevronRight,
   FileText,
   ClipboardList,
-  Eye,
 } from 'lucide-react'
 import { useProject } from '@/hooks/useProjects'
 import { normalizeUrl } from '@/lib/utils'
@@ -29,7 +28,6 @@ export const ProjectDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [activeTab, setActiveTab] = useState<'intro' | 'prd'>('intro')
-  const [previewPrdId, setPreviewPrdId] = useState<number | null>(null)
 
   const { data: project, isLoading, isError, refetch } = useProject(projectId)
 
@@ -331,7 +329,6 @@ export const ProjectDetailPage = () => {
                   <button
                     onClick={() => {
                       setActiveTab('prd')
-                      setPreviewPrdId(null)
                     }}
                     className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-[var(--duration-base)] ease-standard ${
                       activeTab === 'prd'
@@ -382,13 +379,17 @@ export const ProjectDetailPage = () => {
                           {prd.prototype && (
                             <button
                               onClick={() =>
-                                setPreviewPrdId(previewPrdId === prd.id ? null : prd.id)
+                                window.open(
+                                  `/api/prototypes/${prd.prototype!.id}/index.html`,
+                                  '_blank',
+                                  'noopener,noreferrer'
+                                )
                               }
                               className="inline-flex items-center gap-2 h-9 px-3 text-sm font-medium text-[var(--color-accent)] bg-[var(--color-accent-soft)] rounded-[var(--radius-sm)]
                                 hover:brightness-95 transition-all duration-[var(--duration-base)] ease-standard
                                 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
                             >
-                              <Eye className="w-4 h-4" />
+                              <ExternalLink className="w-4 h-4" />
                               查看原型
                             </button>
                           )}
@@ -406,24 +407,6 @@ export const ProjectDetailPage = () => {
                             </a>
                           )}
                         </div>
-
-                        {/* Prototype iframe preview */}
-                        {previewPrdId === prd.id && prd.prototype && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="mt-[var(--space-md)] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border-light)]"
-                          >
-                            <iframe
-                              src={`/api/prototypes/${prd.prototype.id}/index.html`}
-                              sandbox="allow-scripts"
-                              className="w-full h-[70vh] border-0"
-                              title={`${prd.name} 原型`}
-                            />
-                          </motion.div>
-                        )}
                       </motion.div>
                     ))}
                 </div>
