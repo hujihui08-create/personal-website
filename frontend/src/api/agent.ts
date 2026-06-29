@@ -153,9 +153,26 @@ class EventSourcePolyfill {
       while (!done) {
         const result = await reader.read()
         done = result.done
-        if (done) break
 
-        buffer += decoder.decode(result.value, { stream: true })
+        // 先处理数据再检查结束，避免丢失最后一个 chunk 中的数据
+        if (result.value) {
+          buffer += decoder.decode(result.value, { stream: !done })
+        }
+
+        if (done) {
+          // 流结束，处理缓冲区中残余的 SSE 事件
+          if (buffer.trim()) {
+            const remainingLines = buffer.split('\n\n')
+            for (const line of remainingLines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6)
+                this.dispatchEvent('message', { data })
+              }
+            }
+            buffer = ''
+          }
+          break
+        }
 
         const lines = buffer.split('\n\n')
         buffer = lines.pop() || ''

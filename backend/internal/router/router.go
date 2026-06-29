@@ -30,6 +30,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configRepo := repository.NewConfigRepository(db)
 	agentDebugLogRepo := repository.NewAgentDebugLogRepo(db)
 	agentPromptRepo := repository.NewAgentPromptRepo(db)
+	prototypeRepo := repository.NewPrototypeRepository(db)
 
 	// --- Services ---
 	emailService := service.NewEmailService(cfg.Email)
@@ -48,6 +49,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, agentPromptRepo, bookingService)
 	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo)
 	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
+	prototypeService := service.NewPrototypeService(prototypeRepo, minioClient, cfg.MinIO.Bucket)
 
 	// --- Handlers ---
 	authHandler := handler.NewAuthHandler(authService)
@@ -62,6 +64,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configHandler := handler.NewConfigHandler(configService)
 	agentDebugHandler := handler.NewAgentDebugHandler(agentDebugService)
 	agentPromptHandler := handler.NewAgentPromptHandler(agentPromptService, agentDebugService)
+	prototypeHandler := handler.NewPrototypeHandler(prototypeService, minioClient, cfg.MinIO.Bucket)
 
 	api := r.Group("/api")
 	{
@@ -240,6 +243,18 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			knowledgeProtected.POST("", knowledgeHandler.UploadDocument)
 			knowledgeProtected.DELETE("/:id", knowledgeHandler.DeleteDocument)
 			knowledgeProtected.POST("/reindex", knowledgeHandler.ReindexAll)
+		}
+
+		// Prototype routes (file serving is public)
+		api.GET("/prototypes/:id/*filepath", prototypeHandler.ServeFile)
+
+		// Prototype management (protected)
+		prototypesProtected := api.Group("/prototypes")
+		prototypesProtected.Use(middleware.AuthMiddleware(authService))
+		{
+			prototypesProtected.GET("", prototypeHandler.List)
+			prototypesProtected.POST("", prototypeHandler.Upload)
+			prototypesProtected.DELETE("/:id", prototypeHandler.Delete)
 		}
 
 		// Config (protected)

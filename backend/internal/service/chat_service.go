@@ -401,12 +401,15 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 				ContactPhone    string `json:"contact_phone"`
 				Notes           string `json:"notes"`
 			}
-			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+				log.Printf("[ChatService] 解析 [BOOKING_CREATE] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
+			} else {
 				booking, err := s.bookingService.CreateBooking(
 					data.CompanyName, data.CompanyLocation, data.BookingDate, data.BookingTime,
 					data.ContactName, data.ContactEmail, data.ContactPhone, data.Notes, "agent",
 				)
 				if err != nil {
+					log.Printf("[ChatService] 执行预约创建失败: %v", err)
 					return fmt.Sprintf("\u9884\u7ea6\u5931\u8d25\uff1a%v", err), nil
 				}
 				cardData := map[string]interface{}{
@@ -438,9 +441,12 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 				ID    uint   `json:"id"`
 				Phone string `json:"phone"`
 			}
-			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+				log.Printf("[ChatService] 解析 [BOOKING_QUERY] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
+			} else {
 				booking, err := s.bookingService.LookupBooking(data.ID, data.Phone)
 				if err != nil {
+					log.Printf("[ChatService] 查询预约失败 (id=%d): %v", data.ID, err)
 					return "\u672a\u627e\u5230\u5339\u914d\u7684\u9884\u7ea6\uff0c\u8bf7\u68c0\u67e5\u9884\u7ea6\u7f16\u53f7\u548c\u624b\u673a\u53f7\u662f\u5426\u6b63\u786e\u3002", nil
 				}
 				cardData := map[string]interface{}{
@@ -474,9 +480,12 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 				ID    uint   `json:"id"`
 				Phone string `json:"phone"`
 			}
-			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+				log.Printf("[ChatService] 解析 [BOOKING_CANCEL] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
+			} else {
 				booking, err := s.bookingService.CancelBookingByUser(data.ID, data.Phone, "")
 				if err != nil {
+					log.Printf("[ChatService] 取消预约失败 (id=%d): %v", data.ID, err)
 					return fmt.Sprintf("\u53d6\u6d88\u9884\u7ea6\u5931\u8d25\uff1a%v", err), nil
 				}
 				cardData := map[string]interface{}{

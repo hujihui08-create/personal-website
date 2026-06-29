@@ -70,7 +70,9 @@ frontend/scripts/debug-routes.js
 # ==================== 敏感文档和规格 ====================
 portfolio-docs/
 个人简介网站_PRD.md
+PRD_Iterative_V2.md
 COMPONENT_SPEC.md
+multi-page-prototypes.zip
 SERVER_DEPLOY_GUIDE.md
 TECH_STACK.md
 prd_links.md

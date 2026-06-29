@@ -348,3 +348,13 @@ export interface EmbeddingConfig {
   base_url: string
   model: string
 }
+
+// === Prototype Types ===
+
+export interface Prototype {
+  id: number
+  name: string
+  file_count: number
+  storage_prefix: string
+  created_at: string
+}

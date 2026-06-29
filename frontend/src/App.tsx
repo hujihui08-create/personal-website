@@ -21,6 +21,8 @@ import KnowledgeManagePage from '@/pages/admin/KnowledgeManagePage'
 import SettingsPage from '@/pages/admin/SettingsPage'
 import AgentDebugPage from '@/pages/admin/agent-debug'
 import AgentPromptsPage from '@/pages/admin/agent-prompts'
+import PrototypePage from '@/pages/prototypes'
+import { PrototypeManagePage } from '@/pages/admin/PrototypeManagePage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -66,6 +68,7 @@ function App() {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/agent" element={<AgentPage />} />
+            <Route path="/prototypes" element={<PrototypePage />} />
             <Route path="/booking" element={<BookingPage />} />
             <Route path="/admin/login" element={<LoginPage />} />
             <Route
@@ -174,6 +177,16 @@ function App() {
                 <ProtectedRoute>
                   <AdminLayout>
                     <AgentPromptsPage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/prototypes"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <PrototypeManagePage />
                   </AdminLayout>
                 </ProtectedRoute>
               }
