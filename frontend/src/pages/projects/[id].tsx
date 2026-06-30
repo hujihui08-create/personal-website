@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
   AlertCircle,
@@ -12,6 +12,7 @@ import {
   ChevronRight,
   FileText,
   ClipboardList,
+  X,
 } from 'lucide-react'
 import { useProject } from '@/hooks/useProjects'
 import { normalizeUrl } from '@/lib/utils'
@@ -28,6 +29,8 @@ export const ProjectDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [activeTab, setActiveTab] = useState<'intro' | 'prd'>('intro')
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   const { data: project, isLoading, isError, refetch } = useProject(projectId)
 
@@ -56,6 +59,50 @@ export const ProjectDetailPage = () => {
     setImageLoaded(false)
     setCurrentImageIndex(index)
   }
+
+  const openLightbox = useCallback(
+    (index?: number) => {
+      setLightboxIndex(index ?? currentImageIndex)
+      setIsLightboxOpen(true)
+    },
+    [currentImageIndex]
+  )
+
+  const closeLightbox = useCallback(() => {
+    setIsLightboxOpen(false)
+    setCurrentImageIndex(lightboxIndex)
+  }, [lightboxIndex])
+
+  const lightboxNext = () => {
+    setLightboxIndex((prev) => (prev + 1) % allImages.length)
+  }
+
+  const lightboxPrev = () => {
+    setLightboxIndex((prev) => (prev - 1 + allImages.length) % allImages.length)
+  }
+
+  // Keyboard and scroll lock for lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeLightbox()
+      } else if (e.key === 'ArrowLeft') {
+        lightboxPrev()
+      } else if (e.key === 'ArrowRight') {
+        lightboxNext()
+      }
+    }
+
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = ''
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isLightboxOpen, closeLightbox])
 
   if (isError) {
     return (
@@ -157,7 +204,10 @@ export const ProjectDetailPage = () => {
               className="lg:w-[45%] flex-shrink-0 flex flex-col gap-2"
             >
               {/* Main Image */}
-              <div className="relative aspect-[16/9] rounded-[var(--radius-xl)] overflow-hidden bg-[var(--color-bg-secondary)] select-none">
+              <div
+                className="relative aspect-[16/9] rounded-[var(--radius-xl)] overflow-hidden bg-[var(--color-bg-secondary)] select-none cursor-pointer group"
+                onClick={() => openLightbox()}
+              >
                 <div
                   className={`absolute inset-0 scale-110 transition-opacity duration-[var(--duration-slow)] ${
                     imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -239,7 +289,10 @@ export const ProjectDetailPage = () => {
                   {allImages.map((img, index) => (
                     <button
                       key={index}
-                      onClick={() => handleIndicatorClick(index)}
+                      onClick={() => {
+                        handleIndicatorClick(index)
+                        openLightbox(index)
+                      }}
                       className={`flex-shrink-0 w-14 h-10 rounded-md overflow-hidden transition-all duration-[var(--duration-base)] ease-standard
                         ${index === currentImageIndex ? 'ring-2 ring-[var(--color-accent)] opacity-100' : 'opacity-60 hover:opacity-100'}`}
                     >
@@ -439,6 +492,86 @@ export const ProjectDetailPage = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {isLightboxOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeLightbox()
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
+              aria-label="关闭"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Left arrow */}
+            {allImages.length > 1 && (
+              <button
+                onClick={lightboxPrev}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
+                aria-label="上一张"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Image */}
+            <motion.img
+              key={lightboxIndex}
+              src={allImages[lightboxIndex]}
+              alt={project.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-[90vw] max-h-[85vh] object-contain select-none"
+              draggable={false}
+              onTouchStart={(e) => {
+                const startX = e.touches[0].clientX
+                const img = e.currentTarget
+                const handleTouchEnd = (ev: TouchEvent) => {
+                  const endX = ev.changedTouches[0].clientX
+                  const diff = startX - endX
+                  if (Math.abs(diff) > 50) {
+                    if (diff > 0) lightboxNext()
+                    else lightboxPrev()
+                  }
+                  img.removeEventListener('touchend', handleTouchEnd)
+                }
+                img.addEventListener('touchend', handleTouchEnd, { passive: true })
+              }}
+            />
+
+            {/* Right arrow */}
+            {allImages.length > 1 && (
+              <button
+                onClick={lightboxNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
+                aria-label="下一张"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Page indicator */}
+            {allImages.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-sm">
+                {lightboxIndex + 1} / {allImages.length}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
