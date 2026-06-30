@@ -46,6 +46,7 @@ const initialNodes: Node[] = [
     id: 'harness',
     position: { x: 570, y: 80 },
     data: { label: 'Harness ReAct 循环' },
+    type: 'group',
     style: {
       background: '#fce7f3',
       border: '2px solid #db2777',
@@ -54,13 +55,13 @@ const initialNodes: Node[] = [
       fontSize: 14,
       fontWeight: 700,
       color: '#831843',
-      width: 240,
+      width: 300,
       height: 140,
     },
   },
   {
     id: 'llm',
-    position: { x: 595, y: 115 },
+    position: { x: 20, y: 45 },
     data: { label: 'LLM 推理\n(temperature: 0.7)' },
     style: {
       background: '#f0fdf4',
@@ -70,13 +71,14 @@ const initialNodes: Node[] = [
       fontSize: 12,
       fontWeight: 600,
       color: '#166534',
-      width: 140,
+      width: 120,
     },
     parentId: 'harness',
+    extent: 'parent',
   },
   {
     id: 'tool',
-    position: { x: 755, y: 115 },
+    position: { x: 160, y: 45 },
     data: { label: '工具执行\n(3 tools)' },
     style: {
       background: '#fff1f2',
@@ -86,8 +88,10 @@ const initialNodes: Node[] = [
       fontSize: 12,
       fontWeight: 600,
       color: '#9f1239',
-      width: 140,
+      width: 120,
     },
+    parentId: 'harness',
+    extent: 'parent',
   },
   {
     id: 'output',
