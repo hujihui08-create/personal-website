@@ -17,6 +17,38 @@ const RECOMMENDED_QUESTIONS = [
   '我要取消预约',
 ]
 
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/\*\*/g, '')
+    .replace(/create_booking|query_booking|cancel_booking/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+const truncateBookingText = (text: string, hasCard: boolean): string => {
+  if (!hasCard) return text
+  const lines = text.split('\n')
+  const firstLine = lines[0] || ''
+  if (/[。！：]$/.test(firstLine.trim())) {
+    return firstLine.trim()
+  }
+  return lines.slice(0, 2).join('\n').trim()
+}
+
+const formatMessageContent = (
+  content: string,
+  hasCard: boolean,
+  index: number,
+  messagesLength: number
+): string => {
+  let text = stripMarkdown(content)
+  const isLastAssistant = index === messagesLength - 1
+  if (hasCard && isLastAssistant) {
+    text = truncateBookingText(text, hasCard)
+  }
+  return text
+}
+
 export const AgentPage = () => {
   const {
     visitorId,
@@ -195,6 +227,7 @@ export const AgentPage = () => {
           } else if (chunk.type === 'booking_result' && chunk.data) {
             flushContent()
             setBookingCardData(chunk.data)
+            // Truncation is handled in render via formatMessageContent
           } else if (chunk.type === 'chunk' && chunk.content) {
             pendingContentRef.current += chunk.content
             if (!rafRef.current) {
@@ -368,7 +401,14 @@ export const AgentPage = () => {
                       : 'bg-[var(--color-bg)] text-[var(--color-primary)] border border-[var(--color-border-light)]'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {formatMessageContent(
+                      message.content,
+                      !!bookingCardData,
+                      index,
+                      messages.length
+                    )}
+                  </p>
                 </div>
               </div>
             ))}

@@ -437,7 +437,7 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 					"notes":            booking.Notes,
 					"created_at":       booking.CreatedAt,
 				}
-				text := fmt.Sprintf("\u9884\u7ea6\u6210\u529f\uff01\u60a8\u7684\u9884\u7ea6\u7f16\u53f7\u662f **%d**\uff0c\u9884\u7ea6\u65e5\u671f\u4e3a %s %s\u3002\u8bf7\u4fdd\u5b58\u6b64\u7f16\u53f7\uff0c\u540e\u7eed\u53ef\u901a\u8fc7\u7f16\u53f7\u548c\u624b\u673a\u53f7\u67e5\u8be2\u6216\u53d6\u6d88\u9884\u7ea6\u3002", booking.ID, booking.BookingDate, booking.BookingTime)
+				text := fmt.Sprintf("\u9884\u7ea6\u6210\u529f\uff01\u60a8\u7684\u9884\u7ea6\u7f16\u53f7\u662f %d\uff0c\u9884\u7ea6\u65e5\u671f\u4e3a %s %s\u3002\u8bf7\u4fdd\u5b58\u6b64\u7f16\u53f7\uff0c\u540e\u7eed\u53ef\u901a\u8fc7\u7f16\u53f7\u548c\u624b\u673a\u53f7\u67e5\u8be2\u6216\u53d6\u6d88\u9884\u7ea6\u3002", booking.ID, booking.BookingDate, booking.BookingTime)
 				return text, cardData
 			}
 		}
@@ -666,6 +666,12 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 [BOOKING_CANCEL]{"id":123456,"phone":"13800138000"}[/BOOKING_CANCEL]
 
 注意：标签必须放在回答的最末尾，JSON 放在一行内。不要在标签中包含任何多余的文字或换行。
+
+重要格式要求：
+- 回复中禁止使用 ** 等 markdown 加粗符号，统一使用纯文本。例如：说"编号 42"而不是"**编号 42**"
+- 预约成功/查询成功后，已通过卡片展示的信息（编号、日期、时段、公司名称等）不要重复输出，只需简单引导语，如"预约成功！请保存编号，后续可通过编号和手机号查询或取消。"
+- 预约查询成功后，只说"以下是您的预约详情"，详细信息由卡片展示，不要重复列出
+- 对话中禁止出现 create_booking、query_booking、cancel_booking 等技术性工具名称
 
 {{question}}`
 		log.Printf("[ChatService] 使用内置 booking Prompt")
