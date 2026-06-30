@@ -16,6 +16,7 @@ import {
   Settings,
   Bug,
   FileText,
+  GitBranch,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useLocation } from 'react-router-dom'
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
   { key: 'projects', label: '项目管理', path: '/admin/projects', icon: FolderOpen },
   { key: 'knowledge', label: '知识库管理', path: '/admin/knowledge', icon: Brain },
+  { key: 'agent-config', label: 'Agent 配置', path: '/admin/agent/flow', icon: GitBranch },
   { key: 'agent-debug', label: 'Agent 调试', path: '/admin/agent/debug', icon: Bug },
   { key: 'agent-prompts', label: 'Prompt 管理', path: '/admin/agent/prompts', icon: FileText },
   { key: 'settings', label: '系统设置', path: '/admin/settings', icon: Settings },
