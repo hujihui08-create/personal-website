@@ -196,7 +196,7 @@ export const PromptList = ({ searchQuery = '' }: PromptListProps) => {
                       {prompt.name}
                     </h3>
                     {prompt.is_default && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-full)] text-xs bg-[var(--color-warning-soft)] text-[#92400E] flex-shrink-0">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-full)] text-xs bg-[var(--color-warning)]/10 text-[var(--color-warning)] flex-shrink-0">
                         默认
                       </span>
                     )}
@@ -322,7 +322,7 @@ export const PromptList = ({ searchQuery = '' }: PromptListProps) => {
                 <div className="flex items-center gap-3 w-full">
                   <button
                     onClick={() => setDeleteTarget(null)}
-                    className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-hover)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
+                    className="flex-1 h-10 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-tertiary)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
                   >
                     取消
                   </button>

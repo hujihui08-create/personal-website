@@ -137,9 +137,9 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
             <div className="px-6 py-4 space-y-4">
               {/* Warning for default prompts */}
               {isEdit && prompt?.is_default && (
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30">
                   <AlertTriangle className="w-5 h-5 text-[var(--color-warning)] flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-[#92400E]">
+                  <p className="text-sm text-[var(--color-warning)] font-medium">
                     修改默认Prompt将立即影响线上Agent回答，请谨慎操作
                   </p>
                 </div>
@@ -292,7 +292,7 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border-light)]">
               <button
                 onClick={onClose}
-                className="h-10 px-4 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-hover)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
+                className="h-10 px-4 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-tertiary)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
               >
                 取消
               </button>
