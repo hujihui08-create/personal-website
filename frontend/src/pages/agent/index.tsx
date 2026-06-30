@@ -2,8 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Mic, Bot, User, Loader2, Menu } from 'lucide-react'
 import { useAgentStore } from '@/stores/agent'
 import { agentApi } from '@/api/agent'
+import { bookingApi } from '@/api/booking'
 import { SessionList } from '@/components/agent/SessionList'
 import { BookingResultCard } from '@/components/agent/BookingResultCard'
+import { BookingListCard } from '@/components/agent/BookingListCard'
 import type { AgentChatMessage, BookingResultData } from '@/types'
 import { toast } from 'sonner'
 
@@ -228,6 +230,9 @@ export const AgentPage = () => {
             flushContent()
             setBookingCardData(chunk.data)
             // Truncation is handled in render via formatMessageContent
+          } else if (chunk.type === 'booking_list' && chunk.data) {
+            flushContent()
+            setBookingCardData(chunk.data)
           } else if (chunk.type === 'chunk' && chunk.content) {
             pendingContentRef.current += chunk.content
             if (!rafRef.current) {
@@ -308,6 +313,26 @@ export const AgentPage = () => {
     pendingContentRef.current = ''
     await deleteSession(sessionId)
   }
+
+  const handleCancelBooking = useCallback(async (id: number, phone: string) => {
+    if (!confirm('确定取消此预约？')) return
+    try {
+      await bookingApi.cancelBookingByUser(id, phone, '用户通过AI助手取消')
+      toast.success('预约已取消')
+      setBookingCardData((prev) =>
+        prev
+          ? {
+              ...prev,
+              bookings: prev.bookings?.map((b) =>
+                b.id === id ? { ...b, status: 'cancelled' } : b
+              ),
+            }
+          : null
+      )
+    } catch {
+      toast.error('取消失败，请重试')
+    }
+  }, [])
 
   return (
     <div className="h-[calc(100vh-10rem)] md:h-[calc(100vh-4rem)] bg-[var(--color-bg)]">
@@ -413,7 +438,7 @@ export const AgentPage = () => {
               </div>
             ))}
 
-            {bookingCardData && (
+            {bookingCardData && bookingCardData.type !== 'booking_list' && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-white" />
@@ -423,6 +448,22 @@ export const AgentPage = () => {
                 </div>
               </div>
             )}
+
+            {bookingCardData &&
+              bookingCardData.type === 'booking_list' &&
+              bookingCardData.bookings && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="max-w-[80%]">
+                    <BookingListCard
+                      bookings={bookingCardData.bookings}
+                      onCancel={handleCancelBooking}
+                    />
+                  </div>
+                </div>
+              )}
 
             {isLoading && (
               <div className="flex gap-3">

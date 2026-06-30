@@ -304,8 +304,8 @@ func (s *ChatService) ChatStream(
 		var fullResponse strings.Builder
 		var suppressing bool
 
-		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]"}
-		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]"}
+		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]", "[BOOKING_LIST]"}
+		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]", "[/BOOKING_LIST]"}
 
 		containsAny := func(s string, substrs []string) bool {
 			for _, sub := range substrs {
@@ -443,6 +443,32 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 		}
 	}
 
+	// Try LIST action (by phone)
+	if idx := strings.Index(fullResponse, "[BOOKING_LIST]"); idx >= 0 {
+		endIdx := strings.Index(fullResponse, "[/BOOKING_LIST]")
+		if endIdx > idx {
+			jsonStr := strings.TrimSpace(fullResponse[idx+len("[BOOKING_LIST]") : endIdx])
+			var data struct {
+				Phone string `json:"phone"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+				log.Printf("[ChatService] 解析 [BOOKING_LIST] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
+			} else {
+				bookings, err := s.bookingService.ListBookingsByPhone(data.Phone)
+				if err != nil {
+					log.Printf("[ChatService] 查询预约列表失败 (phone=%s): %v", data.Phone, err)
+					return "查询预约列表失败，请稍后再试。", nil
+				}
+				cardData := map[string]interface{}{
+					"type":     "booking_list",
+					"bookings": bookings,
+				}
+				text := fmt.Sprintf("找到 %d 条预约记录，请告诉我要取消哪一个（可以说编号或第几个）。", len(bookings))
+				return text, cardData
+			}
+		}
+	}
+
 	// Try QUERY action
 	if idx := strings.Index(fullResponse, "[BOOKING_QUERY]"); idx >= 0 {
 		endIdx := strings.Index(fullResponse, "[/BOOKING_QUERY]")
@@ -454,7 +480,8 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 			}
 			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
 				log.Printf("[ChatService] 解析 [BOOKING_QUERY] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
-			} else {
+			} else if data.ID > 0 {
+				// Exact query by ID + phone
 				booking, err := s.bookingService.LookupBooking(data.ID, data.Phone)
 				if err != nil {
 					log.Printf("[ChatService] 查询预约失败 (id=%d): %v", data.ID, err)
@@ -478,6 +505,22 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 				}
 				text := fmt.Sprintf("\u67e5\u8be2\u5230\u60a8\u7684\u9884\u7ea6\uff08\u7f16\u53f7 %d\uff09\uff0c\u8be6\u60c5\u5982\u4e0a\u3002", booking.ID)
 				return text, cardData
+			} else if data.Phone != "" {
+				// List by phone only
+				bookings, err := s.bookingService.ListBookingsByPhone(data.Phone)
+				if err != nil {
+					log.Printf("[ChatService] 按手机号查询预约列表失败 (phone=%s): %v", data.Phone, err)
+					return "查询预约列表失败，请稍后再试。", nil
+				}
+				if len(bookings) == 0 {
+					return "未找到该手机号对应的预约记录。", nil
+				}
+				cardData := map[string]interface{}{
+					"type":     "booking_list",
+					"bookings": bookings,
+				}
+				text := fmt.Sprintf("找到 %d 条预约记录，请告诉我要取消哪一个（可以说编号或第几个）。", len(bookings))
+				return text, cardData
 			}
 		}
 	}
@@ -494,7 +537,13 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
 				log.Printf("[ChatService] 解析 [BOOKING_CANCEL] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
 			} else {
-				booking, err := s.bookingService.CancelBookingByUser(data.ID, data.Phone, "")
+				var booking *models.BookingResponse
+				var err error
+				if data.Phone != "" {
+					booking, err = s.bookingService.CancelBookingByUser(data.ID, data.Phone, "")
+				} else {
+					booking, err = s.bookingService.CancelBookingByID(data.ID)
+				}
 				if err != nil {
 					log.Printf("[ChatService] 取消预约失败 (id=%d): %v", data.ID, err)
 					return fmt.Sprintf("\u53d6\u6d88\u9884\u7ea6\u5931\u8d25\uff1a%v", err), nil
@@ -658,12 +707,25 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 [BOOKING_CREATE]{"company_name":"公司名","company_location":"地点","booking_date":"2026-05-20","booking_time":"09:00","contact_name":"姓名","contact_phone":"13800138000"}[/BOOKING_CREATE]
 
 ## 查询预约
-需要用户提供预约编号和手机号，然后加上：
+查询预约有两种方式：
+1. 用户知道预约编号和手机号 → 加上：
 [BOOKING_QUERY]{"id":123456,"phone":"13800138000"}[/BOOKING_QUERY]
+2. 用户只记得手机号 → 加上：
+[BOOKING_QUERY]{"phone":"13800138000"}[/BOOKING_QUERY]  （返回该手机号所有预约列表）
 
 ## 取消预约
-需要用户提供预约编号和手机号，确认后加上：
-[BOOKING_CANCEL]{"id":123456,"phone":"13800138000"}[/BOOKING_CANCEL]
+取消预约分为两个阶段：
+
+第一阶段-确定目标：
+- 如果用户知道预约编号 → 直接确认后加上：
+  [BOOKING_CANCEL]{"id":123456}[/BOOKING_CANCEL]
+- 如果用户不记得编号 → 先让用户提供手机号 → 发出查询：
+  [BOOKING_LIST]{"phone":"13800138000"}[/BOOKING_LIST]  或 [BOOKING_QUERY]{"phone":"13800138000"}[/BOOKING_QUERY]
+  → 系统会展示该手机号的所有预约列表 → 让用户指定要取消哪一个（说编号或第几个）
+
+第二阶段-执行取消：
+- 用户选定后，确认并加上：
+  [BOOKING_CANCEL]{"id":42}[/BOOKING_CANCEL]  （只需编号，无需再提供手机号）
 
 注意：标签必须放在回答的最末尾，JSON 放在一行内。不要在标签中包含任何多余的文字或换行。
 
@@ -880,6 +942,7 @@ func stripBookingTags(text string) string {
 		{"[BOOKING_CREATE]", "[/BOOKING_CREATE]"},
 		{"[BOOKING_QUERY]", "[/BOOKING_QUERY]"},
 		{"[BOOKING_CANCEL]", "[/BOOKING_CANCEL]"},
+		{"[BOOKING_LIST]", "[/BOOKING_LIST]"},
 	}
 
 	result := text

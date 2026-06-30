@@ -27,8 +27,8 @@ const actionTitles: Record<string, string> = {
 }
 
 export const BookingResultCard = ({ data }: BookingResultCardProps) => {
-  const statusClass = statusColors[data.status] || statusColors.pending
-  const title = actionTitles[data.action] || '预约信息'
+  const statusClass = statusColors[data.status ?? ''] || statusColors.pending
+  const title = actionTitles[data.action ?? ''] || '预约信息'
 
   return (
     <div className="mt-3 bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] p-4 space-y-3">

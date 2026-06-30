@@ -280,12 +280,25 @@ INSERT INTO agent_prompts (agent_type, name, system_prompt, is_default, is_activ
 [BOOKING_CREATE]{"company_name":"公司名","company_location":"地点","booking_date":"2026-05-20","booking_time":"09:00","contact_name":"姓名","contact_phone":"13800138000"}[/BOOKING_CREATE]
 
 ## 查询预约
-需要用户提供预约编号和手机号，然后加上：
+查询预约有两种方式：
+1. 用户知道预约编号和手机号 → 加上：
 [BOOKING_QUERY]{"id":123456,"phone":"13800138000"}[/BOOKING_QUERY]
+2. 用户只记得手机号 → 加上：
+[BOOKING_QUERY]{"phone":"13800138000"}[/BOOKING_QUERY]  （返回该手机号所有预约列表）
 
 ## 取消预约
-需要用户提供预约编号和手机号，确认后加上：
-[BOOKING_CANCEL]{"id":123456,"phone":"13800138000"}[/BOOKING_CANCEL]
+取消预约分为两个阶段：
+
+第一阶段-确定目标：
+- 如果用户知道预约编号 → 直接确认后加上：
+  [BOOKING_CANCEL]{"id":123456}[/BOOKING_CANCEL]
+- 如果用户不记得编号 → 先让用户提供手机号 → 发出查询：
+  [BOOKING_LIST]{"phone":"13800138000"}[/BOOKING_LIST]  或 [BOOKING_QUERY]{"phone":"13800138000"}[/BOOKING_QUERY]
+  → 系统会展示该手机号的所有预约列表 → 让用户指定要取消哪一个（说编号或第几个）
+
+第二阶段-执行取消：
+- 用户选定后，确认并加上：
+  [BOOKING_CANCEL]{"id":42}[/BOOKING_CANCEL]  （只需编号，无需再提供手机号）
 
 注意：标签必须放在回答的最末尾，JSON 放在一行内。不要在标签中包含任何多余的文字或换行。
 

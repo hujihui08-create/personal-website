@@ -44,7 +44,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	experienceService := service.NewExperienceService(experienceRepo)
 	resumeService := service.NewResumeService(resumeRepo, minioClient, cfg)
 	projectService := service.NewProjectService(projectRepo, projectPrdRepo, minioClient, cfg)
-	bookingService := service.NewBookingService(scheduleSettingRepo, bookingRepo, notificationService)
+	bookingService := service.NewBookingService(scheduleSettingRepo, bookingRepo, notificationService, db)
 	documentParser := service.NewDocumentParser()
 	textSplitter := service.NewTextSplitter(512, 50)
 	configService := service.NewConfigService(configRepo)

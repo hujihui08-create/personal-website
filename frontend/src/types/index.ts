@@ -198,16 +198,17 @@ export interface AgentChatRequest {
 }
 
 export interface AgentChatStreamChunk {
-  type: 'thinking' | 'chunk' | 'done' | 'booking_result'
+  type: 'thinking' | 'chunk' | 'done' | 'booking_result' | 'booking_list'
   content?: string
   session_id?: string
   data?: BookingResultData
 }
 
 export interface BookingResultData {
-  action: 'created' | 'lookup' | 'cancelled'
-  id: number
-  status: string
+  type?: string
+  action?: string
+  id?: number
+  status?: string
   company_name?: string
   company_location?: string
   booking_date?: string
@@ -219,6 +220,17 @@ export interface BookingResultData {
   reject_reason?: string
   created_at?: string
   updated_at?: string
+  bookings?: Array<{
+    id: number
+    status: string
+    company_name: string
+    company_location: string
+    booking_date: string
+    booking_time: string
+    contact_name: string
+    contact_phone: string
+    contact_email?: string
+  }>
 }
 
 export interface AgentClearRequest {

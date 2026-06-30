@@ -10,16 +10,18 @@ import (
 	"portfolio-backend/internal/database"
 	"portfolio-backend/internal/model"
 	"portfolio-backend/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 var (
-	ErrSlotUnavailable    = errors.New("该时段已被预约")
-	ErrRateLimitIP        = errors.New("请求过于频繁，请稍后再试")
-	ErrRateLimitEmail     = errors.New("该邮箱今日预约次数已达上限")
-	ErrNotWeekday         = errors.New("仅支持工作日预约")
-	ErrInvalidBookingTime = errors.New("无效的预约时间")
-	ErrBookingNotFound    = errors.New("未找到匹配的预约")
-	ErrPhoneMismatch      = errors.New("手机号不匹配")
+	ErrSlotUnavailable     = errors.New("该时段已被预约")
+	ErrRateLimitIP         = errors.New("请求过于频繁，请稍后再试")
+	ErrRateLimitEmail      = errors.New("该邮箱今日预约次数已达上限")
+	ErrNotWeekday          = errors.New("仅支持工作日预约")
+	ErrInvalidBookingTime  = errors.New("无效的预约时间")
+	ErrBookingNotFound     = errors.New("未找到匹配的预约")
+	ErrPhoneMismatch       = errors.New("手机号不匹配")
 	ErrCannotCancelBooking = errors.New("当前状态不允许取消")
 	ErrCannotUpdateBooking = errors.New("当前状态不允许修改")
 )
@@ -28,17 +30,20 @@ type BookingService struct {
 	scheduleSettingRepo *repository.ScheduleSettingRepository
 	bookingRepo         *repository.BookingRepository
 	notificationService *NotificationService
+	db                  *gorm.DB
 }
 
 func NewBookingService(
 	scheduleSettingRepo *repository.ScheduleSettingRepository,
 	bookingRepo *repository.BookingRepository,
 	notificationService *NotificationService,
+	db *gorm.DB,
 ) *BookingService {
 	return &BookingService{
 		scheduleSettingRepo: scheduleSettingRepo,
 		bookingRepo:         bookingRepo,
 		notificationService: notificationService,
+		db:                  db,
 	}
 }
 
@@ -311,6 +316,30 @@ func (s *BookingService) LookupBookingByCompanyName(phone, companyName string) (
 	return toBookingResponse(booking), nil
 }
 
+// ListBookingsByPhone 按手机号查询预约列表
+func (s *BookingService) ListBookingsByPhone(phone string) ([]model.BookingResponse, error) {
+	var bookings []model.Booking
+	if err := s.db.Where("contact_phone = ?", phone).Order("booking_date DESC, booking_time DESC").Find(&bookings).Error; err != nil {
+		return nil, err
+	}
+	var responses []model.BookingResponse
+	for _, b := range bookings {
+		responses = append(responses, model.BookingResponse{
+			ID:              b.ID,
+			Status:          b.Status,
+			CompanyName:     b.CompanyName,
+			CompanyLocation: b.CompanyLocation,
+			BookingDate:     b.BookingDate,
+			BookingTime:     b.BookingTime,
+			ContactName:     b.ContactName,
+			ContactPhone:    b.ContactPhone,
+			CreatedAt:       b.CreatedAt,
+			UpdatedAt:       b.UpdatedAt,
+		})
+	}
+	return responses, nil
+}
+
 func (s *BookingService) CancelBookingByUser(id uint, phone string, cancelReason string) (*model.BookingResponse, error) {
 	ctx := context.Background()
 
@@ -329,6 +358,31 @@ func (s *BookingService) CancelBookingByUser(id uint, phone string, cancelReason
 		return nil, err
 	}
 
+	cacheKey := fmt.Sprintf("booking:slots:%s", booking.BookingDate)
+	database.RedisClient.Del(ctx, cacheKey)
+
+	if s.notificationService != nil {
+		_ = s.notificationService.NotifyBookingStatusChanged(booking, "cancelled")
+	}
+
+	return toBookingResponse(booking), nil
+}
+
+// CancelBookingByID 通过ID取消预约（用户已从列表中选定）
+func (s *BookingService) CancelBookingByID(id uint) (*model.BookingResponse, error) {
+	booking, err := s.bookingRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("预约不存在")
+	}
+	if booking.Status == "cancelled" {
+		return nil, fmt.Errorf("预约已取消")
+	}
+	booking.Status = "cancelled"
+	if err := s.bookingRepo.Update(booking); err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
 	cacheKey := fmt.Sprintf("booking:slots:%s", booking.BookingDate)
 	database.RedisClient.Del(ctx, cacheKey)
 
