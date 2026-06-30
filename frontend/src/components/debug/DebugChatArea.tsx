@@ -75,7 +75,7 @@ export const DebugChatArea = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Top controls */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-[#E5E5E5] space-y-2 bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--color-border-light)] space-y-2 bg-[var(--color-bg)]">
         <div className="flex items-center gap-2">
           {/* Agent type select */}
           <select
@@ -115,18 +115,18 @@ export const DebugChatArea = () => {
               type="checkbox"
               checked={showRetrieval}
               onChange={toggleRetrieval}
-              className="w-3.5 h-3.5 rounded border-[#D4D4D4] text-[#0066FF] focus:ring-[#0066FF]/20 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-[var(--color-border-medium)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]/20 cursor-pointer"
             />
-            <span className="text-xs text-[#666666]">显示检索详情</span>
+            <span className="text-xs text-[var(--color-secondary)]">显示检索详情</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={showPrompt}
               onChange={togglePrompt}
-              className="w-3.5 h-3.5 rounded border-[#D4D4D4] text-[#0066FF] focus:ring-[#0066FF]/20 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-[var(--color-border-medium)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]/20 cursor-pointer"
             />
-            <span className="text-xs text-[#666666]">显示Prompt</span>
+            <span className="text-xs text-[var(--color-secondary)]">显示Prompt</span>
           </label>
         </div>
       </div>
@@ -138,11 +138,13 @@ export const DebugChatArea = () => {
       >
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <div className="w-16 h-16 rounded-[var(--radius-full)] bg-[#F5F5F5] flex items-center justify-center mb-4">
-              <Bot className="w-8 h-8 text-[#D4D4D4]" />
+            <div className="w-16 h-16 rounded-[var(--radius-full)] bg-[var(--color-bg-secondary)] flex items-center justify-center mb-4">
+              <Bot className="w-8 h-8 text-[var(--color-border-medium)]" />
             </div>
-            <p className="text-sm font-medium text-[#1A1A1A] mb-1">Agent 调试面板</p>
-            <p className="text-xs text-[#666666]">发送消息测试 Agent 的意图识别与检索效果</p>
+            <p className="text-sm font-medium text-[var(--color-primary)] mb-1">Agent 调试面板</p>
+            <p className="text-xs text-[var(--color-secondary)]">
+              发送消息测试 Agent 的意图识别与检索效果
+            </p>
           </div>
         )}
 
@@ -154,13 +156,13 @@ export const DebugChatArea = () => {
             {/* Avatar */}
             <div
               className={`w-7 h-7 rounded-[var(--radius-full)] flex items-center justify-center flex-shrink-0 ${
-                msg.role === 'user' ? 'bg-[#0066FF]' : 'bg-[#1A1A1A]'
+                msg.role === 'user' ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-primary)]'
               }`}
             >
               {msg.role === 'user' ? (
-                <User className="w-3.5 h-3.5 text-white" />
+                <User className="w-3.5 h-3.5 text-[var(--color-bg)]" />
               ) : (
-                <Bot className="w-3.5 h-3.5 text-white" />
+                <Bot className="w-3.5 h-3.5 text-[var(--color-bg)]" />
               )}
             </div>
 
@@ -168,8 +170,8 @@ export const DebugChatArea = () => {
             <div
               className={`max-w-[80%] px-4 py-2 text-sm ${
                 msg.role === 'user'
-                  ? 'bg-[#0066FF] text-white rounded-2xl rounded-br-sm'
-                  : 'bg-[#F5F5F5] text-[#1A1A1A] rounded-2xl rounded-bl-sm'
+                  ? 'bg-[var(--color-accent)] text-[var(--color-bg)] rounded-2xl rounded-br-sm'
+                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-primary)] rounded-2xl rounded-bl-sm'
               }`}
             >
               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
@@ -180,11 +182,11 @@ export const DebugChatArea = () => {
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-[var(--radius-full)] bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
-              <Bot className="w-3.5 h-3.5 text-white" />
+            <div className="w-7 h-7 rounded-[var(--radius-full)] bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
+              <Bot className="w-3.5 h-3.5 text-[var(--color-bg)]" />
             </div>
-            <div className="bg-[#F5F5F5] rounded-2xl rounded-bl-sm px-4 py-3">
-              <Loader2 className="w-4 h-4 text-[#0066FF] animate-spin" />
+            <div className="bg-[var(--color-bg-secondary)] rounded-2xl rounded-bl-sm px-4 py-3">
+              <Loader2 className="w-4 h-4 text-[var(--color-accent)] animate-spin" />
             </div>
           </div>
         )}
@@ -193,7 +195,7 @@ export const DebugChatArea = () => {
       </div>
 
       {/* Input area */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-[#E5E5E5] bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-[var(--color-border-light)] bg-[var(--color-bg)]">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -202,12 +204,12 @@ export const DebugChatArea = () => {
             placeholder="输入测试消息..."
             disabled={isLoading}
             rows={1}
-            className="flex-1 bg-[#FAFAFA] border border-[#D4D4D4] rounded-lg px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#999999] resize-none focus:outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]/20 transition-colors disabled:opacity-50 max-h-24"
+            className="flex-1 bg-[var(--color-bg-tertiary)] border border-[var(--color-border-medium)] rounded-[var(--radius-lg)] px-3 py-2 text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] resize-none focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/20 transition-colors duration-[var(--duration-fast)] disabled:opacity-50 max-h-24"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 w-9 h-9 bg-[#0066FF] text-white rounded-lg flex items-center justify-center hover:bg-[#0066FF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-shrink-0 w-9 h-9 bg-[var(--color-accent)] text-[var(--color-bg)] rounded-[var(--radius-lg)] flex items-center justify-center hover:bg-[var(--color-accent)]/90 active:bg-[var(--color-accent)]/80 transition-colors duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] cursor-pointer"
             aria-label="发送消息"
           >
             <Send className="w-4 h-4" />

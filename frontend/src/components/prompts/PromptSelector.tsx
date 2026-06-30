@@ -47,26 +47,32 @@ export const PromptSelector = ({ agentType, value, onChange }: PromptSelectorPro
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center justify-between gap-2 w-full border border-[#D4D4D4] rounded-md px-3 py-2 text-sm text-[#1A1A1A] bg-white hover:border-[#0066FF] focus:outline-none focus:ring-2 focus:ring-[#0066FF]/10 focus:border-[#0066FF] transition-colors"
+        className="inline-flex items-center justify-between gap-2 w-full border border-[var(--color-border-medium)] rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--color-primary)] bg-[var(--color-bg)] hover:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/10 focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-focus-ring)] transition-colors duration-[var(--duration-fast)]"
       >
-        <span className={value === undefined ? 'text-[#666666]' : 'text-[#1A1A1A]'}>
+        <span
+          className={
+            value === undefined ? 'text-[var(--color-secondary)]' : 'text-[var(--color-primary)]'
+          }
+        >
           {getDisplayLabel()}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-[#666666] transition-transform duration-200 ${
+          className={`w-4 h-4 text-[var(--color-secondary)] transition-transform duration-[var(--duration-base)] ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-40 mt-1 w-full bg-white border border-[#E5E5E5] rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.08)] max-h-60 overflow-y-auto">
+        <div className="absolute z-40 mt-1 w-full bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-lg shadow-[var(--shadow-card-hover)] max-h-60 overflow-y-auto">
           {/* Default option */}
           <button
             type="button"
             onClick={() => handleSelect(undefined)}
-            className={`flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-[#F5F5F5] transition-colors ${
-              value === undefined ? 'text-[#0066FF] bg-[#0066FF]/5' : 'text-[#1A1A1A]'
+            className={`flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)] ${
+              value === undefined
+                ? 'text-[var(--color-accent)] bg-[var(--color-accent)]/5'
+                : 'text-[var(--color-primary)]'
             }`}
           >
             <span>默认Prompt</span>
@@ -74,7 +80,7 @@ export const PromptSelector = ({ agentType, value, onChange }: PromptSelectorPro
           </button>
 
           {/* Divider */}
-          {prompts.length > 0 && <div className="border-t border-[#E5E5E5]" />}
+          {prompts.length > 0 && <div className="border-t border-[var(--color-border-light)]" />}
 
           {/* Prompt options */}
           {prompts.map((prompt) => (
@@ -82,20 +88,24 @@ export const PromptSelector = ({ agentType, value, onChange }: PromptSelectorPro
               key={prompt.id}
               type="button"
               onClick={() => handleSelect(prompt.id)}
-              className={`flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-[#F5F5F5] transition-colors ${
-                value === prompt.id ? 'text-[#0066FF] bg-[#0066FF]/5' : 'text-[#1A1A1A]'
+              className={`flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)] ${
+                value === prompt.id
+                  ? 'text-[var(--color-accent)] bg-[var(--color-accent)]/5'
+                  : 'text-[var(--color-primary)]'
               }`}
             >
               <span>
                 {prompt.name}
-                {prompt.is_default && <span className="text-[#999999] ml-1">(默认)</span>}
+                {prompt.is_default && (
+                  <span className="text-[var(--color-secondary)] ml-1">(默认)</span>
+                )}
               </span>
               {value === prompt.id && <Check className="w-4 h-4 flex-shrink-0" />}
             </button>
           ))}
 
           {prompts.length === 0 && (
-            <div className="px-3 py-4 text-center text-sm text-[#999999]">
+            <div className="px-3 py-4 text-center text-sm text-[var(--color-secondary)]">
               {agentType ? '该类型暂无Prompt模板' : '暂无Prompt模板'}
             </div>
           )}

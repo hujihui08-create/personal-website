@@ -116,17 +116,17 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="w-full max-w-lg bg-white rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] my-8 overflow-hidden"
+            className="w-full max-w-lg bg-[var(--color-bg)] rounded-[var(--radius-xl)] shadow-[var(--shadow-card-strong)] my-8 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#E5E5E5]">
-              <h2 className="text-lg font-semibold text-[#1A1A1A]">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[var(--color-border-light)]">
+              <h2 className="text-lg font-semibold text-[var(--color-primary)]">
                 {isEdit ? '编辑 Prompt' : '新建 Prompt'}
               </h2>
               <button
                 onClick={onClose}
-                className="w-9 h-9 flex items-center justify-center rounded-md text-[#666666] hover:text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
                 aria-label="关闭"
               >
                 <X className="w-4 h-4" />
@@ -137,8 +137,8 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
             <div className="px-6 py-4 space-y-4">
               {/* Warning for default prompts */}
               {isEdit && prompt?.is_default && (
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-[#FEF3C7] border border-[#F59E0B]/30">
-                  <AlertTriangle className="w-5 h-5 text-[#F59E0B] flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30">
+                  <AlertTriangle className="w-5 h-5 text-[var(--color-warning)] flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-[#92400E]">
                     修改默认Prompt将立即影响线上Agent回答，请谨慎操作
                   </p>
@@ -147,8 +147,8 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Prompt 名称 <span className="text-[#EF4444]">*</span>
+                <label className="block text-sm font-medium text-[var(--color-primary)] mb-1.5">
+                  Prompt 名称 <span className="text-[var(--color-error)]">*</span>
                 </label>
                 <input
                   type="text"
@@ -158,17 +158,21 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
                     if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }))
                   }}
                   placeholder="例如：专业开发者评估"
-                  className={`w-full border rounded-md px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#0066FF]/10 focus:border-[#0066FF] transition-colors ${
-                    errors.name ? 'border-[#EF4444]' : 'border-[#D4D4D4]'
+                  className={`w-full border rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/10 focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-focus-ring)] transition-colors duration-[var(--duration-fast)] ${
+                    errors.name
+                      ? 'border-[var(--color-error)]'
+                      : 'border-[var(--color-border-medium)]'
                   }`}
                 />
-                {errors.name && <p className="text-xs text-[#EF4444] mt-1">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-xs text-[var(--color-error)] mt-1">{errors.name}</p>
+                )}
               </div>
 
               {/* Agent Type */}
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Agent 类型 <span className="text-[#EF4444]">*</span>
+                <label className="block text-sm font-medium text-[var(--color-primary)] mb-1.5">
+                  Agent 类型 <span className="text-[var(--color-error)]">*</span>
                 </label>
                 <select
                   value={agentType}
@@ -190,8 +194,8 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
 
               {/* System Prompt */}
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  System Prompt <span className="text-[#EF4444]">*</span>
+                <label className="block text-sm font-medium text-[var(--color-primary)] mb-1.5">
+                  System Prompt <span className="text-[var(--color-error)]">*</span>
                 </label>
                 <textarea
                   value={systemPrompt}
@@ -202,32 +206,37 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
                   }}
                   placeholder="你是专业的面试评估助手..."
                   rows={8}
-                  className={`w-full border rounded-md px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#0066FF]/10 focus:border-[#0066FF] transition-colors min-h-[200px] resize-y ${
-                    errors.systemPrompt ? 'border-[#EF4444]' : 'border-[#D4D4D4]'
+                  className={`w-full border rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/10 focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-focus-ring)] transition-colors duration-[var(--duration-fast)] min-h-[200px] resize-y ${
+                    errors.systemPrompt
+                      ? 'border-[var(--color-error)]'
+                      : 'border-[var(--color-border-medium)]'
                   }`}
                 />
                 {errors.systemPrompt && (
-                  <p className="text-xs text-[#EF4444] mt-1">{errors.systemPrompt}</p>
+                  <p className="text-xs text-[var(--color-error)] mt-1">{errors.systemPrompt}</p>
                 )}
               </div>
 
               {/* Context Template */}
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Context Template <span className="text-[#999999] font-normal">(可选)</span>
+                <label className="block text-sm font-medium text-[var(--color-primary)] mb-1.5">
+                  Context Template{' '}
+                  <span className="text-[var(--color-secondary)] font-normal">(可选)</span>
                 </label>
                 <textarea
                   value={contextTemplate}
                   onChange={(e) => setContextTemplate(e.target.value)}
                   placeholder="知识库上下文模板..."
                   rows={4}
-                  className="w-full border border-[#D4D4D4] rounded-md px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#0066FF]/10 focus:border-[#0066FF] transition-colors resize-y"
+                  className="w-full border border-[var(--color-border-medium)] rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/10 focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-focus-ring)] transition-colors duration-[var(--duration-fast)] resize-y"
                 />
               </div>
 
               {/* Available Variables */}
-              <div className="rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] p-3">
-                <p className="text-xs font-medium text-[#666666] mb-2">可用变量提示</p>
+              <div className="rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-light)] p-3">
+                <p className="text-xs font-medium text-[var(--color-secondary)] mb-2">
+                  可用变量提示
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {AVAILABLE_VARIABLES.map((v) => (
                     <button
@@ -245,7 +254,7 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
                           setSystemPrompt(newValue)
                         }
                       }}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-white border border-[#E5E5E5] text-[#0066FF] hover:border-[#0066FF] hover:bg-[#0066FF]/5 transition-colors cursor-pointer font-mono"
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-[var(--color-bg)] border border-[var(--color-border-light)] text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-colors duration-[var(--duration-fast)] cursor-pointer font-mono"
                     >
                       {v}
                     </button>
@@ -256,20 +265,22 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
               {/* Is Active */}
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <p className="text-sm font-medium text-[#1A1A1A]">启用状态</p>
-                  <p className="text-xs text-[#666666] mt-0.5">停用后Agent将不会使用此Prompt</p>
+                  <p className="text-sm font-medium text-[var(--color-primary)]">启用状态</p>
+                  <p className="text-xs text-[var(--color-secondary)] mt-0.5">
+                    停用后Agent将不会使用此Prompt
+                  </p>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={isActive}
                   onClick={() => setIsActive(!isActive)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                    isActive ? 'bg-[#0066FF]' : 'bg-[#D4D4D4]'
+                  className={`relative inline-flex h-6 w-11 items-center rounded-[var(--radius-full)] transition-colors duration-[var(--duration-base)] ${
+                    isActive ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border-medium)]'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                    className={`inline-block h-4 w-4 transform rounded-[var(--radius-full)] bg-[var(--color-bg)] transition-transform duration-[var(--duration-base)] ${
                       isActive ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -278,17 +289,17 @@ export const PromptEditor = ({ prompt, onClose }: PromptEditorProps) => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E5E5E5]">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border-light)]">
               <button
                 onClick={onClose}
-                className="h-10 px-4 border border-[#D4D4D4] text-[#1A1A1A] rounded-md text-sm font-medium hover:bg-[#F5F5F5] transition-colors"
+                className="h-10 px-4 border border-[var(--color-border-medium)] text-[var(--color-primary)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-hover)] transition-colors duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
               >
                 取消
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 h-10 px-4 bg-[#1A1A1A] text-white rounded-md text-sm font-medium hover:bg-[#333333] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 h-10 px-4 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-primary)]/80 active:bg-[var(--color-primary)]/70 transition-all duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 <span>{isSubmitting ? '保存中...' : '保存'}</span>

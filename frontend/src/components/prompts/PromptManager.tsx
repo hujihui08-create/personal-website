@@ -37,12 +37,14 @@ export const PromptManager = () => {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A]">Prompt 管理</h1>
-          <p className="text-[#666666] mt-1">管理和定制AI Agent的Prompt模板</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">
+            Prompt 管理
+          </h1>
+          <p className="text-[var(--color-secondary)] mt-1">管理和定制AI Agent的Prompt模板</p>
         </div>
         <button
           onClick={() => setIsEditorOpen(true)}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#1A1A1A] text-white rounded-md text-sm font-semibold hover:bg-[#333333] hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#1A1A1A] focus:ring-offset-2"
+          className="inline-flex items-center gap-2 h-11 px-6 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-md)] text-sm font-semibold hover:bg-[var(--color-primary)]/80 active:bg-[var(--color-primary)]/70 transition-all duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:ring-offset-2"
         >
           <Plus className="w-4 h-4" />
           <span>新建 Prompt</span>
@@ -50,12 +52,15 @@ export const PromptManager = () => {
       </motion.div>
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-[#666666]">
-        <Link to="/admin/dashboard" className="hover:text-[#0066FF] transition-colors">
+      <nav className="flex items-center gap-1 text-sm text-[var(--color-secondary)]">
+        <Link
+          to="/admin/dashboard"
+          className="hover:text-[var(--color-accent)] transition-colors duration-[var(--duration-fast)]"
+        >
           仪表盘
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-[#1A1A1A] font-medium">Prompt 管理</span>
+        <span className="text-[var(--color-primary)] font-medium">Prompt 管理</span>
       </nav>
 
       {/* Filter bar */}
@@ -70,7 +75,7 @@ export const PromptManager = () => {
           <select
             value={agentTypeFilter}
             onChange={(e) => setAgentTypeFilter(e.target.value)}
-            className="appearance-none h-10 pl-3 pr-9 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-colors cursor-pointer"
+            className="appearance-none h-10 pl-3 pr-9 rounded-[var(--radius-sm)] border border-[var(--color-border-medium)] bg-[var(--color-bg)] text-sm text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
           >
             {AGENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -78,18 +83,18 @@ export const PromptManager = () => {
               </option>
             ))}
           </select>
-          <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] rotate-90 pointer-events-none" />
+          <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-secondary)] rotate-90 pointer-events-none" />
         </div>
 
         {/* Search input */}
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-secondary)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索Prompt名称或内容..."
-            className="w-full h-10 pl-9 pr-3 border border-[#D4D4D4] rounded-md text-sm text-[#1A1A1A] placeholder-[#999999] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF]/10 focus:border-[#0066FF] transition-colors"
+            className="w-full h-10 pl-9 pr-3 border border-[var(--color-border-medium)] rounded-[var(--radius-md)] text-sm text-[var(--color-primary)] placeholder-[var(--color-secondary)] bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/10 focus:border-[var(--color-accent)] focus:shadow-[var(--shadow-focus-ring)] transition-colors duration-[var(--duration-fast)]"
           />
         </div>
       </motion.div>

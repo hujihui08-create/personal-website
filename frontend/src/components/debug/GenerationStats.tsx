@@ -32,7 +32,7 @@ const statCards: {
 
 export const GenerationStats = ({ generation }: GenerationStatsProps) => {
   if (!generation) {
-    return <div className="text-sm text-[#666666] py-2">暂无生成统计</div>
+    return <div className="text-sm text-[var(--color-secondary)] py-2">暂无生成统计</div>
   }
 
   return (
@@ -45,12 +45,15 @@ export const GenerationStats = ({ generation }: GenerationStatsProps) => {
           key === 'model' ? String(value) : format ? format(value as number) : String(value)
 
         return (
-          <div key={key} className="rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] p-2.5">
+          <div
+            key={key}
+            className="rounded-[var(--radius-lg)] border border-[var(--color-border-light)] bg-[var(--color-bg-tertiary)] p-2.5"
+          >
             <div className="flex items-center gap-1 mb-1">
-              <Icon className="w-3 h-3 text-[#0066FF]" />
-              <span className="text-[10px] text-[#666666] font-medium">{label}</span>
+              <Icon className="w-3 h-3 text-[var(--color-accent)]" />
+              <span className="text-[10px] text-[var(--color-secondary)] font-medium">{label}</span>
             </div>
-            <p className="text-sm font-semibold text-[#1A1A1A]">{displayValue}</p>
+            <p className="text-sm font-semibold text-[var(--color-primary)]">{displayValue}</p>
           </div>
         )
       })}

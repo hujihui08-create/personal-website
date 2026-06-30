@@ -17,17 +17,19 @@ const CollapsibleSection = ({ title, icon: Icon, defaultOpen = true, children }:
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-xl border border-[#E5E5E5] bg-white overflow-hidden">
+    <div className="rounded-[var(--radius-xl)] border border-[var(--color-border-light)] bg-[var(--color-bg)] overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-[#FAFAFA] transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-[var(--color-bg-tertiary)] transition-colors duration-[var(--duration-fast)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] cursor-pointer"
       >
-        <Icon className="w-4 h-4 text-[#0066FF]" />
-        <span className="text-sm font-semibold text-[#1A1A1A] flex-1 text-left">{title}</span>
+        <Icon className="w-4 h-4 text-[var(--color-accent)]" />
+        <span className="text-sm font-semibold text-[var(--color-primary)] flex-1 text-left">
+          {title}
+        </span>
         {isOpen ? (
-          <ChevronDown className="w-4 h-4 text-[#666666]" />
+          <ChevronDown className="w-4 h-4 text-[var(--color-secondary)]" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-[#666666]" />
+          <ChevronRight className="w-4 h-4 text-[var(--color-secondary)]" />
         )}
       </button>
       {isOpen && <div className="px-4 pb-4 pt-1">{children}</div>}
@@ -40,11 +42,11 @@ export const DebugInfoPanel = () => {
 
   if (!debugInfo) {
     return (
-      <div className="rounded-xl border border-[#E5E5E5] bg-white p-6">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--color-border-light)] bg-[var(--color-bg)] p-6">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Info className="w-10 h-10 text-[#D4D4D4] mb-3" />
-          <p className="text-sm text-[#666666]">发送消息后查看调试信息</p>
-          <p className="text-xs text-[#999999] mt-1">意图识别、RAG检索、生成统计</p>
+          <Info className="w-10 h-10 text-[var(--color-border-medium)] mb-3" />
+          <p className="text-sm text-[var(--color-secondary)]">发送消息后查看调试信息</p>
+          <p className="text-xs text-[var(--color-secondary)] mt-1">意图识别、RAG检索、生成统计</p>
         </div>
       </div>
     )
