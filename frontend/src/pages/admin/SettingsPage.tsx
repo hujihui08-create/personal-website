@@ -91,11 +91,11 @@ export const SettingsPage = () => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between border-b border-[var(--color-border-light)] pb-4 mb-6"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">系统设置</h1>
-          <p className="text-[var(--color-secondary)] mt-1">配置AI助手的模型参数和API</p>
+          <h1 className="text-xl font-semibold text-[var(--color-primary)]">系统设置</h1>
+          <p className="text-sm text-[var(--color-secondary)]">配置AI助手的模型参数和API</p>
         </div>
       </motion.div>
 
@@ -105,7 +105,7 @@ export const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-6 hover:shadow-lg transition-shadow"
+          className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-6 hover:shadow-[var(--shadow-card-hover)] transition-shadow"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -234,7 +234,7 @@ export const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-6 hover:shadow-lg transition-shadow"
+          className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-6 hover:shadow-[var(--shadow-card-hover)] transition-shadow"
         >
           <div className="flex items-center justify-between mb-6">
             <div>

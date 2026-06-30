@@ -363,11 +363,11 @@ export const ProjectManagePage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">项目管理</h1>
-          <p className="text-[var(--color-secondary)] mt-1">管理和编辑您的项目</p>
+          <h1 className="text-xl font-semibold text-[var(--color-primary)]">项目管理</h1>
+          <p className="text-sm text-[var(--color-secondary)]">管理和编辑您的项目</p>
         </div>
         <button
           onClick={handleOpenAdd}
@@ -457,8 +457,8 @@ export const ProjectManagePage = () => {
                         <span
                           className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-[var(--radius-sm)] ${
                             project.type === 'enterprise'
-                              ? 'bg-[var(--color-primary)] text-white'
-                              : 'bg-[var(--color-accent)] text-white'
+                              ? 'bg-[var(--color-primary)] text-[var(--color-bg)]'
+                              : 'bg-[var(--color-accent)] text-[var(--color-bg)]'
                           }`}
                         >
                           {project.type === 'enterprise' ? '企业项目' : '个人项目'}

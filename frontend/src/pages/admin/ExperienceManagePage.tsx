@@ -171,11 +171,11 @@ export const ExperienceManagePage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">工作经历</h1>
-          <p className="text-[var(--color-secondary)] mt-1">管理和编辑您的工作经历信息</p>
+          <h1 className="text-xl font-semibold text-[var(--color-primary)]">工作经历</h1>
+          <p className="text-sm text-[var(--color-secondary)]">管理和编辑您的工作经历信息</p>
         </div>
         <button
           onClick={handleOpenAdd}

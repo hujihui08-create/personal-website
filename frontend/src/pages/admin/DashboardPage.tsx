@@ -122,11 +122,11 @@ export const DashboardPage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">仪表盘</h1>
-          <p className="text-[var(--color-secondary)] mt-1">
+          <h1 className="text-xl font-semibold text-[var(--color-primary)]">仪表盘</h1>
+          <p className="text-sm text-[var(--color-secondary)]">
             欢迎回来，{profile?.name || '管理员'}！
           </p>
         </div>
@@ -168,7 +168,7 @@ export const DashboardPage = () => {
             </div>
             <Link
               to="/admin/profile"
-              className="group flex items-center gap-2 h-11 px-[var(--space-lg)] bg-[var(--color-bg)] text-[var(--color-accent)] rounded-[var(--radius-md)] text-sm font-semibold hover:bg-[var(--color-bg)]/90 transition-all duration-[var(--duration-base)] shadow-md"
+              className="group flex items-center gap-2 h-11 px-[var(--space-lg)] bg-[var(--color-bg)] text-[var(--color-accent)] rounded-[var(--radius-md)] text-sm font-semibold hover:bg-[var(--color-bg)]/90 transition-all duration-[var(--duration-base)] shadow-[var(--shadow-card-hover)]"
             >
               <Edit3 className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span className="hidden sm:inline">编辑资料</span>

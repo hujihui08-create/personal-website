@@ -105,12 +105,10 @@ export const ScheduleManagePage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-[var(--color-primary)]">时段设置</h1>
-            <p className="text-sm text-[var(--color-secondary)] mt-1">
-              设置每周可预约的时间段
-            </p>
+            <h1 className="text-xl font-semibold text-[var(--color-primary)]">时段设置</h1>
+            <p className="text-sm text-[var(--color-secondary)]">设置每周可预约的时间段</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -122,11 +120,11 @@ export const ScheduleManagePage = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-[var(--radius-md)] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg)] rounded-[var(--radius-md)] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {saving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--color-bg)]"></div>
                   保存中...
                 </>
               ) : (
@@ -146,7 +144,10 @@ export const ScheduleManagePage = () => {
               {Object.entries(schedule).map(([weekdayStr, times]) => {
                 const weekday = parseInt(weekdayStr)
                 return (
-                  <div key={weekday} className="border-b border-[var(--color-border-light)] pb-6 last:border-b-0 last:pb-0">
+                  <div
+                    key={weekday}
+                    className="border-b border-[var(--color-border-light)] pb-6 last:border-b-0 last:pb-0"
+                  >
                     <h3 className="text-lg font-medium text-[var(--color-primary)] mb-4">
                       {weekdayNames[weekday - 1]}
                     </h3>
@@ -159,8 +160,8 @@ export const ScheduleManagePage = () => {
                             onClick={() => toggleTime(weekday, time)}
                             className={`px-4 py-2 rounded-[var(--radius-md)] border font-medium transition-all ${
                               isActive
-                                ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
-                                : 'bg-white text-[var(--color-secondary)] border-[var(--color-border-light)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'
+                                ? 'bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]'
+                                : 'bg-[var(--color-bg)] text-[var(--color-secondary)] border-[var(--color-border-light)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'
                             }`}
                           >
                             {time}
@@ -169,9 +170,7 @@ export const ScheduleManagePage = () => {
                       })}
                     </div>
                     {times.length === 0 && (
-                      <p className="text-sm text-[var(--color-secondary)] mt-3">
-                        该日无可预约时段
-                      </p>
+                      <p className="text-sm text-[var(--color-secondary)] mt-3">该日无可预约时段</p>
                     )}
                   </div>
                 )

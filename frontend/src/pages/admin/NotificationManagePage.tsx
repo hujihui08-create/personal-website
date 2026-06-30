@@ -13,10 +13,10 @@ const typeLabels: Record<string, string> = {
 }
 
 const typeColors: Record<string, string> = {
-  new_booking: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  reminder: 'bg-yellow-100 text-yellow-800',
+  new_booking: 'bg-[var(--color-info)]/10 text-[var(--color-info)]',
+  confirmed: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+  rejected: 'bg-[var(--color-error)]/10 text-[var(--color-error)]',
+  reminder: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
 }
 
 export const NotificationManagePage = () => {
@@ -100,13 +100,13 @@ export const NotificationManagePage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-[var(--color-primary)]">通知中心</h1>
-            <p className="text-sm text-[var(--color-secondary)] mt-1">
+            <h1 className="text-xl font-semibold text-[var(--color-primary)]">通知中心</h1>
+            <p className="text-sm text-[var(--color-secondary)]">
               查看所有系统通知
               {unreadCount > 0 && (
-                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-error)]/10 text-[var(--color-error)]">
                   {unreadCount} 条未读
                 </span>
               )}
@@ -115,7 +115,7 @@ export const NotificationManagePage = () => {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-md)] hover:opacity-90 transition-opacity"
             >
               <CheckCheck className="w-4 h-4" />
               全部标记已读
@@ -139,16 +139,18 @@ export const NotificationManagePage = () => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-6 hover:bg-[var(--color-bg-secondary)]/50 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
+                    className={`p-6 hover:bg-[var(--color-bg-secondary)]/50 transition-colors ${!notification.is_read ? 'bg-[var(--color-info)]/5' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notification.type] || 'bg-gray-100 text-gray-800'}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notification.type] || 'bg-gray-100 text-gray-800'}`}
+                          >
                             {typeLabels[notification.type] || notification.type}
                           </span>
                           {!notification.is_read && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-info)]"></span>
                           )}
                         </div>
                         <h3 className="text-sm font-medium text-[var(--color-primary)] mb-1">

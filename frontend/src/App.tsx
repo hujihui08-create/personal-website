@@ -19,8 +19,6 @@ import NotificationManagePage from '@/pages/admin/NotificationManagePage'
 import ScheduleManagePage from '@/pages/admin/ScheduleManagePage'
 import KnowledgeManagePage from '@/pages/admin/KnowledgeManagePage'
 import SettingsPage from '@/pages/admin/SettingsPage'
-import AgentDebugPage from '@/pages/admin/agent-debug'
-import AgentPromptsPage from '@/pages/admin/agent-prompts'
 import AgentConfigPage from '@/pages/admin/agent-config'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -160,27 +158,7 @@ function App() {
               }
             />
             <Route
-              path="/admin/agent/debug"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AgentDebugPage />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/agent/prompts"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AgentPromptsPage />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/agent/flow"
+              path="/admin/agent"
               element={
                 <ProtectedRoute>
                   <AdminLayout>

@@ -187,11 +187,11 @@ export const ProfileEditPage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">个人资料</h1>
-          <p className="text-[var(--color-secondary)] mt-1">管理您的个人信息和设置</p>
+          <h1 className="text-xl font-semibold text-[var(--color-primary)]">个人资料</h1>
+          <p className="text-sm text-[var(--color-secondary)]">管理您的个人信息和设置</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-[var(--color-secondary)] bg-[var(--color-bg)] px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border-light)]">
           <FileText className="w-4 h-4" />
@@ -215,7 +215,7 @@ export const ProfileEditPage = () => {
         className="space-y-[var(--space-lg)]"
       >
         {/* Profile Form Card */}
-        <div className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-xl)] shadow-[var(--shadow-card-hover)] hover:shadow-md transition-shadow duration-[var(--duration-base)]">
+        <div className="bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] p-[var(--space-xl)] shadow-[var(--shadow-card-hover)] hover:shadow-[var(--shadow-card-hover)] transition-shadow duration-[var(--duration-base)]">
           <div className="space-y-[var(--space-lg)]">
             {/* Avatar Section */}
             <div className="flex items-center gap-[var(--space-lg)]">

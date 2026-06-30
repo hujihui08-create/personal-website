@@ -14,11 +14,11 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  rejected: 'bg-red-100 text-red-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800',
+  pending: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
+  confirmed: 'bg-[var(--color-info)]/10 text-[var(--color-info)]',
+  rejected: 'bg-[var(--color-error)]/10 text-[var(--color-error)]',
+  completed: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+  cancelled: 'bg-[var(--color-bg-secondary)] text-[var(--color-primary)]',
 }
 
 export const BookingManagePage = () => {
@@ -101,10 +101,10 @@ export const BookingManagePage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--color-border-light)] pb-4 mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-[var(--color-primary)]">预约管理</h1>
-            <p className="text-sm text-[var(--color-secondary)] mt-1">管理所有面试预约</p>
+            <h1 className="text-xl font-semibold text-[var(--color-primary)]">预约管理</h1>
+            <p className="text-sm text-[var(--color-secondary)]">管理所有面试预约</p>
           </div>
         </div>
 
@@ -226,13 +226,13 @@ export const BookingManagePage = () => {
                               <>
                                 <button
                                   onClick={() => handleStatusUpdate(booking.id, 'confirmed')}
-                                  className="text-green-600 hover:text-green-800"
+                                  className="text-[var(--color-success)] hover:text-[var(--color-success)]/80"
                                 >
                                   确认
                                 </button>
                                 <button
                                   onClick={() => openStatusModal(booking)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-[var(--color-error)] hover:text-[var(--color-error)]/80"
                                 >
                                   拒绝
                                 </button>
@@ -241,7 +241,7 @@ export const BookingManagePage = () => {
                             {booking.status === 'confirmed' && (
                               <button
                                 onClick={() => handleStatusUpdate(booking.id, 'completed')}
-                                className="text-green-600 hover:text-green-800"
+                                className="text-[var(--color-success)] hover:text-[var(--color-success)]/80"
                               >
                                 完成
                               </button>
@@ -249,7 +249,7 @@ export const BookingManagePage = () => {
                             {booking.status !== 'completed' && booking.status !== 'cancelled' && (
                               <button
                                 onClick={() => handleStatusUpdate(booking.id, 'cancelled')}
-                                className="text-gray-600 hover:text-gray-800"
+                                className="text-[var(--color-secondary)] hover:text-[var(--color-primary)]"
                               >
                                 取消
                               </button>
@@ -292,8 +292,8 @@ export const BookingManagePage = () => {
 
       {showModal && selectedBooking && (
         <Portal>
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-[var(--radius-xl)] p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-[var(--color-bg)] rounded-[var(--radius-xl)] p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold text-[var(--color-primary)] mb-4">拒绝预约</h3>
               <p className="text-sm text-[var(--color-secondary)] mb-4">请输入拒绝原因（可选）</p>
               <textarea
@@ -312,7 +312,7 @@ export const BookingManagePage = () => {
                 </button>
                 <button
                   onClick={() => handleStatusUpdate(selectedBooking.id, 'rejected')}
-                  className="px-4 py-2 bg-red-600 text-white rounded-[var(--radius-md)] hover:bg-red-700"
+                  className="px-4 py-2 bg-[var(--color-error)] text-[var(--color-bg)] rounded-[var(--radius-md)] hover:bg-[var(--color-error)]/90"
                 >
                   确认拒绝
                 </button>
