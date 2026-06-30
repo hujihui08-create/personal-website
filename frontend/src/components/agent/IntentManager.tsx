@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Save, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save, X, ChevronUp, ChevronDown } from 'lucide-react'
 import type { AgentIntent } from '@/types'
 import { agentConfigApi } from '@/api/agent-config'
 import { toast } from 'sonner'
@@ -228,16 +228,16 @@ export const IntentManager = () => {
               <button
                 onClick={() => moveIntent(index, 'up')}
                 disabled={index === 0}
-                className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] disabled:opacity-30"
+                className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] rounded-[var(--radius-sm)]"
               >
-                ▲
+                <ChevronUp className="w-4 h-4" />
               </button>
               <button
                 onClick={() => moveIntent(index, 'down')}
                 disabled={index === intents.length - 1}
-                className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] disabled:opacity-30"
+                className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] rounded-[var(--radius-sm)]"
               >
-                ▼
+                <ChevronDown className="w-4 h-4" />
               </button>
             </div>
             <div className="flex-1 min-w-0">
