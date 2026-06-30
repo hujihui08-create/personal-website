@@ -371,3 +371,81 @@ export interface Prototype {
   storage_prefix: string
   created_at: string
 }
+
+// ============ Agent Config Center Types ============
+
+export interface AgentIntent {
+  id: number
+  name: string
+  label: string
+  keywords: string // comma-separated
+  sort_order: number
+  prompt_id: number | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AgentTool {
+  id: number
+  name: string
+  description: string
+  parameters_json: string // JSON Schema string
+  handler_type: string
+  is_active: boolean
+}
+
+export interface AgentConfig {
+  id: number
+  status: 'draft' | 'published'
+  version: string
+  config: AgentConfigData
+  created_at: string
+  published_at: string | null
+}
+
+export interface AgentConfigData {
+  llm: {
+    temperature: number
+    maxTokens: number
+    topK: number
+  }
+  harness: {
+    maxSteps: number
+    timeoutSeconds: number
+    loopStrategy: 'react'
+  }
+  tools: {
+    enabled: string[]
+  }
+}
+
+export interface AgentConfigVersion {
+  id: number
+  version: string
+  status: string
+  published_at: string | null
+  created_at: string
+}
+
+export interface HarnessStep {
+  step_number: number
+  llm_output: string
+  tool_call: {
+    name: string
+    arguments: Record<string, unknown>
+  } | null
+  tool_result: Record<string, unknown> | null
+  duration_ms: number
+  token_usage: {
+    prompt: number
+    completion: number
+    total: number
+  } | null
+}
+
+export interface HarnessTrace {
+  steps: HarnessStep[]
+  total_duration_ms: number
+  total_tokens: number
+}

@@ -32,6 +32,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	agentDebugLogRepo := repository.NewAgentDebugLogRepo(db)
 	agentPromptRepo := repository.NewAgentPromptRepo(db)
 	prototypeRepo := repository.NewPrototypeRepository(db)
+	agentConfigRepo := repository.NewAgentConfigRepo(db)
+	agentIntentRepo := repository.NewAgentIntentRepo(db)
+	agentToolRepo := repository.NewAgentToolRepo(db)
 
 	// --- Services ---
 	emailService := service.NewEmailService(cfg.Email)
@@ -47,8 +50,8 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configService := service.NewConfigService(configRepo)
 	embeddingService := service.NewEmbeddingService(configService)
 	ragService := service.NewRAGService(knowledgeDocRepo, documentParser, textSplitter, embeddingService)
-	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, agentPromptRepo, bookingService)
-	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo)
+	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, agentPromptRepo, bookingService, agentIntentRepo)
+	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo, agentIntentRepo)
 	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
 	prototypeService := service.NewPrototypeService(prototypeRepo, minioClient, cfg.MinIO.Bucket)
 	projectPrdService := service.NewProjectPrdService(projectPrdRepo, prototypeRepo, minioClient, cfg.MinIO.Bucket)
@@ -67,6 +70,9 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	agentDebugHandler := handler.NewAgentDebugHandler(agentDebugService)
 	agentPromptHandler := handler.NewAgentPromptHandler(agentPromptService, agentDebugService)
 	prototypeHandler := handler.NewPrototypeHandler(prototypeService, minioClient, cfg.MinIO.Bucket)
+	agentConfigHandler := handler.NewAgentConfigHandler(agentConfigRepo)
+	agentToolsHandler := handler.NewAgentToolsHandler(agentToolRepo)
+	agentIntentHandler := handler.NewAgentIntentHandler(agentIntentRepo)
 
 	api := r.Group("/api")
 	{
@@ -267,6 +273,29 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 			configProtected.PUT("/llm", configHandler.UpdateLLMConfig)
 			configProtected.GET("/embedding", configHandler.GetEmbeddingConfig)
 			configProtected.PUT("/embedding", configHandler.UpdateEmbeddingConfig)
+		}
+
+		// Admin Agent (protected)
+		adminAgent := api.Group("/admin/agent")
+		adminAgent.Use(middleware.AuthMiddleware(authService))
+		{
+			// Tools
+			adminAgent.GET("/tools", agentToolsHandler.List)
+			adminAgent.PUT("/tools/:name", agentToolsHandler.UpdateActive)
+
+			// Configs
+			adminAgent.GET("/configs/current", agentConfigHandler.GetCurrent)
+			adminAgent.POST("/configs", agentConfigHandler.SaveDraft)
+			adminAgent.POST("/configs/publish", agentConfigHandler.Publish)
+			adminAgent.GET("/configs/versions", agentConfigHandler.ListVersions)
+			adminAgent.POST("/configs/rollback/:id", agentConfigHandler.Rollback)
+
+			// Intents
+			adminAgent.GET("/intents", agentIntentHandler.List)
+			adminAgent.POST("/intents", agentIntentHandler.Create)
+			adminAgent.PUT("/intents/:id", agentIntentHandler.Update)
+			adminAgent.DELETE("/intents/:id", agentIntentHandler.Delete)
+			adminAgent.PUT("/intents/sort", agentIntentHandler.UpdateSort)
 		}
 	}
 }

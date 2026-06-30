@@ -62,6 +62,7 @@ func main() {
 		&model.KnowledgeDoc{},
 		&model.AgentDebugLog{},
 		&model.AgentPrompt{},
+		&model.AgentConfig{},
 	); err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}

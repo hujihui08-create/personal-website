@@ -1,6 +1,17 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, User, Briefcase, FolderOpen, LogOut, Menu, X, Bug, FileText } from 'lucide-react'
+import {
+  Home,
+  User,
+  Briefcase,
+  FolderOpen,
+  LogOut,
+  Menu,
+  X,
+  Bug,
+  FileText,
+  GitBranch,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,6 +27,7 @@ const navItems: NavItem[] = [
   { key: 'profile', label: '个人资料', path: '/admin/profile', icon: User },
   { key: 'experiences', label: '工作经历', path: '/admin/experiences', icon: Briefcase },
   { key: 'projects', label: '项目管理', path: '/admin/projects', icon: FolderOpen },
+  { key: 'agent-config', label: 'Agent 配置', path: '/admin/agent/flow', icon: GitBranch },
   { key: 'agent-debug', label: 'Agent 调试', path: '/admin/agent/debug', icon: Bug },
   { key: 'agent-prompts', label: 'Prompt 管理', path: '/admin/agent/prompts', icon: FileText },
 ]

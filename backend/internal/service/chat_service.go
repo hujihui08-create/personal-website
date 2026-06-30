@@ -24,6 +24,7 @@ type ChatService struct {
 	projectRepo     *repository.ProjectRepository
 	promptRepo      *repository.AgentPromptRepo
 	bookingService  *BookingService
+	intentRepo      *repository.AgentIntentRepo
 }
 
 func NewChatService(
@@ -35,6 +36,7 @@ func NewChatService(
 	projectRepo *repository.ProjectRepository,
 	promptRepo *repository.AgentPromptRepo,
 	bookingService *BookingService,
+	intentRepo *repository.AgentIntentRepo,
 ) *ChatService {
 	return &ChatService{
 		chatSessionRepo: chatSessionRepo,
@@ -45,6 +47,7 @@ func NewChatService(
 		projectRepo:     projectRepo,
 		promptRepo:      promptRepo,
 		bookingService:  bookingService,
+		intentRepo:      intentRepo,
 	}
 }
 
@@ -222,8 +225,16 @@ func (s *ChatService) ChatStream(
 
 		intentResult := s.classifyIntent(userMessage)
 		agentType := intentResult.AgentType
+
+		// 多轮对话意图保持：如果当前消息意图为 general，但会话历史中包含 booking 上下文，
+		// 则继续使用 booking 意图，确保预约流程在多轮对话中不会中断
+		if agentType == "general" && s.isBookingInSession(session) {
+			agentType = "booking"
+			log.Printf("[ChatService] 会话历史包含预约上下文，保持 booking 意图")
+		}
+
 		log.Printf("[ChatService] 意图分类结果: agentType=%s confidence=%.2f method=%s",
-			intentResult.AgentType, intentResult.Confidence, intentResult.Method)
+			agentType, intentResult.Confidence, intentResult.Method)
 
 		systemPrompt := s.buildSystemPrompt(agentType, relevantDocs, userMessage)
 		log.Printf("[ChatService] 系统提示词: %s", systemPrompt)
@@ -351,15 +362,15 @@ func (s *ChatService) ChatStream(
 					if resp.Choices[0].FinishReason != "" {
 						cleanResponse := stripBookingTags(fullResponse.String())
 
-						if intentResult.AgentType == "booking" {
-							bookingText, bookingData := s.parseAndExecuteBookingAction(fullResponse.String())
-							if bookingData != nil {
-								respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
-							}
-							if bookingText != "" {
-								for _, ch := range bookingText {
-									respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: string(ch)}
-								}
+						// 始终尝试解析 booking 标签，不依赖意图分类结果
+						// 多轮对话中后续消息的意图可能被分类为 general，但 LLM 仍可能输出 booking 标签
+						bookingText, bookingData := s.parseAndExecuteBookingAction(fullResponse.String())
+						if bookingData != nil {
+							respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
+						}
+						if bookingText != "" {
+							for _, ch := range bookingText {
+								respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: string(ch)}
 							}
 						}
 
@@ -502,19 +513,75 @@ func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string,
 	return "", nil
 }
 
+// isBookingInSession 检查会话历史是否处于预约上下文中
+// 如果历史消息中包含预约相关关键词或 LLM 的预约引导回复，则认为当前处于预约会话
+func (s *ChatService) isBookingInSession(session *models.ChatSession) bool {
+	bookingKeywords := []string{
+		"预约", "预订", "booking", "面试", "meeting", "时间安排",
+		"公司名称", "公司地点", "预约日期", "预约时段", "联系电话",
+	}
+	bookingAssistantPatterns := []string{
+		"预约编号", "预约成功", "预约详情", "预约已取消",
+		"请告诉我", "请提供", "公司名称", "预约日期",
+	}
+
+	for _, msg := range session.Messages {
+		lower := strings.ToLower(msg.Content)
+		// 检查用户消息是否包含预约关键词
+		if msg.Role == "user" {
+			for _, kw := range bookingKeywords {
+				if strings.Contains(lower, kw) {
+					return true
+				}
+			}
+		}
+		// 检查助手回复是否包含预约引导内容
+		if msg.Role == "assistant" {
+			for _, pattern := range bookingAssistantPatterns {
+				if strings.Contains(msg.Content, pattern) {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 func (s *ChatService) classifyIntent(query string) IntentClassResult {
 	lower := strings.ToLower(query)
 
-	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能",
-		"work experience", "skill", "background", "experience"}
+	// Try to load intents from DB
+	if s.intentRepo != nil {
+		intents, err := s.intentRepo.FindActive()
+		if err == nil && len(intents) > 0 {
+			for _, intent := range intents {
+				if intent.Name == "general" || intent.Keywords == "" {
+					continue // skip general, it's the fallback
+				}
+				keywords := strings.Split(intent.Keywords, ",")
+				for _, kw := range keywords {
+					if strings.TrimSpace(kw) != "" && strings.Contains(lower, strings.TrimSpace(kw)) {
+						return IntentClassResult{
+							AgentType:  intent.Name,
+							Confidence: 0.85,
+							Method:     "keyword",
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Fallback: hardcoded intents if DB is empty (same as before but keep as safety net)
+	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能", "work experience", "skill", "background", "experience"}
 	for _, kw := range resumeKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "resume", Confidence: 0.85, Method: "keyword"}
 		}
 	}
 
-	bookingKeywords := []string{"预约", "预订", "booking", "meeting", "会议", "时间", "schedule",
-		"安排", "约个时间", "见面", "取消", "查询预约", "我的预约"}
+	bookingKeywords := []string{"预约", "预订", "booking", "meeting", "会议", "时间", "schedule", "安排", "约个时间", "见面", "取消", "查询预约", "我的预约"}
 	for _, kw := range bookingKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "booking", Confidence: 0.85, Method: "keyword"}
@@ -528,8 +595,7 @@ func (s *ChatService) classifyIntent(query string) IntentClassResult {
 		}
 	}
 
-	techKeywords := []string{"技术栈", "技术", "tech stack", "编程语言", "框架", "后端", "前端",
-		"数据库", "云计算", "devops", "开发", "架构", "微服务", "容器", "kubernetes", "docker"}
+	techKeywords := []string{"技术栈", "技术", "tech stack", "编程语言", "框架", "后端", "前端", "数据库", "云计算", "devops", "开发", "架构", "微服务", "容器", "kubernetes", "docker"}
 	for _, kw := range techKeywords {
 		if strings.Contains(lower, kw) {
 			return IntentClassResult{AgentType: "tech", Confidence: 0.85, Method: "keyword"}
@@ -571,11 +637,11 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 	}
 
 	if template == "" && agentType == "booking" {
-		template = `你是胡冀徽的预约助手，专门帮助用户进行面试预约。你可以直接帮助用户完成预约创建、查询和取消。
+		template = `你就是胡冀徽本人。你现在直接以胡冀徽的身份与访客对话，帮助用户进行面试预约。你可以直接帮助用户完成预约创建、查询和取消。
 
-当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历，以及预约咨询等。"
+当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽，有什么可以帮你的？"
 
-请用专业、友好的语言与用户对话，使用中文回答。
+请用专业、友好的语言与用户对话，使用中文回答。始终使用"我"来指代自己，使用"你"来称呼访客。
 
 ## 创建预约
 用户想要预约时，请逐步收集以下信息（每次询问1-2个问题，不要一次性问太多）：
@@ -599,7 +665,7 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 需要用户提供预约编号和手机号，确认后加上：
 [BOOKING_CANCEL]{"id":123456,"phone":"13800138000"}[/BOOKING_CANCEL]
 
-注意：标签必须放在回答的最末尾，JSON 放在一行内。
+注意：标签必须放在回答的最末尾，JSON 放在一行内。不要在标签中包含任何多余的文字或换行。
 
 {{question}}`
 		log.Printf("[ChatService] 使用内置 booking Prompt")
@@ -620,8 +686,8 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 	}
 
 	if template == "" {
-		template = `你是胡冀徽的智能助手，专门回答关于胡冀徽个人背景、工作经验、技术栈、项目以及预约咨询的问题。
-当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽的智能助手，可以帮助您了解胡冀徽的工作经验、项目经验、工作履历，以及预约咨询等。"
+		template = `你就是胡冀徽本人，专门回答关于你的个人背景、工作经验、技术栈、项目以及预约咨询的问题。
+当用户询问"你是谁"或类似问题时，请回答："我是胡冀徽，有什么可以帮你的？"
 
 {{profile}}
 
@@ -638,7 +704,7 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 1. 不要使用 ** 标记
 2. 不要使用 - 列表
 3. 如需列出要点，请使用数字排序（1. 2. 3. 等）
-4. 你可以回答关于胡冀徽个人背景、工作经验、技术栈、项目经历、工作履历等相关问题。如果用户询问预约或咨询相关事宜（如面试时间、会议安排等），请告诉用户可以说"我要预约面试"来启动预约流程，或使用预约页面（/booking）自行操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。`
+4. 你可以回答关于个人背景、工作经验、技术栈、项目经历、工作履历等相关问题。如果用户询问预约或咨询相关事宜（如面试时间、会议安排等），请告诉用户可以说"我要预约面试"来启动预约流程，或使用预约页面（/booking）自行操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。`
 	}
 
 	result := strings.ReplaceAll(template, "{{profile}}", profileSection)
@@ -664,7 +730,7 @@ func (s *ChatService) buildProfileSection() string {
 	}
 
 	sb := &strings.Builder{}
-	sb.WriteString("以下是胡冀徽的个人联系方式信息，当用户询问联系方式时请基于此回答：\n")
+	sb.WriteString("以下是你自己的个人信息，请用第一人称回答相关问题：\n")
 	sb.WriteString(fmt.Sprintf("姓名: %s\n", profile.Name))
 	if profile.Title != "" {
 		sb.WriteString(fmt.Sprintf("职位: %s\n", profile.Title))
@@ -699,7 +765,7 @@ func (s *ChatService) buildProjectsSection() string {
 	}
 
 	sb := &strings.Builder{}
-	sb.WriteString(fmt.Sprintf("以下是胡冀徽的项目列表（共 %d 个），当用户询问项目相关问题时请基于此回答：\n", len(projects)))
+	sb.WriteString(fmt.Sprintf("以下是你做过的项目（共 %d 个），当用户询问项目相关问题时请基于此回答：\n", len(projects)))
 	for i, p := range projects {
 		sb.WriteString(fmt.Sprintf("%d. 项目名称: %s\n", i+1, p.Name))
 		sb.WriteString(fmt.Sprintf("   类型: %s\n", p.Type))

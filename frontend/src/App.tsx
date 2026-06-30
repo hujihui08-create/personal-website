@@ -21,6 +21,7 @@ import KnowledgeManagePage from '@/pages/admin/KnowledgeManagePage'
 import SettingsPage from '@/pages/admin/SettingsPage'
 import AgentDebugPage from '@/pages/admin/agent-debug'
 import AgentPromptsPage from '@/pages/admin/agent-prompts'
+import AgentConfigPage from '@/pages/admin/agent-config'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -174,6 +175,16 @@ function App() {
                 <ProtectedRoute>
                   <AdminLayout>
                     <AgentPromptsPage />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/agent/flow"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AgentConfigPage />
                   </AdminLayout>
                 </ProtectedRoute>
               }

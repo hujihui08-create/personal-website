@@ -67,6 +67,7 @@ type AgentDebugService struct {
 	promptRepo       *repository.AgentPromptRepo
 	profileRepo      *repository.ProfileRepository
 	projectRepo      *repository.ProjectRepository
+	intentRepo       *repository.AgentIntentRepo
 }
 
 func NewAgentDebugService(
@@ -77,6 +78,7 @@ func NewAgentDebugService(
 	promptRepo *repository.AgentPromptRepo,
 	profileRepo *repository.ProfileRepository,
 	projectRepo *repository.ProjectRepository,
+	intentRepo *repository.AgentIntentRepo,
 ) *AgentDebugService {
 	return &AgentDebugService{
 		ragService:       ragService,
@@ -86,6 +88,7 @@ func NewAgentDebugService(
 		promptRepo:       promptRepo,
 		profileRepo:      profileRepo,
 		projectRepo:      projectRepo,
+		intentRepo:       intentRepo,
 	}
 }
 
@@ -94,7 +97,25 @@ func NewAgentDebugService(
 func (s *AgentDebugService) classifyIntent(query string) IntentClassResult {
 	lower := strings.ToLower(query)
 
-	// 简历/工作经历相关
+	// 优先从 DB 加载意图规则（数据驱动）
+	if s.intentRepo != nil {
+		intents, err := s.intentRepo.FindActive()
+		if err == nil && len(intents) > 0 {
+			for _, intent := range intents {
+				keywords := strings.Split(intent.Keywords, ",")
+				for _, kw := range keywords {
+					kw = strings.TrimSpace(kw)
+					if kw != "" && strings.Contains(lower, strings.ToLower(kw)) {
+						return IntentClassResult{AgentType: intent.Name, Confidence: 0.85, Method: "db"}
+					}
+				}
+			}
+			// DB 中有意图规则但未匹配到，返回 general
+			return IntentClassResult{AgentType: "general", Confidence: 0.5, Method: "db"}
+		}
+	}
+
+	// 回退到硬编码关键词
 	resumeKeywords := []string{"简历", "resume", "cv", "工作经历", "工作履历", "项目经验", "技能",
 		"work experience", "skill", "background", "experience"}
 	for _, kw := range resumeKeywords {
@@ -103,7 +124,6 @@ func (s *AgentDebugService) classifyIntent(query string) IntentClassResult {
 		}
 	}
 
-	// 预约/会议相关
 	bookingKeywords := []string{"预约", "预订", "booking", "meeting", "会议", "时间", "schedule",
 		"安排", "约个时间", "见面", "取消", "查询预约", "我的预约"}
 	for _, kw := range bookingKeywords {
@@ -112,7 +132,6 @@ func (s *AgentDebugService) classifyIntent(query string) IntentClassResult {
 		}
 	}
 
-	// 项目/作品相关
 	projectKeywords := []string{"项目", "project", "作品", "portfolio", "案例", "case"}
 	for _, kw := range projectKeywords {
 		if strings.Contains(lower, kw) {
@@ -120,7 +139,6 @@ func (s *AgentDebugService) classifyIntent(query string) IntentClassResult {
 		}
 	}
 
-	// 技术栈相关
 	techKeywords := []string{"技术栈", "技术", "tech stack", "编程语言", "框架", "后端", "前端",
 		"数据库", "云计算", "devops", "开发", "架构", "微服务", "容器", "kubernetes", "docker"}
 	for _, kw := range techKeywords {
