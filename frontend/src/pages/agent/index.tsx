@@ -483,7 +483,7 @@ export const AgentPage = () => {
                 <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="max-w-[80%]">
+                <div className="max-w-[85%] md:max-w-[75%]">
                   <BookingResultCard data={bookingCardData} />
                 </div>
               </div>
@@ -496,7 +496,7 @@ export const AgentPage = () => {
                   <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  <div className="max-w-[80%]">
+                  <div className="max-w-[85%] md:max-w-[75%]">
                     <BookingListCard
                       bookings={bookingCardData.bookings}
                       onCancel={handleCancelBooking}
@@ -510,7 +510,7 @@ export const AgentPage = () => {
                 <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="max-w-[85%]">
+                <div className="max-w-[85%] md:max-w-[75%]">
                   <BookingFlowCard lastBookingInfo={lastBookingInfo} />
                 </div>
               </div>

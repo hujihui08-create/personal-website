@@ -316,6 +316,26 @@ func (s *ChatService) ChatStream(
 			return false
 		}
 
+		// Check if the end of the accumulated text is a prefix of any start tag
+		// This prevents tag prefix leaking (e.g. "[BOOKING" being shown before "[BOOKING_INTENT]" completes)
+		isTagPrefix := func(s string, targets []string) bool {
+			// Find the last '[' - it might be the start of a booking tag
+			lastBracket := strings.LastIndex(s, "[")
+			if lastBracket < 0 {
+				return false
+			}
+			tail := s[lastBracket:]
+			if len(tail) < 2 {
+				return false // single '[' is not a meaningful prefix
+			}
+			for _, t := range targets {
+				if strings.HasPrefix(t, tail) {
+					return true
+				}
+			}
+			return false
+		}
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -333,7 +353,7 @@ func (s *ChatService) ChatStream(
 					if content != "" {
 						fullResponse.WriteString(content)
 
-						if !suppressing && containsAny(fullResponse.String(), bookingStartTags) {
+						if !suppressing && (containsAny(fullResponse.String(), bookingStartTags) || isTagPrefix(fullResponse.String(), bookingStartTags)) {
 							suppressing = true
 						} else if !suppressing {
 							respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: content}
