@@ -304,8 +304,8 @@ func (s *ChatService) ChatStream(
 		var fullResponse strings.Builder
 		var suppressing bool
 
-		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]", "[BOOKING_LIST]"}
-		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]", "[/BOOKING_LIST]"}
+		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]", "[BOOKING_LIST]", "[BOOKING_INTENT]"}
+		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]", "[/BOOKING_LIST]", "[/BOOKING_INTENT]"}
 
 		containsAny := func(s string, substrs []string) bool {
 			for _, sub := range substrs {
@@ -366,7 +366,16 @@ func (s *ChatService) ChatStream(
 						// 多轮对话中后续消息的意图可能被分类为 general，但 LLM 仍可能输出 booking 标签
 						bookingText, bookingData := s.parseAndExecuteBookingAction(fullResponse.String())
 						if bookingData != nil {
-							respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
+							// 检查是否为 booking_form 类型（包含 step 字段）
+							if dataMap, ok := bookingData.(map[string]interface{}); ok {
+								if _, hasStep := dataMap["step"]; hasStep {
+									respChan <- StreamMessage{Type: "booking_form", Data: bookingData}
+								} else {
+									respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
+								}
+							} else {
+								respChan <- StreamMessage{Type: StreamMessageTypeBookingResult, Data: bookingData}
+							}
 						}
 						if bookingText != "" {
 							for _, ch := range bookingText {
@@ -395,6 +404,25 @@ func (s *ChatService) ChatStream(
 func (s *ChatService) parseAndExecuteBookingAction(fullResponse string) (string, interface{}) {
 	if s.bookingService == nil {
 		return "", nil
+	}
+
+	// Try BOOKING_INTENT - trigger interactive card flow
+	if idx := strings.Index(fullResponse, "[BOOKING_INTENT]"); idx >= 0 {
+		endIdx := strings.Index(fullResponse, "[/BOOKING_INTENT]")
+		if endIdx > idx {
+			jsonStr := strings.TrimSpace(fullResponse[idx+len("[BOOKING_INTENT]") : endIdx])
+			var data struct {
+				Step string `json:"step"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+				log.Printf("[ChatService] 解析 [BOOKING_INTENT] JSON 失败: %v, 原始 JSON: %s", err, jsonStr)
+			} else {
+				cardData := map[string]interface{}{
+					"step": data.Step,
+				}
+				return "", cardData
+			}
+		}
 	}
 
 	// Try CREATE action
@@ -692,8 +720,13 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 
 请用专业、友好的语言与用户对话，使用中文回答。始终使用"我"来指代自己，使用"你"来称呼访客。
 
-## 创建预约
-用户想要预约时，请逐步收集以下信息（每次询问1-2个问题，不要一次性问太多）：
+## 创建预约（优先使用交互式卡片）
+用户想要预约时（如说"我要预约"、"预约面试"等），请**直接**输出以下标签触发交互式卡片，由系统卡片接管后续信息收集：
+[BOOKING_INTENT]{"step":"date_time"}[/BOOKING_INTENT]
+输出标签后不需要再追问用户，卡片会自动引导用户选择时间和填写信息。
+
+当用户不是通过表达预约意图而是直接提供了完整的预约信息（如"帮我预约7月5号14:00，XX公司，张三，138xxx..."），则按以下原有流程使用 [BOOKING_CREATE] 标签：
+
 - 公司名称
 - 公司地点
 - 预约日期（格式 YYYY-MM-DD，如 2026-05-20，仅限工作日周一至周五）
@@ -943,6 +976,7 @@ func stripBookingTags(text string) string {
 		{"[BOOKING_QUERY]", "[/BOOKING_QUERY]"},
 		{"[BOOKING_CANCEL]", "[/BOOKING_CANCEL]"},
 		{"[BOOKING_LIST]", "[/BOOKING_LIST]"},
+		{"[BOOKING_INTENT]", "[/BOOKING_INTENT]"},
 	}
 
 	result := text

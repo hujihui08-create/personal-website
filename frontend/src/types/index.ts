@@ -198,10 +198,31 @@ export interface AgentChatRequest {
 }
 
 export interface AgentChatStreamChunk {
-  type: 'thinking' | 'chunk' | 'done' | 'booking_result' | 'booking_list'
+  type: 'thinking' | 'chunk' | 'done' | 'booking_result' | 'booking_list' | 'booking_form'
   content?: string
   session_id?: string
-  data?: BookingResultData
+  data?: BookingResultData | BookingFormChunkData
+}
+
+export interface BookingFormChunkData {
+  step: 'date_time' | 'info'
+}
+
+export interface BookingFormState {
+  step: 'date_time' | 'info' | 'result'
+  selectedDate: string
+  selectedTime: string
+  formData: BookingFormData
+  result?: BookingResultData
+}
+
+export interface BookingFormData {
+  company_name: string
+  company_location: string
+  contact_name: string
+  contact_phone: string
+  contact_email: string
+  notes: string
 }
 
 export interface BookingResultData {

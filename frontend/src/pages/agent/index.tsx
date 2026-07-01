@@ -6,7 +6,13 @@ import { bookingApi } from '@/api/booking'
 import { SessionList } from '@/components/agent/SessionList'
 import { BookingResultCard } from '@/components/agent/BookingResultCard'
 import { BookingListCard } from '@/components/agent/BookingListCard'
-import type { AgentChatMessage, BookingResultData } from '@/types'
+import { BookingFlowCard } from '@/components/agent/BookingFlowCard'
+import type {
+  AgentChatMessage,
+  BookingResultData,
+  BookingFormData,
+  BookingFormChunkData,
+} from '@/types'
 import { toast } from 'sonner'
 
 const RECOMMENDED_QUESTIONS = [
@@ -75,6 +81,13 @@ export const AgentPage = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [sessionPanelOpen, setSessionPanelOpen] = useState(false)
   const [bookingCardData, setBookingCardData] = useState<BookingResultData | null>(null)
+  const [bookingFormState, setBookingFormState] = useState<{ show: boolean; step: string } | null>(
+    null
+  )
+  const [lastBookingInfo, _setLastBookingInfo] = useState<Partial<BookingFormData> | undefined>(
+    undefined
+  )
+  const [cancelTarget, setCancelTarget] = useState<{ id: number; phone: string } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
@@ -212,6 +225,7 @@ export const AgentPage = () => {
     addMessage(assistantMessage)
 
     setBookingCardData(null)
+    setBookingFormState(null)
 
     try {
       const request = {
@@ -228,11 +242,17 @@ export const AgentPage = () => {
             console.log('Thinking...')
           } else if (chunk.type === 'booking_result' && chunk.data) {
             flushContent()
-            setBookingCardData(chunk.data)
+            setBookingCardData(chunk.data as BookingResultData)
             // Truncation is handled in render via formatMessageContent
           } else if (chunk.type === 'booking_list' && chunk.data) {
             flushContent()
-            setBookingCardData(chunk.data)
+            setBookingCardData(chunk.data as BookingResultData)
+          } else if (chunk.type === 'booking_form' && chunk.data) {
+            flushContent()
+            setBookingFormState({
+              show: true,
+              step: (chunk.data as BookingFormChunkData).step || 'date_time',
+            })
           } else if (chunk.type === 'chunk' && chunk.content) {
             pendingContentRef.current += chunk.content
             if (!rafRef.current) {
@@ -314,8 +334,14 @@ export const AgentPage = () => {
     await deleteSession(sessionId)
   }
 
-  const handleCancelBooking = useCallback(async (id: number, phone: string) => {
-    if (!confirm('确定取消此预约？')) return
+  const handleCancelBooking = useCallback((id: number, phone: string) => {
+    setCancelTarget({ id, phone })
+  }, [])
+
+  const handleConfirmCancel = useCallback(async () => {
+    if (!cancelTarget) return
+    const { id, phone } = cancelTarget
+    setCancelTarget(null)
     try {
       await bookingApi.cancelBookingByUser(id, phone, '用户通过AI助手取消')
       toast.success('预约已取消')
@@ -329,10 +355,22 @@ export const AgentPage = () => {
             }
           : null
       )
+      // 添加助手的告别消息
+      const farewellMessages = [
+        '预约已成功取消。虽然有点可惜，但你一定要回来呀！随时欢迎你再次预约~',
+        '预约已取消。期待下次与你见面，一定要回来呀！',
+        '好的，预约已取消。希望这只是暂时的告别，一定要回来看看呀！',
+      ]
+      const farewell = farewellMessages[Math.floor(Math.random() * farewellMessages.length)]
+      addMessage({
+        role: 'assistant',
+        content: farewell,
+        timestamp: new Date().toISOString(),
+      })
     } catch {
       toast.error('取消失败，请重试')
     }
-  }, [])
+  }, [cancelTarget, addMessage])
 
   return (
     <div className="h-[calc(100vh-10rem)] md:h-[calc(100vh-4rem)] bg-[var(--color-bg)]">
@@ -467,6 +505,17 @@ export const AgentPage = () => {
                 </div>
               )}
 
+            {bookingFormState && bookingFormState.show && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="max-w-[85%]">
+                  <BookingFlowCard lastBookingInfo={lastBookingInfo} />
+                </div>
+              </div>
+            )}
+
             {isLoading && !messages[messages.length - 1]?.content && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
@@ -526,6 +575,34 @@ export const AgentPage = () => {
             </div>
           </div>
         </main>
+
+        {/* Cancel Confirmation Modal */}
+        {cancelTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-[var(--color-bg)] rounded-[var(--radius-lg)] p-6 mx-4 max-w-sm w-full shadow-xl">
+              <h3 className="text-sm font-semibold text-[var(--color-primary)] mb-2">
+                确认取消预约
+              </h3>
+              <p className="text-sm text-[var(--color-secondary)] mb-6">
+                确定要取消此预约吗？取消后无法恢复。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setCancelTarget(null)}
+                  className="flex-1 py-2 text-sm border border-[var(--color-border-light)] text-[var(--color-primary)] rounded-[var(--radius-md)] hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)]"
+                >
+                  再想想
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  className="flex-1 py-2 text-sm bg-[var(--color-error)] text-white rounded-[var(--radius-md)] hover:bg-red-600 transition-colors duration-[var(--duration-fast)]"
+                >
+                  确认取消
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
