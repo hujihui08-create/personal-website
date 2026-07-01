@@ -410,6 +410,12 @@ func (s *ChatService) ChatStream(
 
 					if resp.Choices[0].FinishReason != "" {
 						cleanResponse := stripAllTags(fullResponse.String())
+						// 去除末尾残留的 [ 字符（streaming 时单个 [ 可能在标签前缀识别前已泄露）
+						cleanResponse = strings.TrimSpace(cleanResponse)
+						if strings.HasSuffix(cleanResponse, "[") {
+							cleanResponse = strings.TrimSuffix(cleanResponse, "[")
+							cleanResponse = strings.TrimSpace(cleanResponse)
+						}
 
 						// 始终尝试解析 booking 标签，不依赖意图分类结果
 						// 多轮对话中后续消息的意图可能被分类为 general，但 LLM 仍可能输出 booking 标签
@@ -1073,6 +1079,12 @@ func generateSessionID() string {
 func saveAndDone(respChan chan<- StreamMessage, session *models.ChatSession, fullResponse *strings.Builder, chatSessionRepo *repository.ChatSessionRepository) {
 	if fullResponse.Len() > 0 {
 		cleanResponse := stripAllTags(fullResponse.String())
+		// 去除末尾残留的 [
+		cleanResponse = strings.TrimSpace(cleanResponse)
+		if strings.HasSuffix(cleanResponse, "[") {
+			cleanResponse = strings.TrimSuffix(cleanResponse, "[")
+			cleanResponse = strings.TrimSpace(cleanResponse)
+		}
 		assistantMsg := models.ChatMessage{
 			Role:      "assistant",
 			Content:   cleanResponse,
