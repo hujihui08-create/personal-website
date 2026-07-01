@@ -465,7 +465,7 @@ export const AgentPage = () => {
                 </div>
               )}
 
-            {isLoading && (
+            {isLoading && !messages[messages.length - 1]?.content && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-white" />
