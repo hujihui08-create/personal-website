@@ -399,44 +399,46 @@ export const AgentPage = () => {
               </div>
             )}
 
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex gap-3 ${
-                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                }`}
-              >
+            {messages
+              .filter((m) => m.content)
+              .map((message, index) => (
                 <div
-                  className={`w-8 h-8 rounded-[var(--radius-full)] flex items-center justify-center flex-shrink-0 ${
-                    message.role === 'user'
-                      ? 'bg-[var(--color-primary)]'
-                      : 'bg-[var(--color-accent)]'
+                  key={index}
+                  className={`flex gap-3 ${
+                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   }`}
                 >
-                  {message.role === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <div
-                  className={`max-w-[80%] rounded-[var(--radius-lg)] px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-[var(--color-primary)] text-white'
-                      : 'bg-[var(--color-bg)] text-[var(--color-primary)] border border-[var(--color-border-light)]'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">
-                    {formatMessageContent(
-                      message.content,
-                      !!bookingCardData,
-                      index,
-                      messages.length
+                  <div
+                    className={`w-8 h-8 rounded-[var(--radius-full)] flex items-center justify-center flex-shrink-0 ${
+                      message.role === 'user'
+                        ? 'bg-[var(--color-primary)]'
+                        : 'bg-[var(--color-accent)]'
+                    }`}
+                  >
+                    {message.role === 'user' ? (
+                      <User className="w-4 h-4 text-white" />
+                    ) : (
+                      <Bot className="w-4 h-4 text-white" />
                     )}
-                  </p>
+                  </div>
+                  <div
+                    className={`max-w-[80%] rounded-[var(--radius-lg)] px-4 py-3 ${
+                      message.role === 'user'
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : 'bg-[var(--color-bg)] text-[var(--color-primary)] border border-[var(--color-border-light)]'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">
+                      {formatMessageContent(
+                        message.content,
+                        !!bookingCardData,
+                        index,
+                        messages.length
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             {bookingCardData && bookingCardData.type !== 'booking_list' && (
               <div className="flex gap-3">
