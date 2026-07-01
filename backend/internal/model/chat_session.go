@@ -9,6 +9,7 @@ import (
 type ChatMessage struct {
 	Role      string    `json:"role"`
 	Content   string    `json:"content"`
+	CardData  string    `json:"card_data,omitempty"`
 	Timestamp time.Time `json:"timestamp"`
 }
 

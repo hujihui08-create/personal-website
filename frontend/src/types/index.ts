@@ -154,6 +154,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  cardData?: string // JSON string, e.g. {"type":"work_experience","data":[...]}
 }
 
 export interface Notification {
@@ -183,6 +184,7 @@ export interface AgentChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  cardData?: string // JSON string, e.g. {"type":"work_experience","data":[...]}
 }
 
 export interface AgentChatSession {

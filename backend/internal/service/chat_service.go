@@ -351,12 +351,15 @@ func (s *ChatService) ChatStream(
 				return false
 			}
 			tail := s[lastBracket:]
-			if len(tail) < 1 {
+			if len(tail) < 2 {
 				return false
 			}
-			for _, t := range targets {
-				if strings.HasPrefix(t, tail) {
-					return true
+			// 只匹配有效的标签第二个字符：[B, [W, [P
+			if tail[1] == 'B' || tail[1] == 'W' || tail[1] == 'P' {
+				for _, t := range targets {
+					if strings.HasPrefix(t, tail) {
+						return true
+					}
 				}
 			}
 			return false
@@ -441,9 +444,42 @@ func (s *ChatService) ChatStream(
 							respChan <- StreamMessage{Type: StreamMessageTypeProjectList, Data: projData}
 						}
 
+						// 收集卡片数据并序列化为 JSON，写入 CardData 字段持久化
+						var cardDataStr string
+						if bookingData != nil {
+							if dataMap, ok := bookingData.(map[string]interface{}); ok {
+								if _, hasStep := dataMap["step"]; !hasStep {
+									// booking_result or booking_list
+									dataMap["type"] = "booking"
+									if b, err := json.Marshal(dataMap); err == nil {
+										cardDataStr = string(b)
+									}
+								}
+							}
+						}
+						if cardDataStr == "" && bookingData != nil {
+							// fallback
+							if b, err := json.Marshal(bookingData); err == nil {
+								cardDataStr = string(b)
+							}
+						}
+						if cardDataStr == "" && expData != nil {
+							cardData := map[string]interface{}{"type": "work_experience", "data": expData}
+							if b, err := json.Marshal(cardData); err == nil {
+								cardDataStr = string(b)
+							}
+						}
+						if cardDataStr == "" && projData != nil {
+							cardData := map[string]interface{}{"type": "project_list", "data": projData}
+							if b, err := json.Marshal(cardData); err == nil {
+								cardDataStr = string(b)
+							}
+						}
+
 						assistantMsg := models.ChatMessage{
 							Role:      "assistant",
 							Content:   cleanResponse,
+							CardData:  cardDataStr,
 							Timestamp: time.Now(),
 						}
 						session.Messages = append(session.Messages, assistantMsg)

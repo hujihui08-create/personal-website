@@ -123,7 +123,17 @@ export const AgentPage = () => {
 
   useEffect(() => {
     initVisitor()
-    loadSessions()
+    loadSessions().then(() => {
+      const msgs = useAgentStore.getState().messages
+      const lastMsg = msgs.filter((m) => m.role === 'assistant').pop()
+      if (lastMsg?.cardData) {
+        parseCardData(lastMsg.cardData)
+      } else {
+        setBookingCardData(null)
+        setExperienceData(null)
+        setProjectListData(null)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -138,6 +148,26 @@ export const AgentPage = () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current)
       }
+    }
+  }, [])
+
+  const parseCardData = useCallback((cardDataStr?: string) => {
+    if (!cardDataStr) return
+    try {
+      const parsed = JSON.parse(cardDataStr)
+      switch (parsed.type) {
+        case 'booking':
+          setBookingCardData(parsed as BookingResultData)
+          break
+        case 'work_experience':
+          setExperienceData(parsed.data as ExperienceBrief[])
+          break
+        case 'project_list':
+          setProjectListData(parsed.data as ProjectBrief[])
+          break
+      }
+    } catch {
+      // ignore parse errors
     }
   }, [])
 
@@ -317,6 +347,17 @@ export const AgentPage = () => {
 
     await switchSession(sessionId)
     setSessionPanelOpen(false)
+
+    // Parse card data from the last assistant message
+    const msgs = useAgentStore.getState().messages
+    const lastMsg = msgs.filter((m) => m.role === 'assistant').pop()
+    if (lastMsg?.cardData) {
+      parseCardData(lastMsg.cardData)
+    } else {
+      setBookingCardData(null)
+      setExperienceData(null)
+      setProjectListData(null)
+    }
   }
 
   const handleNewSession = () => {
@@ -330,6 +371,10 @@ export const AgentPage = () => {
       rafRef.current = null
     }
     pendingContentRef.current = ''
+    setBookingCardData(null)
+    setBookingFormState(null)
+    setExperienceData(null)
+    setProjectListData(null)
     createNewSession()
     setSessionPanelOpen(false)
   }
