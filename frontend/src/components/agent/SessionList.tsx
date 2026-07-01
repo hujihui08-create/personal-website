@@ -1,4 +1,5 @@
-import { Plus, Trash2, MessageSquare, X } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Trash2, MessageSquare, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { AgentSessionMeta } from '@/types'
 
 interface SessionListProps {
@@ -31,9 +32,21 @@ export const SessionList = ({
   isOpen,
   onToggle,
 }: SessionListProps) => {
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+
   const sessionListContent = (
     <>
       <div className="p-[var(--space-md)]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <span className="text-sm font-semibold text-[var(--color-primary)]">对话记录</span>
+          <button
+            onClick={() => setDesktopCollapsed(true)}
+            className="hidden md:flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors duration-[var(--duration-fast)]"
+            aria-label="收起侧边栏"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        </div>
         <button
           onClick={onNew}
           className="flex items-center gap-2 w-full h-10 px-[var(--space-md)] bg-[var(--color-primary)] text-[var(--color-bg)] rounded-[var(--radius-sm)] hover:opacity-90 transition-colors duration-[var(--duration-fast)]"
@@ -88,10 +101,27 @@ export const SessionList = ({
 
   return (
     <>
-      <nav className="hidden md:flex flex-col w-64 h-full bg-[var(--color-bg-tertiary)] border-r border-[var(--color-border-light)]">
-        {sessionListContent}
+      {/* Desktop sidebar */}
+      <nav
+        className={`hidden md:flex flex-col h-full bg-[var(--color-bg-tertiary)] border-r border-[var(--color-border-light)] transition-all duration-[var(--duration-base)] overflow-hidden ${
+          desktopCollapsed ? 'w-0 border-r-0' : 'w-64'
+        }`}
+      >
+        <div className="w-64 flex-shrink-0">{sessionListContent}</div>
       </nav>
 
+      {/* Desktop expand button (shown when collapsed) */}
+      {desktopCollapsed && (
+        <button
+          onClick={() => setDesktopCollapsed(false)}
+          className="hidden md:flex items-center justify-center w-8 h-8 rounded-r-[var(--radius-md)] bg-[var(--color-bg-tertiary)] border border-l-0 border-[var(--color-border-light)] text-[var(--color-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors duration-[var(--duration-fast)] mt-[var(--space-md)] flex-shrink-0"
+          aria-label="展开侧边栏"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Mobile sidebar */}
       <div className="md:hidden">
         {isOpen && (
           <div

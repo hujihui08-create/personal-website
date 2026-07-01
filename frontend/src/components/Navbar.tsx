@@ -29,7 +29,7 @@ export const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[var(--z-nav)] bg-[var(--color-bg)]/80 backdrop-blur-md border-b border-[var(--color-border-light)]">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center">
         <Link to="/" className="text-xl text-[var(--color-primary)]">
           个人主页
         </Link>
