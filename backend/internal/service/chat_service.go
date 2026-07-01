@@ -1177,13 +1177,13 @@ func (s *ChatService) parseProjectListTag(fullResponse string) interface{} {
 		return nil
 	}
 
-	projects, err := s.projectRepo.ListFeatured(100)
+	allProjects, _, err := s.projectRepo.List(repository.ListProjectsOptions{Page: 1, PageSize: 100})
 	if err != nil {
 		log.Printf("[ChatService] 查询项目列表失败: %v", err)
 		return nil
 	}
 
-	if len(projects) == 0 {
+	if len(allProjects) == 0 {
 		return nil
 	}
 
@@ -1196,8 +1196,8 @@ func (s *ChatService) parseProjectListTag(fullResponse string) interface{} {
 		Tags       []string `json:"tags"`
 	}
 
-	result := make([]ProjBrief, 0, len(projects))
-	for _, p := range projects {
+	result := make([]ProjBrief, 0, len(allProjects))
+	for _, p := range allProjects {
 		tags := p.Tags
 		if tags == nil {
 			tags = []string{}

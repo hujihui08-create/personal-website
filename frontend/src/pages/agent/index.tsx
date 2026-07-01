@@ -37,26 +37,24 @@ const stripMarkdown = (text: string): string => {
     .trim()
 }
 
-const truncateBookingText = (text: string, hasCard: boolean): string => {
-  if (!hasCard) return text
-  const lines = text.split('\n')
-  const firstLine = lines[0] || ''
-  if (/[。！：]$/.test(firstLine.trim())) {
-    return firstLine.trim()
-  }
-  return lines.slice(0, 2).join('\n').trim()
-}
-
 const formatMessageContent = (
   content: string,
-  hasCard: boolean,
+  cardType: 'none' | 'booking' | 'experience' | 'project',
   index: number,
   messagesLength: number
 ): string => {
   let text = stripMarkdown(content)
   const isLastAssistant = index === messagesLength - 1
-  if (hasCard && isLastAssistant) {
-    text = truncateBookingText(text, hasCard)
+  // 只有预约卡片才截断文字（预约卡片已展示所有关键信息）
+  // 项目/经历卡片的文字是 AI 总结，应完整显示
+  if (cardType === 'booking' && isLastAssistant) {
+    const lines = text.split('\n')
+    const firstLine = lines[0] || ''
+    if (/[。！：]$/.test(firstLine.trim())) {
+      text = firstLine.trim()
+    } else {
+      text = lines.slice(0, 2).join('\n').trim()
+    }
   }
   return text
 }
@@ -528,7 +526,13 @@ export const AgentPage = () => {
                     <p className="text-sm whitespace-pre-wrap">
                       {formatMessageContent(
                         message.content,
-                        !!(bookingCardData || experienceData || projectListData),
+                        bookingCardData
+                          ? 'booking'
+                          : experienceData
+                            ? 'experience'
+                            : projectListData
+                              ? 'project'
+                              : 'none',
                         index,
                         messages.length
                       )}
