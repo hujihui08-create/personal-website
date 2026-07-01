@@ -344,16 +344,15 @@ func (s *ChatService) ChatStream(
 		}
 
 		// Check if the end of the accumulated text is a prefix of any start tag
-		// This prevents tag prefix leaking (e.g. "[BOOKING" being shown before "[BOOKING_INTENT]" completes)
+		// This prevents tag prefix leaking (e.g. "[" / "[BOOKING" being shown before the tag completes)
 		isTagPrefix := func(s string, targets []string) bool {
-			// Find the last '[' - it might be the start of a booking tag
 			lastBracket := strings.LastIndex(s, "[")
 			if lastBracket < 0 {
 				return false
 			}
 			tail := s[lastBracket:]
-			if len(tail) < 2 {
-				return false // single '[' is not a meaningful prefix
+			if len(tail) < 1 {
+				return false
 			}
 			for _, t := range targets {
 				if strings.HasPrefix(t, tail) {
