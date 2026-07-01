@@ -50,7 +50,7 @@ func Setup(r *gin.Engine, cfg *config.Config, db *gorm.DB, minioClient *minio.Cl
 	configService := service.NewConfigService(configRepo)
 	embeddingService := service.NewEmbeddingService(configService)
 	ragService := service.NewRAGService(knowledgeDocRepo, documentParser, textSplitter, embeddingService)
-	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, agentPromptRepo, bookingService, agentIntentRepo)
+	chatService := service.NewChatService(chatSessionRepo, ragService, configService, redisClient, profileRepo, projectRepo, experienceRepo, agentPromptRepo, bookingService, agentIntentRepo)
 	agentDebugService := service.NewAgentDebugService(ragService, embeddingService, configService, agentDebugLogRepo, agentPromptRepo, profileRepo, projectRepo, agentIntentRepo)
 	agentPromptService := service.NewAgentPromptService(agentPromptRepo)
 	prototypeService := service.NewPrototypeService(prototypeRepo, minioClient, cfg.MinIO.Bucket)

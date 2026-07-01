@@ -67,6 +67,11 @@ scripts/fix-avatar.sql
 scripts/update-password.sql
 frontend/scripts/debug-routes.js
 
+# ==================== Demo 和 Patch 文件 ====================
+*.patch
+*-demo.html
+bundle.git
+
 # ==================== 敏感文档和规格 ====================
 portfolio-docs/
 个人简介网站_PRD.md

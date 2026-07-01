@@ -7,11 +7,15 @@ import { SessionList } from '@/components/agent/SessionList'
 import { BookingResultCard } from '@/components/agent/BookingResultCard'
 import { BookingListCard } from '@/components/agent/BookingListCard'
 import { BookingFlowCard } from '@/components/agent/BookingFlowCard'
+import { ExperienceTimelineCard } from '@/components/agent/ExperienceTimelineCard'
+import { ProjectListCard } from '@/components/agent/ProjectListCard'
 import type {
   AgentChatMessage,
   BookingResultData,
   BookingFormData,
   BookingFormChunkData,
+  ExperienceBrief,
+  ProjectBrief,
 } from '@/types'
 import { toast } from 'sonner'
 
@@ -88,6 +92,8 @@ export const AgentPage = () => {
     undefined
   )
   const [cancelTarget, setCancelTarget] = useState<{ id: number; phone: string } | null>(null)
+  const [experienceData, setExperienceData] = useState<ExperienceBrief[] | null>(null)
+  const [projectListData, setProjectListData] = useState<ProjectBrief[] | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
@@ -226,6 +232,8 @@ export const AgentPage = () => {
 
     setBookingCardData(null)
     setBookingFormState(null)
+    setExperienceData(null)
+    setProjectListData(null)
 
     try {
       const request = {
@@ -253,6 +261,12 @@ export const AgentPage = () => {
               show: true,
               step: (chunk.data as BookingFormChunkData).step || 'date_time',
             })
+          } else if (chunk.type === 'work_experience' && chunk.data) {
+            flushContent()
+            setExperienceData(chunk.data as ExperienceBrief[])
+          } else if (chunk.type === 'project_list' && chunk.data) {
+            flushContent()
+            setProjectListData(chunk.data as ProjectBrief[])
           } else if (chunk.type === 'chunk' && chunk.content) {
             pendingContentRef.current += chunk.content
             if (!rafRef.current) {
@@ -469,7 +483,7 @@ export const AgentPage = () => {
                     <p className="text-sm whitespace-pre-wrap">
                       {formatMessageContent(
                         message.content,
-                        !!bookingCardData,
+                        !!(bookingCardData || experienceData || projectListData),
                         index,
                         messages.length
                       )}
@@ -512,6 +526,28 @@ export const AgentPage = () => {
                 </div>
                 <div className="max-w-[85%] md:max-w-[75%]">
                   <BookingFlowCard lastBookingInfo={lastBookingInfo} />
+                </div>
+              </div>
+            )}
+
+            {experienceData && experienceData.length > 0 && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="max-w-[90%] bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] px-4 py-3">
+                  <ExperienceTimelineCard experiences={experienceData} />
+                </div>
+              </div>
+            )}
+
+            {projectListData && projectListData.length > 0 && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-[var(--radius-full)] bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="max-w-[95%] bg-[var(--color-bg)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] px-4 py-3">
+                  <ProjectListCard projects={projectListData} />
                 </div>
               </div>
             )}

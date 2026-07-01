@@ -22,6 +22,7 @@ type ChatService struct {
 	redisClient     *redis.Client
 	profileRepo     *repository.ProfileRepository
 	projectRepo     *repository.ProjectRepository
+	experienceRepo  *repository.WorkExperienceRepository
 	promptRepo      *repository.AgentPromptRepo
 	bookingService  *BookingService
 	intentRepo      *repository.AgentIntentRepo
@@ -34,6 +35,7 @@ func NewChatService(
 	redisClient *redis.Client,
 	profileRepo *repository.ProfileRepository,
 	projectRepo *repository.ProjectRepository,
+	experienceRepo *repository.WorkExperienceRepository,
 	promptRepo *repository.AgentPromptRepo,
 	bookingService *BookingService,
 	intentRepo *repository.AgentIntentRepo,
@@ -45,6 +47,7 @@ func NewChatService(
 		redisClient:     redisClient,
 		profileRepo:     profileRepo,
 		projectRepo:     projectRepo,
+		experienceRepo:  experienceRepo,
 		promptRepo:      promptRepo,
 		bookingService:  bookingService,
 		intentRepo:      intentRepo,
@@ -155,10 +158,12 @@ func (s *ChatService) ListSessions(visitorID string) ([]SessionMeta, error) {
 type StreamMessageType string
 
 const (
-	StreamMessageTypeThinking      StreamMessageType = "thinking"
-	StreamMessageTypeChunk         StreamMessageType = "chunk"
-	StreamMessageTypeDone          StreamMessageType = "done"
-	StreamMessageTypeBookingResult StreamMessageType = "booking_result"
+	StreamMessageTypeThinking       StreamMessageType = "thinking"
+	StreamMessageTypeChunk          StreamMessageType = "chunk"
+	StreamMessageTypeDone           StreamMessageType = "done"
+	StreamMessageTypeBookingResult  StreamMessageType = "booking_result"
+	StreamMessageTypeWorkExperience StreamMessageType = "work_experience"
+	StreamMessageTypeProjectList    StreamMessageType = "project_list"
 )
 
 type StreamMessage struct {
@@ -324,6 +329,10 @@ func (s *ChatService) ChatStream(
 
 		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]", "[BOOKING_LIST]", "[BOOKING_INTENT]"}
 		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]", "[/BOOKING_LIST]", "[/BOOKING_INTENT]"}
+		cardStartTags := []string{"[WORK_EXPERIENCE]", "[PROJECT_LIST]"}
+		cardEndTags := []string{"[/WORK_EXPERIENCE]", "[/PROJECT_LIST]"}
+		allStartTags := append(bookingStartTags, cardStartTags...)
+		allEndTags := append(bookingEndTags, cardEndTags...)
 
 		containsAny := func(s string, substrs []string) bool {
 			for _, sub := range substrs {
@@ -371,18 +380,18 @@ func (s *ChatService) ChatStream(
 					if content != "" {
 						fullResponse.WriteString(content)
 
-						if !suppressing && (containsAny(fullResponse.String(), bookingStartTags) || isTagPrefix(fullResponse.String(), bookingStartTags)) {
+						if !suppressing && (containsAny(fullResponse.String(), allStartTags) || isTagPrefix(fullResponse.String(), allStartTags)) {
 							suppressing = true
 						} else if !suppressing {
 							respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: content}
 						}
 
-						if suppressing && containsAny(fullResponse.String(), bookingEndTags) {
+						if suppressing && containsAny(fullResponse.String(), allEndTags) {
 							suppressing = false
 							afterLastEnd := ""
 							fullStr := fullResponse.String()
 							lastEnd := 0
-							for _, endTag := range bookingEndTags {
+							for _, endTag := range allEndTags {
 								if idx := strings.LastIndex(fullStr, endTag); idx >= 0 {
 									end := idx + len(endTag)
 									if end > lastEnd {
@@ -398,7 +407,7 @@ func (s *ChatService) ChatStream(
 					}
 
 					if resp.Choices[0].FinishReason != "" {
-						cleanResponse := stripBookingTags(fullResponse.String())
+						cleanResponse := stripAllTags(fullResponse.String())
 
 						// 始终尝试解析 booking 标签，不依赖意图分类结果
 						// 多轮对话中后续消息的意图可能被分类为 general，但 LLM 仍可能输出 booking 标签
@@ -419,6 +428,18 @@ func (s *ChatService) ChatStream(
 							for _, ch := range bookingText {
 								respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: string(ch)}
 							}
+						}
+
+						// 解析工作经历标签
+						expData := s.parseWorkExperienceTag(fullResponse.String())
+						if expData != nil {
+							respChan <- StreamMessage{Type: StreamMessageTypeWorkExperience, Data: expData}
+						}
+
+						// 解析项目列表标签
+						projData := s.parseProjectListTag(fullResponse.String())
+						if projData != nil {
+							respChan <- StreamMessage{Type: StreamMessageTypeProjectList, Data: projData}
 						}
 
 						assistantMsg := models.ChatMessage{
@@ -843,7 +864,22 @@ func (s *ChatService) buildSystemPrompt(agentType string, contexts []string, use
 1. 不要使用 ** 标记
 2. 不要使用 - 列表
 3. 如需列出要点，请使用数字排序（1. 2. 3. 等）
-4. 你可以回答关于个人背景、工作经验、技术栈、项目经历、工作履历等相关问题。如果用户询问预约或咨询相关事宜（如面试时间、会议安排等），请告诉用户可以说"我要预约面试"来启动预约流程，或使用预约页面（/booking）自行操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。`
+4. 你可以回答关于个人背景、工作经验、技术栈、项目经历、工作履历等相关问题。如果用户询问预约或咨询相关事宜（如面试时间、会议安排等），请告诉用户可以说"我要预约面试"来启动预约流程，或使用预约页面（/booking）自行操作。只有遇到与以上所有话题都完全无关的问题时，才请礼貌拒绝并引导用户询问相关话题。
+
+## 卡片输出规则
+当用户询问工作经历、个人履历等问题时，在回答末尾单独一行加上标签（不需要任何参数）：
+[WORK_EXPERIENCE][/WORK_EXPERIENCE]
+
+当用户询问项目、作品、做过什么等问题时，在回答末尾单独一行加上标签（不需要任何参数）：
+[PROJECT_LIST][/PROJECT_LIST]
+
+注意：标签必须放在回答的最末尾，不要包含任何多余文字。同一回答中不要同时使用 [WORK_EXPERIENCE] 和 [PROJECT_LIST]，根据用户问题选一个即可。`
+	}
+
+	// 如果使用的是 DB 自定义 Prompt（不含卡片规则），动态追加
+	if template != "" && !strings.Contains(template, "[WORK_EXPERIENCE]") {
+		template += "\n\n## 卡片输出规则\n当用户询问工作经历、个人履历等问题时，在回答末尾单独一行加上标签（不需要任何参数）：\n[WORK_EXPERIENCE][/WORK_EXPERIENCE]\n\n当用户询问项目、作品、做过什么等问题时，在回答末尾单独一行加上标签（不需要任何参数）：\n[PROJECT_LIST][/PROJECT_LIST]\n\n注意：标签必须放在回答的最末尾，不要包含任何多余文字。同一回答中不要同时使用 [WORK_EXPERIENCE] 和 [PROJECT_LIST]，根据用户问题选一个即可。"
+		log.Printf("[ChatService] 动态追加卡片输出规则到 Prompt")
 	}
 
 	result := strings.ReplaceAll(template, "{{profile}}", profileSection)
@@ -1001,7 +1037,7 @@ func generateSessionID() string {
 
 func saveAndDone(respChan chan<- StreamMessage, session *models.ChatSession, fullResponse *strings.Builder, chatSessionRepo *repository.ChatSessionRepository) {
 	if fullResponse.Len() > 0 {
-		cleanResponse := stripBookingTags(fullResponse.String())
+		cleanResponse := stripAllTags(fullResponse.String())
 		assistantMsg := models.ChatMessage{
 			Role:      "assistant",
 			Content:   cleanResponse,
@@ -1013,13 +1049,15 @@ func saveAndDone(respChan chan<- StreamMessage, session *models.ChatSession, ful
 	respChan <- StreamMessage{Type: StreamMessageTypeDone, SessionID: session.SessionID}
 }
 
-func stripBookingTags(text string) string {
+func stripAllTags(text string) string {
 	tags := []struct{ start, end string }{
 		{"[BOOKING_CREATE]", "[/BOOKING_CREATE]"},
 		{"[BOOKING_QUERY]", "[/BOOKING_QUERY]"},
 		{"[BOOKING_CANCEL]", "[/BOOKING_CANCEL]"},
 		{"[BOOKING_LIST]", "[/BOOKING_LIST]"},
 		{"[BOOKING_INTENT]", "[/BOOKING_INTENT]"},
+		{"[WORK_EXPERIENCE]", "[/WORK_EXPERIENCE]"},
+		{"[PROJECT_LIST]", "[/PROJECT_LIST]"},
 	}
 
 	result := text
@@ -1039,5 +1077,106 @@ func stripBookingTags(text string) string {
 	}
 
 	result = strings.TrimSpace(result)
+	return result
+}
+
+// parseWorkExperienceTag 解析 [WORK_EXPERIENCE] 标签，查询 DB 并返回结构化数据
+func (s *ChatService) parseWorkExperienceTag(fullResponse string) interface{} {
+	if s.experienceRepo == nil {
+		return nil
+	}
+
+	hasTag := strings.Contains(fullResponse, "[WORK_EXPERIENCE]") && strings.Contains(fullResponse, "[/WORK_EXPERIENCE]")
+	if !hasTag {
+		return nil
+	}
+
+	experiences, err := s.experienceRepo.List()
+	if err != nil {
+		log.Printf("[ChatService] 查询工作经历失败: %v", err)
+		return nil
+	}
+
+	type ExpBrief struct {
+		ID          uint   `json:"id"`
+		Type        string `json:"type"`
+		CompanyName string `json:"companyName"`
+		Position    string `json:"position"`
+		StartDate   string `json:"startDate"`
+		EndDate     string `json:"endDate"`
+		Description string `json:"description"`
+		SortOrder   int    `json:"sortOrder"`
+	}
+
+	result := make([]ExpBrief, 0, len(experiences))
+	for _, e := range experiences {
+		brief := ExpBrief{
+			ID:          e.ID,
+			Type:        e.Type,
+			CompanyName: e.CompanyName,
+			Position:    e.Position,
+			Description: e.Description,
+			SortOrder:   e.SortOrder,
+		}
+		if !e.StartDate.IsZero() {
+			brief.StartDate = e.StartDate.Format("2006-01-02")
+		}
+		if e.EndDate != nil && !e.EndDate.IsZero() {
+			brief.EndDate = e.EndDate.Format("2006-01-02")
+		}
+		result = append(result, brief)
+	}
+
+	log.Printf("[ChatService] 返回 %d 条工作经历", len(result))
+	return result
+}
+
+// parseProjectListTag 解析 [PROJECT_LIST] 标签，查询 DB 并返回结构化数据
+func (s *ChatService) parseProjectListTag(fullResponse string) interface{} {
+	if s.projectRepo == nil {
+		return nil
+	}
+
+	hasTag := strings.Contains(fullResponse, "[PROJECT_LIST]") && strings.Contains(fullResponse, "[/PROJECT_LIST]")
+	if !hasTag {
+		return nil
+	}
+
+	projects, err := s.projectRepo.ListFeatured(100)
+	if err != nil {
+		log.Printf("[ChatService] 查询项目列表失败: %v", err)
+		return nil
+	}
+
+	if len(projects) == 0 {
+		return nil
+	}
+
+	type ProjBrief struct {
+		ID         uint     `json:"id"`
+		Name       string   `json:"name"`
+		Type       string   `json:"type"`
+		Summary    string   `json:"summary"`
+		CoverImage string   `json:"coverImage"`
+		Tags       []string `json:"tags"`
+	}
+
+	result := make([]ProjBrief, 0, len(projects))
+	for _, p := range projects {
+		tags := p.Tags
+		if tags == nil {
+			tags = []string{}
+		}
+		result = append(result, ProjBrief{
+			ID:         p.ID,
+			Name:       p.Name,
+			Type:       p.Type,
+			Summary:    p.Summary,
+			CoverImage: p.CoverImage,
+			Tags:       tags,
+		})
+	}
+
+	log.Printf("[ChatService] 返回 %d 个项目", len(result))
 	return result
 }

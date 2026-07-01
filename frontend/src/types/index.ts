@@ -198,10 +198,18 @@ export interface AgentChatRequest {
 }
 
 export interface AgentChatStreamChunk {
-  type: 'thinking' | 'chunk' | 'done' | 'booking_result' | 'booking_list' | 'booking_form'
+  type:
+    | 'thinking'
+    | 'chunk'
+    | 'done'
+    | 'booking_result'
+    | 'booking_list'
+    | 'booking_form'
+    | 'work_experience'
+    | 'project_list'
   content?: string
   session_id?: string
-  data?: BookingResultData | BookingFormChunkData
+  data?: BookingResultData | BookingFormChunkData | ExperienceBrief[] | ProjectBrief[]
 }
 
 export interface BookingFormChunkData {
@@ -481,4 +489,26 @@ export interface HarnessTrace {
   steps: HarnessStep[]
   total_duration_ms: number
   total_tokens: number
+}
+
+// === Agent Card Types (聊天卡片交互) ===
+
+export interface ExperienceBrief {
+  id: number
+  type: string
+  companyName: string
+  position: string
+  startDate: string
+  endDate: string
+  description: string
+  sortOrder: number
+}
+
+export interface ProjectBrief {
+  id: number
+  name: string
+  type: string
+  summary: string
+  coverImage: string
+  tags: string[]
 }
