@@ -370,7 +370,7 @@ export const AgentPage = () => {
           {/* Messages */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto min-h-0 mb-[var(--space-md)] space-y-[var(--space-md)] pr-2"
+            className="flex-1 overflow-y-auto min-h-0 mb-[var(--space-md)] space-y-[var(--space-md)] pr-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
           >
             {messages.length === 0 && (
               <div className="text-center py-[var(--space-3xl)]">
