@@ -326,6 +326,7 @@ func (s *ChatService) ChatStream(
 
 		var fullResponse strings.Builder
 		var suppressing bool
+		var pendingBuf strings.Builder // 缓冲末尾可能是标签前缀的 [ 字符
 
 		bookingStartTags := []string{"[BOOKING_CREATE]", "[BOOKING_QUERY]", "[BOOKING_CANCEL]", "[BOOKING_LIST]", "[BOOKING_INTENT]"}
 		bookingEndTags := []string{"[/BOOKING_CREATE]", "[/BOOKING_QUERY]", "[/BOOKING_CANCEL]", "[/BOOKING_LIST]", "[/BOOKING_INTENT]"}
@@ -368,11 +369,13 @@ func (s *ChatService) ChatStream(
 		for {
 			select {
 			case <-ctx.Done():
+				flushPendingBuf(&pendingBuf, respChan)
 				saveAndDone(respChan, session, &fullResponse, s.chatSessionRepo)
 				return
 			default:
 				resp, err := stream.Recv()
 				if err != nil {
+					flushPendingBuf(&pendingBuf, respChan)
 					saveAndDone(respChan, session, &fullResponse, s.chatSessionRepo)
 					return
 				}
@@ -381,11 +384,38 @@ func (s *ChatService) ChatStream(
 					content := resp.Choices[0].Delta.Content
 					if content != "" {
 						fullResponse.WriteString(content)
+						pendingBuf.WriteString(content)
 
 						if !suppressing && (containsAny(fullResponse.String(), allStartTags) || isTagPrefix(fullResponse.String(), allStartTags)) {
+							// 标签开始，丢弃 pendingBuf 中未发送的 [ 前缀
 							suppressing = true
+							pendingBuf.Reset()
 						} else if !suppressing {
-							respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: content}
+							// 检查是否应该缓冲末尾的 [（可能是标签前缀的开始）
+							pendingStr := pendingBuf.String()
+							flushAll := true
+							lastBracket := strings.LastIndex(pendingStr, "[")
+							if lastBracket >= 0 {
+								tail := pendingStr[lastBracket:]
+								// 如果末尾是单独的 [，暂不发送，等下一个字符确认
+								if len(tail) == 1 {
+									flushAll = false
+									// 发送 [ 之前的内容，保留 [
+									safe := pendingStr[:lastBracket]
+									if safe != "" {
+										respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: safe}
+									}
+									pendingBuf.Reset()
+									pendingBuf.WriteString("[")
+								}
+							}
+							if flushAll {
+								respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: pendingStr}
+								pendingBuf.Reset()
+							}
+						} else {
+							// suppressing 时清空 pendingBuf
+							pendingBuf.Reset()
 						}
 
 						if suppressing && containsAny(fullResponse.String(), allEndTags) {
@@ -403,7 +433,8 @@ func (s *ChatService) ChatStream(
 							}
 							if lastEnd < len(fullStr) {
 								afterLastEnd = fullStr[lastEnd:]
-								respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: afterLastEnd}
+								// 也走 pending buffer，防止标签后紧跟新的 [ 前缀
+								pendingBuf.WriteString(afterLastEnd)
 							}
 						}
 					}
@@ -1226,4 +1257,11 @@ func (s *ChatService) parseProjectListTag(fullResponse string) interface{} {
 
 	log.Printf("[ChatService] 返回 %d 个项目", len(result))
 	return result
+}
+
+// flushPendingBuf 发送 pendingBuf 中剩余的内容（用于 stream 结束时）
+func flushPendingBuf(pendingBuf *strings.Builder, respChan chan<- StreamMessage) {
+	if pendingBuf.Len() > 0 {
+		respChan <- StreamMessage{Type: StreamMessageTypeChunk, Content: pendingBuf.String()}
+	}
 }
