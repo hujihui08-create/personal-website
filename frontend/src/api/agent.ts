@@ -57,9 +57,13 @@ export const agentApi = {
     }
   },
 
-  getHistory: async (sessionId: string) => {
+  getHistory: async (sessionId: string, visitorId?: string) => {
+    const params: Record<string, string> = { session_id: sessionId }
+    if (visitorId) {
+      params.visitor_id = visitorId
+    }
     const response = await apiClient.get<ApiResponse<AgentChatSession>>('/agent/history', {
-      params: { session_id: sessionId },
+      params,
     })
     return response.data
   },

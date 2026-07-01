@@ -104,6 +104,7 @@ func (h *AgentHandler) Chat(c *gin.Context) {
 
 func (h *AgentHandler) GetHistory(c *gin.Context) {
 	sessionID := c.Query("session_id")
+	visitorID := c.Query("visitor_id")
 	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
@@ -112,8 +113,19 @@ func (h *AgentHandler) GetHistory(c *gin.Context) {
 		return
 	}
 
-	history, err := h.chatService.GetSessionHistory(sessionID)
+	history, err := h.chatService.GetSessionHistory(sessionID, visitorID)
 	if err != nil {
+		if err.Error() == "forbidden: visitor_id mismatch" {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    403,
+				"message": "无权访问该会话",
+				"data": gin.H{
+					"session_id": sessionID,
+					"messages":   []any{},
+				},
+			})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"code":    200,
 			"message": "success",

@@ -102,6 +102,24 @@ func (s *ChatService) GetOrCreateSession(sessionID string, visitorID string) (*m
 		return session, nil
 	}
 
+	// 安全校验：已有的 session 必须属于当前 visitor，防止会话劫持
+	// 如果 visitorID 不匹配，视为新会话（生成新 ID，不覆盖原有 session）
+	if session.VisitorID != visitorID {
+		log.Printf("[ChatService] visitor 不匹配: 请求 visitor=%s, session owner=%s, 创建新会话", visitorID, session.VisitorID)
+		newSession := &models.ChatSession{
+			SessionID: generateSessionID(),
+			VisitorID: visitorID,
+			Title:     "",
+			Messages:  models.ChatMessages{},
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		if err := s.chatSessionRepo.Create(newSession); err != nil {
+			return nil, err
+		}
+		return newSession, nil
+	}
+
 	return session, nil
 }
 
@@ -951,10 +969,15 @@ func (s *ChatService) buildTechStackSection() string {
 	return sb.String()
 }
 
-func (s *ChatService) GetSessionHistory(sessionID string) (*ChatSessionResponse, error) {
+func (s *ChatService) GetSessionHistory(sessionID string, visitorID string) (*ChatSessionResponse, error) {
 	session, err := s.chatSessionRepo.FindBySessionID(sessionID)
 	if err != nil {
 		return nil, err
+	}
+
+	// 安全校验：只允许会话所有者查看历史
+	if visitorID != "" && session.VisitorID != visitorID {
+		return nil, fmt.Errorf("forbidden: visitor_id mismatch")
 	}
 
 	messages := make([]ChatMessageResponse, len(session.Messages))

@@ -56,7 +56,10 @@ export const useAgentStore = create<AgentState>()(
             set({ activeSessionId: firstSessionId })
 
             try {
-              const historyResponse = await agentApi.getHistory(firstSessionId)
+              const historyResponse = await agentApi.getHistory(
+                firstSessionId,
+                get().visitorId || undefined
+              )
               set({
                 messages: historyResponse.data.messages,
                 isLoading: false,
@@ -75,7 +78,7 @@ export const useAgentStore = create<AgentState>()(
         set({ activeSessionId: sessionId, isLoading: true, error: null })
 
         try {
-          const response = await agentApi.getHistory(sessionId)
+          const response = await agentApi.getHistory(sessionId, get().visitorId || undefined)
           set({
             messages: response.data.messages,
             isLoading: false,
@@ -135,7 +138,10 @@ export const useAgentStore = create<AgentState>()(
           const state = get()
           if (state.activeSessionId && state.activeSessionId !== sessionId) {
             try {
-              const response = await agentApi.getHistory(state.activeSessionId)
+              const response = await agentApi.getHistory(
+                state.activeSessionId,
+                state.visitorId || undefined
+              )
               set({
                 messages: response.data.messages,
                 isLoading: false,
